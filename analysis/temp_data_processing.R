@@ -12,9 +12,11 @@ library(reshape2)
 # NOAA OI SST V2 High Resolution Dataset
 # https://www.esrl.noaa.gov/psd/data/gridded/data.noaa.oisst.v2.highres.html 
 
-year_list <- 1981:2019
+year_list <- 1991:2019
 
 tmp_slice_list <- list()
+
+ts_list <- vector()
 
 for (i in 1:length(year_list)) {
   
@@ -55,6 +57,8 @@ tday <- as.integer(unlist(tdstr)[3])
 tyear <- as.integer(unlist(tdstr)[1])
 ts <- chron(time,origin=c(tmonth, tday, tyear))
 
+ts_list <- c(ts_list,ts)
+
 tmp_array[tmp_array==fillvalue$value] <- NA
 
 # getting dims for array
@@ -74,7 +78,7 @@ tmp_slice_list[[i]] <- tmp_slice
 }
 
 # save the slice of data
-save(tmp_slice_list,file = "output/CALCOFI_OI_SST_Slice.Rdata")
+save(tmp_slice_list,ts_list,lat_grid,lon_grid,lon,lat, file = "output/CALCOFI_OI_SST_Slice.Rdata")
 
 # Calculate Coeff. Var.
 

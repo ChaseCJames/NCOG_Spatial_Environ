@@ -15,10 +15,11 @@ library(grid)
 library(gridExtra)
 library(lubridate)
 library(vegan)
+library(spatialEco)
+library(geosphere)
+library(viridis)
 
 ########## Data Processing ############
-
-set.seed(532)
 
 load("output/CALCOFI_temp_tables.Rdata")
 
@@ -115,7 +116,7 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
   subset <- as.data.frame(subset)
   
   # run som
-  out_som <- trainSOM(x.data = subset, dimension = c(5, 5), nb.save = 10, maxit = 2000, 
+  out_som <- trainSOM(x.data = subset, dimension = c(5, 5), maxit = 5000, 
                       scaling = "none")
   
   # cluster som
@@ -143,10 +144,12 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
   in_amplicon$evenness <- diversity(subset, index="shannon")/log(S)
   environ_dat$evenness <- in_amplicon$evenness[match(full_dat$eco_name, rownames(in_amplicon))]
   
+  if(length(which(is.na(environ_dat$som_id)))>0){environ_dat <- environ_dat[-which(is.na(environ_dat$som_id)),]}
+  
   # look at stations
   som_maps <- environ_dat %>% 
     group_by(Sta_ID) %>%
-    summarise(som_1 = sum(som_id == 1)/n(), som_2 = sum(som_id == 2)/n(),
+    summarise(som_1 = sum(som_id == 1,na.rm = TRUE)/n(), som_2 = sum(som_id == 2,na.rm = TRUE)/n(),
               n_samps = n(), lat = mean(Lat_Dec, na.rm = TRUE), long = mean(Lon_Dec, na.rm = TRUE),
               PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
               SiO3_mean = mean(SiO3ug, na.rm = TRUE),
@@ -160,6 +163,7 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
   
   names_vect <- c("Cluster 1", "Cluster 2")
   color_vect <- c("darkblue", "darkred")
+  centroid_vect <- c("red","blue")
   
   # FOR NOW REMOVE NORTHERN TRANSECTS
   
@@ -167,6 +171,21 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
   
   map <- map_data("world")    
   
+  # find centroids
+  clean_som <- som_maps[,c(6,5,2,3,13,14)]
+  clean_som <- clean_som[which(!is.na(rowSums(clean_som))),]
+  
+  centroid_df <- SpatialPointsDataFrame(coords = clean_som[,1:2], data = clean_som)
+  
+  centroid_list <- list()
+  
+  centroid_list[[1]] <- wt.centroid(x = centroid_df , p = 3)
+  centroid_list[[2]] <- wt.centroid(x = centroid_df , p = 4)
+  centroid_list[[3]] <- wt.centroid(x = centroid_df , p = 5)
+  centroid_list[[4]] <- wt.centroid(x = centroid_df , p = 6)
+  
+
+
   for (i in 1:2) {
     
     p <-  ggplot() + 
@@ -187,6 +206,12 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
     
   }
   
+  som_plot_list[[1]] <- som_plot_list[[1]] + geom_point(aes(x = centroid_list[[1]]@coords[1], y = centroid_list[[1]]@coords[2]),
+                      color = centroid_vect[1], size = 5, pch = 10)
+  
+  som_plot_list[[2]] <- som_plot_list[[2]] + geom_point(aes(x = centroid_list[[2]]@coords[1], y = centroid_list[[2]]@coords[2]),
+                                                        color = centroid_vect[2], size = 5, pch = 10)
+  
   # shannon
   shannon <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -199,31 +224,59 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
           panel.background = element_blank(),
           panel.border = element_rect(fill = NA),
           title = element_text(hjust = 0.5))
+
+  shannon <- shannon + geom_point(aes(x = centroid_list[[3]]@coords[1], y = centroid_list[[3]]@coords[2]), color = "red", size = 5, pch = 10)
   
   evenness <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-125.3206, -116.3055),ylim= c(28.84998,38.08734), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "evenness"), color = "black", size =5, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(low = "white", high = "red", aes(min = min(evenness, na.rm = TRUE, max = max(shannon, na.rm = TRUE)), limits = c(min,max))) +
+    scale_fill_gradient(low = "white", high = "red", aes(min = min(evenness, na.rm = TRUE, max = max(evenness, na.rm = TRUE)), limits = c(min,max))) +
     ggtitle(paste0("Evenness")) +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
           panel.border = element_rect(fill = NA),
           title = element_text(hjust = 0.5))
+
+  evenness <- evenness + geom_point(aes(x = centroid_list[[4]]@coords[1], y = centroid_list[[4]]@coords[2]), color = "blue", size = 5, pch = 10)
+  
+  # distance to coast
+  
+  coast_calc <- vector()
+  
+  for (i in 1:nrow(environ_dat)) {
+    
+    long_lat <-  c(environ_dat$Lon_Dec[i], environ_dat$Lat_Dec[i])
+    
+    if (length(which(!is.na(long_lat))) == 2) {
+      
+      map_dist <- map[,1:2]
+      
+      distances <- distm(long_lat, map_dist, fun = distGeo)
+      
+      coast_calc[i] <- min(distances, na.rm = TRUE)
+      
+    }
+    
+    else{coast_calc[i] <- NA}
+    
+  }
+  
+  environ_dat$dist_to_coast <- coast_calc/1000
   
   # Run random forests
   
   environ_dat$Date <- as.Date(environ_dat$Date, format = "%m/%d/%Y")
   environ_dat$Julian <- as.numeric(format(environ_dat$Date, "%j"))
   
-  forest_dat <- environ_dat[,-which(is.na(rowSums(environ_dat[,c(27,28,33,34,37,38,39,59,60)])))]
+  forest_dat <- environ_dat[-which(is.na(rowSums(environ_dat[,c(33,34,37,38,39,59,62,63)]))),]
   
   forest_dat$som_id <- as.factor(forest_dat$som_id)
   
   train <- sample(nrow(forest_dat), 0.7*nrow(forest_dat), replace = FALSE)
   
-  forest_out <- randomForest(som_id ~ Lat_Dec + Lon_Dec + CC_Depth + T_degC + Salnty +
+  forest_out <- randomForest(som_id ~  dist_to_coast + CC_Depth + T_degC + Salnty +
                                  PO4ug + SiO3ug + NO3ug + Julian, data = forest_dat, importance = TRUE,
                                na.action = na.omit, subset = train, mtry = 4)
   
@@ -250,21 +303,29 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
   coeff_val <- vector()
   mean_val <- vector()
   
+  coast_distance <- vector()
+  
   for (i in 1:nrow(som_maps)) {
     
-    lat_1 <- som_maps$lat[i]
-    lon_1 <- som_maps$long[i]
+    long_lat <-  c(som_maps$long[i], som_maps$lat[i])
+    sst_dat <- coeff_table[,1:2]  
+    map_dat <- map[,1:2]
     
-    distance_vect <- sqrt((lat_1 - coeff_table$lat)^2 + (lon_1 - coeff_table$lon)^2)
+    sst_dist <- distm(long_lat, sst_dat, fun = distGeo)
+    map_dist <- distm(long_lat, map_dat, fun = distGeo)
     
-    coeff_val[i] <- coeff_table$coeff_var[which.min(distance_vect)]
-    mean_val[i] <- mean_table$Mean[which.min(distance_vect)]
+    coeff_val[i] <- coeff_table$coeff_var[which.min(sst_dist)]
+    mean_val[i] <- mean_table$Mean[which.min(sst_dist)]
+    
+    # find distance between coast and location
+    coast_distance[i] <- min(map_dist, na.rm = TRUE)
     
     
   }
   
   som_maps$temp_mean <- mean_val
   som_maps$temp_coeff <- coeff_val
+  som_maps$dist_to_coast <- coast_distance/1000
   
   # glm
   
@@ -391,10 +452,41 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
   sub_plot <- recordPlot()
   
 
+# extra plots
   
+  plot(environ_dat$dist_to_coast, environ_dat$shannon, xlab = "Distance to Coast (km)",
+       ylab = "Diversity (Shannon)")
   
+  abline(lm(environ_dat$shannon~environ_dat$dist_to_coast), col = "red", lty = 1, lwd = 2)
   
+  plot(environ_dat$dist_to_coast, environ_dat$evenness, xlab = "Distance to Coast (km)",
+       ylab = "Evenness")
   
+  abline(lm(environ_dat$evenness~environ_dat$dist_to_coast), col = "red", lty = 1, lwd = 2)
+  
+  shannon_depth_dist <- ggplot(environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+    geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+    scale_fill_gradient2(low = "darkblue", mid = "white", high = "darkred", midpoint = 2, name = "Shannon Diversity") +
+    ylab("Depth (m)") + xlab("Distance to Coast (km)") + ggtitle(group_name)
+  
+  even_depth_dist <- ggplot(environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+    geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+    scale_fill_gradient2(low = "darkblue", mid = "white", high = "darkred",
+                         name = "Evenness", midpoint = 0.7) +
+    ylab("Depth (m)") + xlab("Distance to Coast (km)") + ggtitle(group_name)
+  
+  environ_dat$Date <- as.Date(environ_dat$Date, format = "%m/%d/%Y")
+  
+  shannon_timeplot <- ggplot(environ_dat, aes(x = Date, y = dist_to_coast, fill = shannon)) + 
+    geom_jitter(size = 4, pch = 21, color = "black",height = 0, width = 10) + 
+    scale_fill_viridis(name = "Shannon", option = "D") +
+    ylab("Distance to Coast") + xlab("Time") 
+  
+  even_timeplot <- ggplot(environ_dat, aes(x = Date, y = dist_to_coast, fill = evenness)) + 
+    geom_jitter(size = 4, pch = 21, color = "black",height = 0, width = 10) + 
+    scale_fill_viridis(name = "Evenness", option = "D") +
+    ylab("Distance to Coast") + xlab("Time") 
+
   
   return(list(out_som = out_som, out_clust = out_clust,
               som_plot_list = som_plot_list, 
@@ -402,11 +494,19 @@ group_analysis <- function(in_amplicon = eighteen_s, group = taxa_id_list[[1]], 
               temp_plots = temp_plots, glm_subset = sub_plot,
               shannon = shannon, evenness = evenness,
               temp_diversity_plots = temp_diversity_plots,
-              temp_evenness_plots = temp_evenness_plots))
+              temp_evenness_plots = temp_evenness_plots,
+              environ_dat = environ_dat, som_maps = som_maps,
+              shannon_depth_dist = shannon_depth_dist,
+              even_depth_dist = even_depth_dist,
+              centroid_list = centroid_list,
+              shannon_timeplot = shannon_timeplot,
+              even_timeplot = even_timeplot))
   
   }
 
 # Diatoms
+
+set.seed(15)
 
 diatom_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[1]], group_name = taxa_groups[[1]],
                                  environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
@@ -421,16 +521,31 @@ plot_grid(title, plot_grid(diatom_results$som_plot_list[[1]],diatom_results$som_
           nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
 dev.off()
 
+# additional diversity evenness plots
+
+shannon_depth_dist <- ggplot(diatom_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Shannon Diversity", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+even_depth_dist <- ggplot(diatom_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Evenness", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
 theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/diatom_diversity_evenness.pdf", width = 10, height = 10)
+pdf(file = "figures/diatom_diversity_evenness.pdf", width = 10, height = 13)
 plot_grid(title, plot_grid(diatom_results$shannon,diatom_results$evenness, labels = c("A","B")), 
           plot_grid(diatom_results$temp_diversity_plots,
           diatom_results$temp_evenness_plots, ncol =  2,
-          labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+          labels = c("C","D")), plot_grid(shannon_depth_dist, even_depth_dist, labels = c("E","F")),
+          plot_grid(diatom_results$shannon_timeplot, diatom_results$even_timeplot, ncol = 2, labels = c("G", "H")),
+          nrow = 5, ncol = 1, rel_heights = c(0.1,1,1.2,0.8,0.8))
 dev.off()
 
 #Dinoflagellates
+
+set.seed(123)
 
 dino_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[2]], group_name = taxa_groups[[2]],
                                  environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
@@ -445,16 +560,29 @@ plot_grid(title, plot_grid(dino_results$som_plot_list[[1]],dino_results$som_plot
           nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
 dev.off()
 
+shannon_depth_dist <- ggplot(dino_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Shannon Diversity", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+even_depth_dist <- ggplot(dino_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Evenness", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
 theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/dinoflagellate_diversity_evenness.pdf", width = 10, height = 10)
+pdf(file = "figures/dinoflagellate_diversity_evenness.pdf", width = 10, height = 13)
 plot_grid(title, plot_grid(dino_results$shannon,dino_results$evenness, labels = c("A","B")), 
           plot_grid(dino_results$temp_diversity_plots,
                     dino_results$temp_evenness_plots, ncol =  2,
-                    labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+                    labels = c("C","D")), plot_grid(shannon_depth_dist, even_depth_dist, labels = c("E","F")),
+          plot_grid(dino_results$shannon_timeplot, dino_results$even_timeplot, ncol = 2, labels = c("G", "H")),
+          nrow = 5, ncol = 1, rel_heights = c(0.1,1,1,1.2,0.8,0.8))
 dev.off()
 
 #Haptophytes
+
+set.seed(4)
 
 hapto_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[3]], group_name = taxa_groups[[3]],
                                environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
@@ -469,16 +597,29 @@ plot_grid(title, plot_grid(hapto_results$som_plot_list[[1]],hapto_results$som_pl
           nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
 dev.off()
 
+shannon_depth_dist <- ggplot(hapto_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Shannon Diversity", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+even_depth_dist <- ggplot(hapto_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Evenness", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
 theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/haptophyte_diversity_evenness.pdf", width = 10, height = 10)
+pdf(file = "figures/haptophyte_diversity_evenness.pdf", width = 10, height = 13)
 plot_grid(title, plot_grid(hapto_results$shannon,hapto_results$evenness, labels = c("A","B")), 
           plot_grid(hapto_results$temp_diversity_plots,
                     hapto_results$temp_evenness_plots, ncol =  2,
-                    labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+                    labels = c("C","D")), plot_grid(shannon_depth_dist, even_depth_dist, labels = c("E","F")),
+          plot_grid(hapto_results$shannon_timeplot, hapto_results$even_timeplot, ncol = 2, labels = c("G", "H")),
+          nrow = 5, ncol = 1, rel_heights = c(0.1,1,1,1.2,0.8,0.8))
 dev.off()
 
 #Crustacea
+
+set.seed(452)
 
 crust_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[4]], group_name = taxa_groups[[4]],
                                 environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
@@ -493,16 +634,30 @@ plot_grid(title, plot_grid(crust_results$som_plot_list[[1]],crust_results$som_pl
           nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
 dev.off()
 
+shannon_depth_dist <- ggplot(crust_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Shannon Diversity", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+even_depth_dist <- ggplot(crust_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Evenness", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+
 theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/crustacea_diversity_evenness.pdf", width = 10, height = 10)
+pdf(file = "figures/crustacea_diversity_evenness.pdf", width = 10, height = 13)
 plot_grid(title, plot_grid(crust_results$shannon,crust_results$evenness, labels = c("A","B")), 
           plot_grid(crust_results$temp_diversity_plots,
                     crust_results$temp_evenness_plots, ncol =  2,
-                    labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+                    labels = c("C","D")), plot_grid(shannon_depth_dist, even_depth_dist, labels = c("E","F")),
+          plot_grid(crust_results$shannon_timeplot, crust_results$even_timeplot, ncol = 2, labels = c("G", "H")),
+          nrow = 5, ncol = 1, rel_heights = c(0.1,1,1,1.2,0.8,0.8))
 dev.off()
 
 #Radiolaria
+
+set.seed(56)
 
 radio_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[5]], group_name = taxa_groups[[5]],
                                 environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
@@ -517,16 +672,29 @@ plot_grid(title, plot_grid(radio_results$som_plot_list[[1]],radio_results$som_pl
           nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
 dev.off()
 
+shannon_depth_dist <- ggplot(radio_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Shannon Diversity", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+even_depth_dist <- ggplot(radio_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Evenness", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
 theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/radiolaria_diversity_evenness.pdf", width = 10, height = 10)
+pdf(file = "figures/radiolaria_diversity_evenness.pdf", width = 10, height = 13)
 plot_grid(title, plot_grid(radio_results$shannon,radio_results$evenness, labels = c("A","B")), 
           plot_grid(radio_results$temp_diversity_plots,
                     radio_results$temp_evenness_plots, ncol =  2,
-                    labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+                    labels = c("C","D")), plot_grid(shannon_depth_dist, even_depth_dist, labels = c("E","F")),
+          plot_grid(radio_results$shannon_timeplot, radio_results$even_timeplot, ncol = 2, labels = c("G", "H")),
+          nrow = 5, ncol = 1, rel_heights = c(0.1,1,1,1.2,0.8,0.8))
 dev.off()
 
 #Cnidaria
+
+set.seed(981)
 
 cnidaria_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[6]], group_name = taxa_groups[[6]],
                                 environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
@@ -541,36 +709,72 @@ plot_grid(title, plot_grid(cnidaria_results$som_plot_list[[1]],cnidaria_results$
           nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
 dev.off()
 
+shannon_depth_dist <- ggplot(cnidaria_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = shannon)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Shannon Diversity", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
+even_depth_dist <- ggplot(cnidaria_results$environ_dat, aes(x = dist_to_coast, y = CC_Depth, fill = evenness)) + 
+  geom_point(size = 4, pch = 21, color = "black") + ylim(150,0) + 
+  scale_fill_viridis(name = "Evenness", option = "D") +
+  ylab("Depth (m)") + xlab("Distance to Coast (km)") 
+
 theme_set(theme_cowplot(font_size=10))
 pdf(file = "figures/cnidaria_diversity_evenness.pdf", width = 10, height = 10)
 plot_grid(title, plot_grid(cnidaria_results$shannon,cnidaria_results$evenness, labels = c("A","B")), 
           plot_grid(cnidaria_results$temp_diversity_plots,
                     cnidaria_results$temp_evenness_plots, ncol =  2,
-                    labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+                    labels = c("C","D")), plot_grid(shannon_depth_dist, even_depth_dist, labels = c("E","F")),
+          plot_grid(cnidaria_results$shannon_timeplot, cnidaria_results$even_timeplot, ncol = 2, labels = c("G", "H")),
+          nrow = 5, ncol = 1, rel_heights = c(0.1,1,1,1.2,0.8,0.8))
 dev.off()
 
+# Summary Plots
 
-#Annelida
+map <- map_data("world")  
+map_dist <- map[,1:2]
 
-annelida_results <- group_analysis(in_amplicon = eighteen_s, group = taxa_id_list[[6]], group_name = taxa_groups[[6]],
-                                   environ_dat = full_dat, coeff_table = coeff_table, mean_table = mean_table)
+summary_stats <- function(in_dat = diatom_results){
 
-title <- ggdraw() + draw_label("Annelida", fontface='bold')
+lat_lon_1 <- c(in_dat$centroid_list[[1]]@coords[1], in_dat$centroid_list[[1]]@coords[2])
+lat_lon_2 <- c(in_dat$centroid_list[[2]]@coords[1], in_dat$centroid_list[[2]]@coords[2])
 
-theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/annelida_results.pdf", width = 14, height = 15)
-plot_grid(title, plot_grid(annelida_results$som_plot_list[[1]],annelida_results$som_plot_list[[2]]), 
-          plot_grid(annelida_results$rf_importance, annelida_results$glm_subset, scale = c(0.7,0.7)),
-          annelida_results$temp_plots,
-          nrow = 4, ncol = 1, rel_heights = c(0.1,1,1.2,1), labels = c("", "A","B","C"))
-dev.off()
+distances <- distm(lat_lon_1, lat_lon_2, fun = distGeo)
+separation_clust <- round(distances/1000, digits = 0)
 
-theme_set(theme_cowplot(font_size=10))
-pdf(file = "figures/annelida_diversity_evenness.pdf", width = 10, height = 10)
-plot_grid(title, plot_grid(annelida_results$shannon,annelida_results$evenness, labels = c("A","B")), 
-          plot_grid(annelida_results$temp_diversity_plots,
-                    annelida_results$temp_evenness_plots, ncol =  2,
-                    labels = c("C","D")),
-          nrow = 3, ncol = 1, rel_heights = c(0.1,1,1,1))
+ordered <- in_dat$rf_out$importance[order(in_dat$rf_out$importance[,3], decreasing = TRUE),]
+
+var_name <- paste0(rownames(ordered)[1],", ",rownames(ordered)[2])
+
+mean_lm <- summary(lm(som_1 ~ temp_mean, data = in_dat$som_maps))
+coeff_lm <- summary(lm(som_1 ~ temp_coeff, data = in_dat$som_maps))
+
+lm_results <- c(round(mean_lm$r.squared,digits = 2), round(mean_lm$coefficients[2,4], digits = 4),
+                round(coeff_lm$r.squared, digits = 2), round(coeff_lm$coefficients[2,4], digits = 4))
+
+total_results <- c(separation_clust,lm_results, var_name)
+
+return(total_results)
+
+}
+
+result_table <- as.data.frame(matrix(NA,6,6))
+
+colnames(result_table) <- c("Distance between\n Centriod of Clusters (km)", "Mean SST\n R-Sq", "Mean SST\n p-val", "Coeff. Var.\n SST R-Sq", "Coeff. Var.\n SST p-val", "Most Important\n Random Forest Variables")
+
+rownames(result_table) <- c("Diatoms", "Dinoflagellates", "Haptophytes", "Crustacea", "Radiolaria", "Cnidaria")
+
+result_table[1,] <- summary_stats(in_dat = diatom_results)
+result_table[2,] <- summary_stats(in_dat = dino_results)
+result_table[3,] <- summary_stats(in_dat = hapto_results)
+result_table[4,] <- summary_stats(in_dat = crust_results)
+result_table[5,] <- summary_stats(in_dat = radio_results)
+result_table[6,] <- summary_stats(in_dat = cnidaria_results)
+
+
+g <- tableGrob(result_table)
+
+pdf(file = "figures/18sv9_summary_table_0627.pdf", width = 10, height = 4)
+plot.new()
+grid.draw(g)
 dev.off()
