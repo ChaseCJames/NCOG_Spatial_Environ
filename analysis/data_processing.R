@@ -239,3 +239,10 @@ scaled_inputs <- as.matrix(scaled_inputs)
 asv_table <- hetero_copy
 
 save(scaled_inputs, eight_hetero, eight_tax_id, asv_table, file = "data/18s_heterotrophic_euks.Rdata")
+
+# icthyoplankton
+
+load("data/icthyoplankton.Rdata")
+
+icthy_mat <- spread(calcofi_filt, key = scientific_name, value = larvae_10m2, fill = 0)
+

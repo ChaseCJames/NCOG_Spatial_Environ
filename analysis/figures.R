@@ -107,18 +107,18 @@ som_figure <- function(SST_file = "output/CALCOFI_temp_tables.Rdata",
   som_plots$cluster[som_plots$cluster == "som_1"] <- som_name_vector[1]
   som_plots$cluster[som_plots$cluster == "som_2"] <- som_name_vector[2]
   
-  summary_fit <- summary(lm(som_maps$som_1~som_maps$temp_mean))
+  summary_fit <- summary(lm(som_maps$som_1~som_maps$sst_mean))
   
   p_val <- summary_fit$coefficients[2,4]
   r_sq_mean <- summary_fit$r.squared
   
-  summary_fit <- summary(lm(som_maps$som_1~som_maps$temp_coeff))
+  summary_fit <- summary(lm(som_maps$som_1~som_maps$sst_coeff))
   
   p_val <- summary_fit$coefficients[2,4]
   r_sq_coeff <- summary_fit$r.squared
   
   
-  mean_plot <- ggplot(som_plots, aes(x = temp_mean, y = freq, color = cluster)) +
+  mean_plot <- ggplot(som_plots, aes(x = sst_mean, y = freq, color = cluster)) +
     geom_point(pch = 20, size = 4) +
     theme(legend.title = element_blank(),
           panel.border = element_rect(color = "black", linetype = "solid"),
@@ -129,7 +129,7 @@ som_figure <- function(SST_file = "output/CALCOFI_temp_tables.Rdata",
     xlab("Mean SST (°C)") + ylab("Frequency") +
     annotate("text", x = mean_position[1], y = mean_position[2], label = paste0("R Squared = ", round(r_sq_mean, digits = 3)), size = 3) + ggtitle("F. SOM Freq ~ Mean SST")
   
-  coeff_plot <- ggplot(som_plots, aes(x = temp_coeff, y = freq, color = cluster)) +
+  coeff_plot <- ggplot(som_plots, aes(x = sst_coeff, y = freq, color = cluster)) +
     geom_point(pch = 20, size = 4) +
     theme(legend.title = element_blank(),
           panel.border = element_rect(color = "black", linetype = "solid"),
@@ -616,9 +616,11 @@ diversity_over_time_figure <- function(full_data_file = "output/bacteria_16s_ful
 
 aic_table_func <- function(som_maps = cyano_plots){  
   
-  som_glm <- som_maps[,c(1:9,16,10:12,17)]
+  som_glm <- som_maps[,c(1:3,7:22,26:29)]
   
-  model_AIC <- matrix(NA,8,2)
+  model_AIC <- matrix(NA,18,2)
+  
+  # temperature
   
   glm_mean_temp <- glm(som_1 ~  temp_mean, data = som_glm)
   mt_sum <- summary(glm_mean_temp)
@@ -627,44 +629,116 @@ aic_table_func <- function(som_maps = cyano_plots){
   
   glm_coeff_temp <- glm(som_1 ~  temp_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_temp)
-  model_AIC[5,2] <- ct_sum$aic
-  model_AIC[5,1] <- "Coeff Var. Temp"
+  model_AIC[10,2] <- ct_sum$aic
+  model_AIC[10,1] <- "Coeff. Var. Temp"
+  
+  # sea surface temperature
+  
+  glm_mean_sst <- glm(som_1 ~  sst_mean, data = som_glm)
+  mt_sum <- summary(glm_mean_sst)
+  model_AIC[2,2] <- mt_sum$aic
+  model_AIC[2,1] <- "Mean SST"
+  
+  glm_coeff_sst <- glm(som_1 ~  sst_coeff, data = som_glm)
+  ct_sum <- summary(glm_coeff_sst)
+  model_AIC[11,2] <- ct_sum$aic
+  model_AIC[11,1] <- "Coeff. Var. SST"
+  
+  # salinity
+  
+  glm_mean_sal <- glm(som_1 ~  sal_mean, data = som_glm)
+  mt_sum <- summary(glm_mean_sal)
+  model_AIC[3,2] <- mt_sum$aic
+  model_AIC[3,1] <- "Mean Salinity"
+  
+  glm_coeff_sal <- glm(som_1 ~  sal_coeff, data = som_glm)
+  ct_sum <- summary(glm_coeff_sal)
+  model_AIC[12,2] <- ct_sum$aic
+  model_AIC[12,1] <- "Coeff. Var. Salinity"
   
   # NO3
   
   glm_mean_no3 <- glm(som_1 ~  NO3_mean, data = som_glm)
   mn_sum <- summary(glm_mean_no3)
-  model_AIC[2,2] <- mn_sum$aic
-  model_AIC[2,1] <- "Mean NO3"
+  model_AIC[4,2] <- mn_sum$aic
+  model_AIC[4,1] <- "Mean NO3"
   
   glm_coeff_no3 <- glm(som_1 ~  NO3_coeff, data = som_glm)
   cn_sum <- summary(glm_coeff_no3)
-  model_AIC[6,2] <- cn_sum$aic
-  model_AIC[6,1] <- "Coeff Var. NO3"
+  model_AIC[13,2] <- cn_sum$aic
+  model_AIC[13,1] <- "Coeff. Var. NO3"
   
   # PO4
   
   glm_mean_po4 <- glm(som_1 ~  PO4_mean, data = som_glm)
   mp_sum <- summary(glm_mean_po4)
-  model_AIC[3,2] <- mp_sum$aic
-  model_AIC[3,1] <- "Mean PO4"
+  model_AIC[5,2] <- mp_sum$aic
+  model_AIC[5,1] <- "Mean PO4"
   
   glm_coeff_po4 <- glm(som_1 ~  PO4_coeff, data = som_glm)
   cp_sum <- summary(glm_coeff_po4)
-  model_AIC[7,2] <- cp_sum$aic
-  model_AIC[7,1] <- "Coeff Var. PO4"
+  model_AIC[14,2] <- cp_sum$aic
+  model_AIC[14,1] <- "Coeff. Var. PO4"
   
   # SiO3
   
   glm_mean_sio3 <- glm(som_1 ~  SiO3_mean, data = som_glm)
   ms_sum <- summary(glm_mean_sio3)
-  model_AIC[4,2] <- ms_sum$aic
-  model_AIC[4,1] <- "Mean SiO3"
+  model_AIC[6,2] <- ms_sum$aic
+  model_AIC[6,1] <- "Mean SiO3"
   
   glm_coeff_sio3 <- glm(som_1 ~  SiO3_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_sio3)
-  model_AIC[8,2] <- cs_sum$aic
-  model_AIC[8,1] <- "Coeff Var. SiO3"
+  model_AIC[15,2] <- cs_sum$aic
+  model_AIC[15,1] <- "Coeff. Var. SiO3"
+  
+  # C14
+  
+  # glm_mean_c14 <- glm(som_1 ~  C14_mean, data = som_glm)
+  # ms_sum <- summary(glm_mean_c14)
+  # model_AIC[7,2] <- ms_sum$aic
+  # model_AIC[7,1] <- "Mean C14"
+  # 
+  # glm_coeff_c14 <- glm(som_1 ~  C14_coeff, data = som_glm)
+  # cs_sum <- summary(glm_coeff_c14)
+  # model_AIC[17,2] <- cs_sum$aic
+  # model_AIC[17,1] <- "Coeff. Var. C14"
+  
+  # SLA
+  
+  glm_mean_sla <- glm(som_1 ~  sla_mean, data = som_glm)
+  ms_sum <- summary(glm_mean_sla)
+  model_AIC[7,2] <- ms_sum$aic
+  model_AIC[7,1] <- "Mean SLA"
+  
+  glm_coeff_sla <- glm(som_1 ~  sla_coeff, data = som_glm)
+  cs_sum <- summary(glm_coeff_sla)
+  model_AIC[16,2] <- cs_sum$aic
+  model_AIC[16,1] <- "Coeff. Var. SLA"
+  
+  # MLD
+  
+  glm_mean_mld <- glm(som_1 ~  MLD_mean, data = som_glm)
+  ms_sum <- summary(glm_mean_mld)
+  model_AIC[8,2] <- ms_sum$aic
+  model_AIC[8,1] <- "Mean MLD"
+  
+  glm_coeff_mld <- glm(som_1 ~  MLD_coeff, data = som_glm)
+  cs_sum <- summary(glm_coeff_mld)
+  model_AIC[17,2] <- cs_sum$aic
+  model_AIC[17,1] <- "Coeff. Var. MLD"
+  
+  # NC Depth
+  
+  glm_mean_nc <- glm(som_1 ~  NC_mean, data = som_glm)
+  ms_sum <- summary(glm_mean_nc)
+  model_AIC[9,2] <- ms_sum$aic
+  model_AIC[9,1] <- "Mean NCD"
+  
+  glm_coeff_nc <- glm(som_1 ~  NC_coeff, data = som_glm)
+  cs_sum <- summary(glm_coeff_nc)
+  model_AIC[18,2] <- cs_sum$aic
+  model_AIC[18,1] <- "Coeff. Var. NCD"
   
   return(model_AIC)
   
@@ -673,9 +747,11 @@ aic_table_func <- function(som_maps = cyano_plots){
 full_aic_table_figure <- function(in_plastid = "output/plastid_16s_map.Rdata",
                                   in_cyano = "output/cyano_16s_map.Rdata",
                              in_bacteria = "output/bacteria_m_euks_16s_map.Rdata",
-                             in_euks = "output/euks_18sv9_map.Rdata",
+                             in_euks = "output/euks_hetero_18sv9_map.Rdata",
                              in_phyto = "output/euks_auto_18sv9_map.Rdata", minimum_tp = 8,
-                             figure_name = paste0("figures/full_aic_table_",Sys.Date(),".pdf")){
+                             figure_name = paste0("figures/full_aic_table_",Sys.Date(),".pdf"),
+                             figure_name_2 = paste0("figures/full_aic_plot_",Sys.Date(),".pdf"),
+                             title_name = "Variable Importance"){
   # load an rename data
   
   load(in_plastid)
@@ -702,26 +778,31 @@ full_aic_table_figure <- function(in_plastid = "output/plastid_16s_map.Rdata",
   plastid_AIC <- as.data.frame(plastid_AIC, stringsAsFactors = FALSE)
   colnames(plastid_AIC) <- c("Variables","AIC")
   plastid_AIC$AIC <- as.numeric(plastid_AIC$AIC)
+  plastid_AIC$AIC <- round(plastid_AIC$AIC, digits = 2)
   
   cyano_AIC <- aic_table_func(som_maps = cyano_plots)
   cyano_AIC <- as.data.frame(cyano_AIC, stringsAsFactors = FALSE)
   colnames(cyano_AIC) <- c("Variables","AIC")
   cyano_AIC$AIC <- as.numeric(cyano_AIC$AIC)
+  cyano_AIC$AIC <- round(cyano_AIC$AIC, digits = 2)
   
   bacteria_AIC <- aic_table_func(som_maps = bacteria_plots)
   bacteria_AIC <- as.data.frame(bacteria_AIC, stringsAsFactors = FALSE)
   colnames(bacteria_AIC) <- c("Variables","AIC")
   bacteria_AIC$AIC <- as.numeric(bacteria_AIC$AIC)
+  bacteria_AIC$AIC <- round(bacteria_AIC$AIC, digits = 2)
   
   eukaryota_AIC <- aic_table_func(som_maps = eukaryota_plots)
   eukaryota_AIC <- as.data.frame(eukaryota_AIC, stringsAsFactors = FALSE)
   colnames(eukaryota_AIC) <- c("Variables","AIC")
   eukaryota_AIC$AIC <- as.numeric(eukaryota_AIC$AIC)
+  eukaryota_AIC$AIC <- round(eukaryota_AIC$AIC, digits = 2)
   
   phyto_AIC  <- aic_table_func(som_maps = phyto_plots)
   phyto_AIC <- as.data.frame(phyto_AIC, stringsAsFactors = FALSE)
   colnames(phyto_AIC) <- c("Variables","AIC")
   phyto_AIC$AIC <- as.numeric(phyto_AIC$AIC)
+  phyto_AIC$AIC <- round(phyto_AIC$AIC, digits = 2)
   
 
   AIC_full <- full_join(plastid_AIC, cyano_AIC, by = "Variables")
@@ -730,28 +811,28 @@ full_aic_table_figure <- function(in_plastid = "output/plastid_16s_map.Rdata",
   AIC_full <- full_join(AIC_full, phyto_AIC, by = "Variables")
   
   colnames(AIC_full) <- c("Variables", "Eukaryotic Plastid\n AIC", "Cyanobacteria\n AIC",
-                          "Bacteria/Archaea\n AIC", "Eukaryota\n AIC", "Eukaryotic Phytoplankton\n AIC")
+                          "Bacteria/Archaea\n AIC", "Heterotrophic Eukaryotes\n AIC", "Eukaryotic Phytoplankton\n AIC")
   
   colfunc <- colorRampPalette(c("white", "red"))
   
-  plastid_col <- round(seq(max(plastid_AIC$AIC),min(plastid_AIC$AIC), by = -0.01), digits = 2)
+  plastid_col <- round(seq(max(plastid_AIC$AIC, na.rm = TRUE),min(plastid_AIC$AIC, na.rm = TRUE), by = -0.01), digits = 2)
   scale <- colfunc(length(plastid_col))
   plastid_fill <- scale[match(round(plastid_AIC$AIC, digits = 2), plastid_col)]
   
-  cyano_col <- round(seq(max(cyano_AIC$AIC),min(cyano_AIC$AIC), by = -0.01), digits = 2)
+  cyano_col <- round(seq(max(cyano_AIC$AIC, na.rm = TRUE),min(cyano_AIC$AIC, na.rm = TRUE), by = -0.01), digits = 2)
   scale <- colfunc(length(cyano_col))
   cyano_fill <- scale[match(round(cyano_AIC$AIC, digits = 2), cyano_col)]
   cyano_fill[5] <- scale[3903]
   
-  bacteria_col <- round(seq(max(bacteria_AIC$AIC),min(bacteria_AIC$AIC), by = -0.01), digits = 2)
+  bacteria_col <- round(seq(max(bacteria_AIC$AIC, na.rm = TRUE),min(bacteria_AIC$AIC, na.rm = TRUE), by = -0.01), digits = 2)
   scale <- colfunc(length(bacteria_col))
   bacteria_fill <- scale[match(round(bacteria_AIC$AIC, digits = 2), bacteria_col)]
   
-  eukaryota_col <- round(seq(max(eukaryota_AIC$AIC),min(eukaryota_AIC$AIC), by = -0.01), digits = 2)
+  eukaryota_col <- round(seq(max(eukaryota_AIC$AIC, na.rm = TRUE),min(eukaryota_AIC$AIC, na.rm = TRUE), by = -0.01), digits = 2)
   scale <- colfunc(length(eukaryota_col))
   eukaryota_fill <- scale[match(round(eukaryota_AIC$AIC, digits = 2), eukaryota_col)]
   
-  phyto_col <- round(seq(max(phyto_AIC$AIC),min(phyto_AIC$AIC), by = -0.01), digits = 2)
+  phyto_col <- round(seq(max(phyto_AIC$AIC, na.rm = TRUE),min(phyto_AIC$AIC, na.rm = TRUE), by = -0.01), digits = 2)
   scale <- colfunc(length(phyto_col))
   phyto_fill <- scale[match(round(phyto_AIC$AIC, digits = 2), phyto_col)]
 
@@ -777,7 +858,7 @@ full_aic_table_figure <- function(in_plastid = "output/plastid_16s_map.Rdata",
                     core=list(bg_params = list(fill=bacteria_fill, col = "black")),
                     colhead = list(bg_params=list(fill="white", col="black"))),
                   rows = NULL)
-  t4 <- tableGrob(AIC_full["Eukaryota\n AIC"],
+  t4 <- tableGrob(AIC_full["Heterotrophic Eukaryotes\n AIC"],
                   theme=ttheme_default(
                     core=list(bg_params = list(fill=eukaryota_fill, col = "black")),
                     colhead = list(bg_params=list(fill="white", col="black"))),
@@ -794,6 +875,44 @@ full_aic_table_figure <- function(in_plastid = "output/plastid_16s_map.Rdata",
   pdf(file = figure_name, width = 12, height = 6)
   grid.arrange(tab)
   dev.off()
+  
+  AIC_scaled <- AIC_full
+  
+  for (i in 2:ncol(AIC_scaled)) {
+    zero_one_scale <- 1-(AIC_scaled[,i]-min(AIC_scaled[,i], na.rm = TRUE))/
+      abs(min(AIC_scaled[,i], na.rm = TRUE) - max(AIC_scaled[,i], na.rm = TRUE))
+    AIC_scaled[,i] <- 50^zero_one_scale
+    
+  }
+  
+  plot_df <- melt(AIC_scaled)
+  
+  colnames(plot_df) <- c("Variables", "Group", "AIC")
+  plot_df$Variables <- as.factor(plot_df$Variables)
+  plot_df$Variables <- factor(plot_df$Variables, levels = c("Coeff. Var. NCD","Coeff. Var. MLD",
+                                                            "Coeff. Var. SLA",#"Coeff. Var. C14",
+                                                            "Coeff. Var. SiO3","Coeff. Var. PO4",
+                                                            "Coeff. Var. NO3", "Coeff. Var. Salinity",
+                                                            "Coeff. Var. SST","Coeff. Var. Temp",
+                                                            "Mean NCD", "Mean MLD",
+                                                            "Mean SLA",#"Mean C14",
+                                                            "Mean SiO3", "Mean PO4",
+                                                            "Mean NO3","Mean Salinity",
+                                                            "Mean SST", "Mean Temp" ))
+  
+  pdf(figure_name_2, width = 8, height = 8)
+  print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC)) + 
+    geom_point(fill = "red", color = "black", alpha = 0.6, shape = 21) +
+    labs(size = "Variable\n Importance") + ylab("Variable") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA),
+          legend.position = "none",
+          panel.grid.major.y = element_line(color = "grey", linetype = 2),
+          plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = -45)) + ggtitle(title_name) +
+    scale_size_continuous(range = c(1,15)) + xlab("") + ylab(""))
+  dev.off()
+  
   
 }
 
@@ -1107,19 +1226,413 @@ som_temp_animation <- function(temp_table = "output/CALCOFI_OI_SST_Slice.Rdata",
   
 }
 
+som_stacked_figure <- function(in_plastid = "output/plastid_16s_map.Rdata",
+                               in_cyano = "output/cyano_16s_map.Rdata",
+                               in_bacteria = "output/bacteria_m_euks_16s_map.Rdata",
+                               in_euks = "output/euks_hetero_18sv9_map.Rdata",
+                               in_phyto = "output/euks_auto_18sv9_map.Rdata",
+                               figure_name = paste0("figures/som_summary_",Sys.Date(),".pdf")){
+  
+  
+  map <- map_data("world")   
+  
+  # eukaryotic phytoplaknton
+  
+  load(in_phyto)
+  
+  som_color_vector = c("darkred", "darkblue")
+  som_name_vector = c("Nearshore", "Offshore")
+  centroid_color = c("blue","red")
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  p1 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",1)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[1], limits = c(0,1)) +
+    ggtitle(paste0("B. ",som_name_vector[1]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid1 <- wt.centroid(x =centroid_df , p = 2)
+  p1 <- p1 + geom_point(aes(x = centroid1@coords[1], y = centroid1@coords[2]), color = centroid_color[1], size = 5, pch = 10)
+  
+  p2 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",2)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[2], limits = c(0,1)) +
+    ggtitle(paste0("A. ",som_name_vector[2]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid2 <- wt.centroid(x =centroid_df , p = 3)
+  p2 <- p2 + geom_point(aes(x = centroid2@coords[1], y = centroid2@coords[2]), color = centroid_color[2], size = 5, pch = 10)
+  
+  title <- ggdraw() + draw_label("Eukaryotic\n Phytoplankton", fontface='bold')
+  phyto <- plot_grid(title, plot_grid(p2,p1, ncol = 2), nrow = 1, rel_widths = c(0.2,1))
+  
+  # heterotrophic eukaryotes
+  
+  load(in_euks)
+  
+  som_color_vector = c("darkblue", "darkred")
+  som_name_vector = c("Offshore", "Nearshore")
+  centroid_color = c("red","blue")
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  p1 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",1)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[1], limits = c(0,1)) +
+    ggtitle(paste0("C. ",som_name_vector[1]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid1 <- wt.centroid(x =centroid_df , p = 2)
+  p1 <- p1 + geom_point(aes(x = centroid1@coords[1], y = centroid1@coords[2]), color = centroid_color[1], size = 5, pch = 10)
+  
+  p2 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",2)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[2], limits = c(0,1)) +
+    ggtitle(paste0("D. ",som_name_vector[2]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid2 <- wt.centroid(x =centroid_df , p = 3)
+  p2 <- p2 + geom_point(aes(x = centroid2@coords[1], y = centroid2@coords[2]), color = centroid_color[2], size = 5, pch = 10)
+  
+  title <- ggdraw() + draw_label("Heterotrophic\n Eukaryotes", fontface='bold')
+  euks <- plot_grid(title, plot_grid(p1,p2, ncol = 2), nrow = 1, rel_widths = c(0.2,1))
+  
+  # cyanobacteria
+  
+  load(in_cyano)
+  
+  som_color_vector = c("darkblue", "darkred")
+  som_name_vector = c("Offshore", "Nearshore")
+  centroid_color = c("red","blue")
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  p1 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",1)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[1], limits = c(0,1)) +
+    ggtitle(paste0("E. ",som_name_vector[1]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid1 <- wt.centroid(x =centroid_df , p = 2)
+  p1 <- p1 + geom_point(aes(x = centroid1@coords[1], y = centroid1@coords[2]), color = centroid_color[1], size = 5, pch = 10)
+  
+  p2 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",2)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[2], limits = c(0,1)) +
+    ggtitle(paste0("F. ",som_name_vector[2]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid2 <- wt.centroid(x =centroid_df , p = 3)
+  p2 <- p2 + geom_point(aes(x = centroid2@coords[1], y = centroid2@coords[2]), color = centroid_color[2], size = 5, pch = 10)
+  
+  title <- ggdraw() + draw_label("Cyanobacteria", fontface='bold')
+  cyano <- plot_grid(title, plot_grid(p1,p2, ncol = 2), nrow = 1, rel_widths = c(0.2,1))
+  
+  # heterotrophic bacteria archaea
+  
+  load(in_bacteria)
+  
+  som_color_vector = c("darkblue", "darkred")
+  som_name_vector = c("Offshore", "Nearshore")
+  centroid_color = c("red","blue")
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  p1 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",1)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[1], limits = c(0,1)) +
+    ggtitle(paste0("H. ",som_name_vector[1]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid1 <- wt.centroid(x =centroid_df , p = 2)
+  p1 <- p1 + geom_point(aes(x = centroid1@coords[1], y = centroid1@coords[2]), color = centroid_color[1], size = 5, pch = 10)
+  
+  p2 <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",2)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(low = "white", high = som_color_vector[2], limits = c(0,1)) +
+    ggtitle(paste0("I. ",som_name_vector[2]," Cluster")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  centroid2 <- wt.centroid(x =centroid_df , p = 3)
+  p2 <- p2 + geom_point(aes(x = centroid2@coords[1], y = centroid2@coords[2]), color = centroid_color[2], size = 5, pch = 10)
+  
+  title <- ggdraw() + draw_label("Heterotrophic\n Bacteria/Archaea", fontface='bold')
+  bact <- plot_grid(title, plot_grid(p1,p2, ncol = 2), nrow = 1, rel_widths = c(0.2,1))
+  
+  
+  all <- plot_grid(phyto, euks, cyano, bact, nrow = 4)
+  
+  pdf(figure_name, width = 10, height = 12)
+  print(all)
+  dev.off()
+  
+}
+
+lm_stacked_figure <- function(in_plastid = "output/plastid_16s_glm.Rdata",
+                               in_cyano = "output/cyano_16s_glm.Rdata",
+                               in_bacteria = "output/bacteria_m_euks_16s_glm.Rdata",
+                               in_euks = "output/euks_18sv9_glm.Rdata",
+                               in_phyto = "output/euks_auto_18sv9_glm.Rdata",
+                               figure_name = paste0("figures/glm_summary_",Sys.Date(),".pdf")){
+  
+  
+  # Eukaryotic Phytoplankton
+  
+  load(in_phyto)
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_mean[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_mean <- summary_fit$r.squared
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_coeff[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_coeff <- summary_fit$r.squared
+  
+  
+  mean_plot <- ggplot(som_plots, aes(x = temp_mean, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("Mean SST (°C)") + ylab("Frequency") + 
+    annotate("text", x = 15.05, y = 0.125, label = paste0("R Squared = ", round(r_sq_mean, digits = 3)), size = 3) + ggtitle("A. SOM Freq ~ Mean SST")
+  
+  coeff_plot <- ggplot(som_plots, aes(x = temp_coeff, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("SST Coeff. Var") + ylab("Frequency") + 
+    annotate("text", x = 0.1, y = 0.5, label = paste0("R Squared = ", round(r_sq_coeff, digits = 3)), size = 3) + ggtitle("B. SOM Freq ~ Coeff. Var. SST")
+  
+  title <- ggdraw() + draw_label("Eukaryotic\n Phytoplankton", fontface='bold')
+  phyto_som_plots <- plot_grid(title, mean_plot, coeff_plot, ncol = 3,rel_widths = c(0.4,1,1))
+  
+# heterotrophic euks
+  
+  load(in_euks)
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_mean[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_mean <- summary_fit$r.squared
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_coeff[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_coeff <- summary_fit$r.squared
+  
+  
+  mean_plot <- ggplot(som_plots, aes(x = temp_mean, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("Mean SST (°C)") + ylab("Frequency") + 
+    annotate("text", x = 16, y = 0.5, label = paste0("R Squared = ", round(r_sq_mean, digits = 3)), size = 3) + ggtitle("C. SOM Freq ~ Mean SST")
+  
+  coeff_plot <- ggplot(som_plots, aes(x = temp_coeff, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("SST Coeff. Var") + ylab("Frequency") + 
+    annotate("text", x = 0.1, y = 0.5, label = paste0("R Squared = ", round(r_sq_coeff, digits = 3)), size = 3) + ggtitle("D. SOM Freq ~ Coeff. Var. SST")
+  
+  title <- ggdraw() + draw_label("Heterotrophic\n Eukaryotes", fontface='bold')
+  hetero_euk_som_plots <- plot_grid(title, mean_plot, coeff_plot, ncol = 3,rel_widths = c(0.4,1,1))
+  
+  # cyanobacteria
+  
+  load(in_cyano)
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_mean[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_mean <- summary_fit$r.squared
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_coeff[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_coeff <- summary_fit$r.squared
+  
+  
+  mean_plot <- ggplot(som_plots, aes(x = temp_mean, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("Mean SST (°C)") + ylab("Frequency") + 
+    annotate("text", x = 15.3, y = 0.88, label = paste0("R Squared = ", round(r_sq_mean, digits = 3)), size = 3) + ggtitle("E. SOM Freq ~ Mean SST")
+  
+  coeff_plot <- ggplot(som_plots, aes(x = temp_coeff, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("SST Coeff. Var") + ylab("Frequency") + 
+    annotate("text", x = 0.095, y = 0.5, label = paste0("R Squared = ", round(r_sq_coeff, digits = 3)), size = 3) + ggtitle("F. SOM Freq ~ Coeff. Var. SST")
+  
+  title <- ggdraw() + draw_label("Cyanobacteria", fontface='bold')
+  cyano_som_plots <- plot_grid(title, mean_plot, coeff_plot, ncol = 3,rel_widths = c(0.4,1,1))
+  
+  # bacteria archaea
+  
+  load(in_bacteria)
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_mean[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_mean <- summary_fit$r.squared
+  
+  summary_fit <- summary(lm(som_plots$freq[which(som_plots$cluster == "som_1")]~som_plots$temp_coeff[which(som_plots$cluster == "som_1")]))
+  
+  p_val <- summary_fit$coefficients[2,4]
+  r_sq_coeff <- summary_fit$r.squared
+  
+  
+  mean_plot <- ggplot(som_plots, aes(x = temp_mean, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("Mean SST (°C)") + ylab("Frequency") + 
+    annotate("text", x = 15.3, y = 0.5, label = paste0("R Squared = ", round(r_sq_mean, digits = 3)), size = 3) + ggtitle("H. SOM Freq ~ Mean SST")
+  
+  coeff_plot <- ggplot(som_plots, aes(x = temp_coeff, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(values = c("red", "blue")) +
+    xlab("SST Coeff. Var") + ylab("Frequency") + 
+    annotate("text", x = 0.125, y = 0.5, label = paste0("R Squared = ", round(r_sq_coeff, digits = 3)), size = 3) + ggtitle("I. SOM Freq ~ Coeff. Var. SST")
+  
+  title <- ggdraw() + draw_label("Heterotrophic\n Bacteria/Archaea", fontface='bold')
+  bact_som_plots <- plot_grid(title, mean_plot, coeff_plot, ncol = 3,rel_widths = c(0.4,1,1))
+  
+  p <- ggplot(som_plots, aes(x = temp_coeff, y = freq, color = cluster)) +
+    geom_point(pch = 20, size = 4) +
+    theme(legend.title = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black", linetype = "solid"),
+          panel.background = element_blank(),
+          axis.line = element_blank(),
+          legend.background = element_rect(color = "black", linetype = "solid"),
+          plot.title = element_text(hjust = 0.5)) +
+    stat_smooth(method = "lm", level = 0.95) +
+    scale_color_manual(labels = c("Nearshore", "Offshore"), values = c("red", "blue")) +
+    xlab("SST Coeff. Var") + ylab("Frequency") + 
+    annotate("text", x = 0.125, y = 0.5, label = paste0("R Squared = ", round(r_sq_coeff, digits = 3)), size = 3) + ggtitle("I. SOM Freq ~ Coeff. Var. SST")
+  
+  legend_plot <- get_legend(p)
+  
+  full_plot <- plot_grid(plot_grid(phyto_som_plots, hetero_euk_som_plots,
+                      cyano_som_plots, bact_som_plots, ncol = 1),
+            legend_plot, rel_widths = c(1,0.2))
+  
+  pdf(file = figure_name, width = 12, height = 12)
+  print(full_plot)
+  dev.off()
+  
+  }
+
 ###### Running Figures #####
 
 ######## som figures #######
-
-som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
-           map_file = "output/bacteria_16s_map.Rdata",
-           reg_file = "output/bacteria_16s_glm.Rdata",
-           figure_name = paste0("figures/bacteria_16s_som_",Sys.Date(),".pdf"),
-           som_color_vector = c("darkred", "darkblue"),
-           som_name_vector = c("Nearshore", "Offshore"),
-           centroid_color = c("blue","red"), switch = TRUE,
-           main = "16s Bacteria", mean_position = c(15,0.5),
-           coeff_position = c(0.123,0.5))
 
 som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
            map_file = "output/plastid_16s_map.Rdata",
@@ -1152,16 +1665,6 @@ som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
            coeff_position = c(0.123,1.2))
 
 som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
-           map_file = "output/euks_18sv9_map.Rdata",
-           reg_file = "output/euks_18sv9_glm.Rdata",
-           figure_name = paste0("figures/euks_18sv9_som_",Sys.Date(),".pdf"),
-           som_color_vector = c("darkblue", "darkred"),
-           som_name_vector = c("Offshore", "Nearshore"),
-           centroid_color = c("red","blue"), switch = FALSE,
-           main = "18sv9 Eukaryota", mean_position = c(15,1.2),
-           coeff_position = c(0.123,1.2))
-
-som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
            map_file = "output/euks_auto_18sv9_map.Rdata",
            reg_file = "output/euks_auto_18sv9_glm.Rdata",
            figure_name = paste0("figures/euks_auto_18sv9_som_",Sys.Date(),".pdf"),
@@ -1180,6 +1683,110 @@ som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
            centroid_color = c("red","blue"), switch = FALSE,
            main = "18sv9 Heterotrophic Eukaryota", mean_position = c(15,1.2),
            coeff_position = c(0.123,1.2))
+
+# Surface
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/plastid_16s_surf_map.Rdata",
+           reg_file = "output/plastid_16s_surf_glm.Rdata",
+           figure_name = paste0("figures/plastid_16s_surf_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkred", "darkblue"),
+           som_name_vector = c("Nearshore", "Offshore"),
+           centroid_color = c("blue","red"), switch = TRUE,
+           main = "16s Plastid Surface", mean_position = c(16.2,1),
+           coeff_position = c(0.123,1))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/bacteria_m_euks_16s_surf_map.Rdata",
+           reg_file = "output/bacteria_m_euks_16s_surf_glm.Rdata",
+           figure_name = paste0("figures/bacteria_m_euks_16s_surf_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkred", "darkblue"),
+           som_name_vector = c("Nearshore", "Offshore"),
+           centroid_color = c("blue","red"), switch = TRUE,
+           main = "16s Bacteria (no Euks) Surface", mean_position = c(16,1),
+           coeff_position = c(0.1,1))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/cyano_16s_surf_map.Rdata",
+           reg_file = "output/cyano_16s_surf_glm.Rdata",
+           figure_name = paste0("figures/cyano_16s_surf_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkblue", "darkred"),
+           som_name_vector = c("Offshore", "Nearshore"),
+           centroid_color = c("red","blue"), switch = FALSE,
+           main = "16s Cyanobacteria Surface", mean_position = c(16.2,1.2),
+           coeff_position = c(0.123,1.2))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/euks_auto_18sv9_surf_map.Rdata",
+           reg_file = "output/euks_auto_18sv9_surf_glm.Rdata",
+           figure_name = paste0("figures/euks_auto_18sv9_surf_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkred", "darkblue"),
+           som_name_vector = c("Nearshore", "Offshore"),
+           centroid_color = c("blue","red"), switch = FALSE,
+           main = "18sv9 Autotrophic Eukaryota Surface", mean_position = c(16,1),
+           coeff_position = c(0.123,1.2))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/euks_hetero_18sv9_surf_map.Rdata",
+           reg_file = "output/euks_hetero_18sv9_surf_glm.Rdata",
+           figure_name = paste0("figures/euks_hetero_18sv9_surf_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkblue", "darkred"),
+           som_name_vector = c("Offshore", "Nearshore"),
+           centroid_color = c("red","blue"), switch = FALSE,
+           main = "18sv9 Heterotrophic Eukaryota Surface", mean_position = c(15.5,1),
+           coeff_position = c(0.123,1))
+
+# Depth
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/plastid_16s_deep_map.Rdata",
+           reg_file = "output/plastid_16s_deep_glm.Rdata",
+           figure_name = paste0("figures/plastid_16s_deep_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkred", "darkblue"),
+           som_name_vector = c("Nearshore", "Offshore"),
+           centroid_color = c("blue","red"), switch = TRUE,
+           main = "16s Plastid Depth", mean_position = c(16.2,1),
+           coeff_position = c(0.123,1))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/bacteria_m_euks_16s_deep_map.Rdata",
+           reg_file = "output/bacteria_m_euks_16s_deep_glm.Rdata",
+           figure_name = paste0("figures/bacteria_m_euks_16s_deep_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkred", "darkblue"),
+           som_name_vector = c("Nearshore", "Offshore"),
+           centroid_color = c("blue","red"), switch = TRUE,
+           main = "16s Bacteria (no Euks) Deptj", mean_position = c(16,1),
+           coeff_position = c(0.1,1))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/cyano_16s_deep_map.Rdata",
+           reg_file = "output/cyano_16s_deep_glm.Rdata",
+           figure_name = paste0("figures/cyano_16s_deep_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkblue", "darkred"),
+           som_name_vector = c("Offshore", "Nearshore"),
+           centroid_color = c("red","blue"), switch = FALSE,
+           main = "16s Cyanobacteria Depth", mean_position = c(16.2,1.2),
+           coeff_position = c(0.123,1.2))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/euks_auto_18sv9_deep_map.Rdata",
+           reg_file = "output/euks_auto_18sv9_deep_glm.Rdata",
+           figure_name = paste0("figures/euks_auto_18sv9_deep_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkred", "darkblue"),
+           som_name_vector = c("Nearshore", "Offshore"),
+           centroid_color = c("blue","red"), switch = FALSE,
+           main = "18sv9 Autotrophic Eukaryota Depth", mean_position = c(16,1),
+           coeff_position = c(0.123,1.2))
+
+som_figure(SST_file = "output/CALCOFI_temp_tables.Rdata",
+           map_file = "output/euks_hetero_18sv9_deep_map.Rdata",
+           reg_file = "output/euks_hetero_18sv9_deep_glm.Rdata",
+           figure_name = paste0("figures/euks_hetero_18sv9_deep_som_",Sys.Date(),".pdf"),
+           som_color_vector = c("darkblue", "darkred"),
+           som_name_vector = c("Offshore", "Nearshore"),
+           centroid_color = c("red","blue"), switch = FALSE,
+           main = "18sv9 Heterotrophic Eukaryota Depth", mean_position = c(15.5,1),
+           coeff_position = c(0.123,1))
 
 ###### aic figures #########
 
@@ -1405,9 +2012,29 @@ diversity_over_time_figure(full_data_file = "output/euks_hetero_18sv9_full_data.
 ####### Full AIC Table ######
 
 full_aic_table_figure(in_plastid = "output/plastid_16s_map.Rdata", in_cyano = "output/cyano_16s_map.Rdata",
-                       in_bacteria = "output/bacteria_m_euks_16s_map.Rdata", in_euks = "output/euks_18sv9_map.Rdata",
+                       in_bacteria = "output/bacteria_m_euks_16s_map.Rdata", in_euks = "output/euks_hetero_18sv9_map.Rdata",
                        in_phyto = "output/euks_auto_18sv9_map.Rdata", minimum_tp = 8,
-                       figure_name = paste0("figures/full_aic_table_",Sys.Date(),".pdf"))
+                       figure_name = paste0("figures/full_aic_table_",Sys.Date(),".pdf"),
+                      figure_name_2 = paste0("figures/full_aic_plot_",Sys.Date(),".pdf"),
+                      title_name = "Variable Importance All Samples")
+
+# Surface
+
+full_aic_table_figure(in_plastid = "output/plastid_16s_surf_map.Rdata", in_cyano = "output/cyano_16s_surf_map.Rdata",
+                      in_bacteria = "output/bacteria_m_euks_16s_surf_map.Rdata", in_euks = "output/euks_hetero_18sv9_surf_map.Rdata",
+                      in_phyto = "output/euks_auto_18sv9_surf_map.Rdata", minimum_tp = 4,
+                      figure_name = paste0("figures/full_aic_table_surface_",Sys.Date(),".pdf"),
+                      figure_name_2 = paste0("figures/full_aic_plot_surface_",Sys.Date(),".pdf"),
+                      title_name = "Variable Importance Surface Samples")
+
+# depth
+
+full_aic_table_figure(in_plastid = "output/plastid_16s_deep_map.Rdata", in_cyano = "output/cyano_16s_deep_map.Rdata",
+                      in_bacteria = "output/bacteria_m_euks_16s_deep_map.Rdata", in_euks = "output/euks_hetero_18sv9_deep_map.Rdata",
+                      in_phyto = "output/euks_auto_18sv9_deep_map.Rdata", minimum_tp = 4,
+                      figure_name = paste0("figures/full_aic_table_deep_",Sys.Date(),".pdf"),
+                      figure_name_2 = paste0("figures/full_aic_plot_deep_",Sys.Date(),".pdf"),
+                      title_name = "Variable Importance Deep Samples")
 
 
 ####### Animations ##########
@@ -1461,3 +2088,26 @@ som_current_animation(vel_table = "output/CALCOFI_Copernicus_GSC_Slice.Rdata",
 som_temp_animation(temp_table = "output/CALCOFI_OI_SST_Slice.Rdata",
                    som_data = "output/euks_18sv9_full_data.Rdata", type = "euks_18sv9_temp",
                    figure_name = paste0("figures/euks_18sv9_som_animation_temp_",Sys.Date(),".gif"))
+
+#### Stacked Figures #####
+
+som_stacked_figure(in_plastid = "output/plastid_16s_map.Rdata",
+                   in_cyano = "output/cyano_16s_map.Rdata",
+                   in_bacteria = "output/bacteria_m_euks_16s_map.Rdata",
+                   in_euks = "output/euks_hetero_18sv9_map.Rdata",
+                   in_phyto = "output/euks_auto_18sv9_map.Rdata",
+                   figure_name = paste0("figures/som_summary_",Sys.Date(),".pdf"))
+
+som_stacked_figure(in_plastid = "output/plastid_16s_surf_map.Rdata",
+                   in_cyano = "output/cyano_16s_surf_map.Rdata",
+                   in_bacteria = "output/bacteria_m_euks_16s_surf_map.Rdata",
+                   in_euks = "output/euks_hetero_18sv9_surf_map.Rdata",
+                   in_phyto = "output/euks_auto_18sv9_surf_map.Rdata",
+                   figure_name = paste0("figures/som_surface_summary_",Sys.Date(),".pdf"))
+
+som_stacked_figure(in_plastid = "output/plastid_16s_deep_map.Rdata",
+                   in_cyano = "output/cyano_16s_deep_map.Rdata",
+                   in_bacteria = "output/bacteria_m_euks_16s_deep_map.Rdata",
+                   in_euks = "output/euks_hetero_18sv9_deep_map.Rdata",
+                   in_phyto = "output/euks_auto_18sv9_deep_map.Rdata",
+                   figure_name = paste0("figures/som_depth_summary_",Sys.Date(),".pdf"))
