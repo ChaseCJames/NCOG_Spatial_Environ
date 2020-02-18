@@ -74,7 +74,7 @@ bacteria_copy <- bacteria_sixteen
 cyano_sixteen <- sixteen_s[,which(six_tax_id$type == "bacteria" & split_taxa$B == "D_1__Cyanobacteria")]
 cyano_copy <- cyano_sixteen
 
-bacteria_m_euks_sixteen <- sixteen_s[,which(six_tax_id$type == "bacteria" & split_taxa$A != "D_0__Eukaryota")]
+bacteria_m_euks_sixteen <- sixteen_s[,which(six_tax_id$type == "bacteria" & split_taxa$A != "D_0__Eukaryota" & split_taxa$B != "D_1__Cyanobacteria")]
 bacteria_m_euks_copy <- bacteria_m_euks_sixteen
 
 plastid_sixteen <- sixteen_s[,which(six_tax_id$type == "plastid")]

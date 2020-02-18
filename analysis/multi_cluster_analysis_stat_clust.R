@@ -72,6 +72,7 @@ multicluster_analysis <- function(raw_data = "data/18s_autotrophic_euks.Rdata",
                         xvmult = 100,
                         cp = 0,
                         plot.add = TRUE)
+  
 
   if(length(mvrt_result$na.action) > 0){final_dat <- ordered_dat[-mvrt_result$na.action,]}else{final_dat <- ordered_dat}
   
@@ -407,32 +408,32 @@ som_title <- ggdraw() + draw_label(paste0("SOM Analysis ",title_name), fontface=
 #   text(mvrt_result)
 # }
 
-# get maps
-mvrt_a <- plot_grid(mvrt_map_list[[1]],
-                    mvrt_map_list[[2]],
-                    mvrt_map_list[[3]],
-                    mvrt_map_list[[4]], 
-                    # mvrt_map_list[[5]],
-                    ncol = n_clust)
-
-som_a <- plot_grid(som_map_list[[1]],
-                   som_map_list[[2]],
-                   som_map_list[[3]],
-                   som_map_list[[4]], 
-                   # som_map_list[[5]],
-                    ncol = n_clust)
+# # get maps
+# mvrt_a <- plot_grid(mvrt_map_list[[1]],
+#                     mvrt_map_list[[2]],
+#                     mvrt_map_list[[3]],
+#                     mvrt_map_list[[4]], 
+#                     # mvrt_map_list[[5]],
+#                     ncol = n_clust)
+# 
+# som_a <- plot_grid(som_map_list[[1]],
+#                    som_map_list[[2]],
+#                    som_map_list[[3]],
+#                    som_map_list[[4]], 
+#                    # som_map_list[[5]],
+#                     ncol = n_clust)
 
 # b <- ~p1_tree
 
 mvrt_large_plot <- plot_grid(mvrt_title,
                         plot_grid(mvrt_plot, mvrt_plot_ts, ncol = 2),
-                        mvrt_a,
+                        mvrt_pie_map,
                         plot_grid(mvrt_time_series_plot, mvrt_season_plot, rel_widths = c(1,0.6)),
                         mvrt_cluster_leg, nrow = 5, rel_heights = c(0.1,1,1,1,0.1))
 
 som_large_plot <- plot_grid(som_title,
                              plot_grid(som_plot, som_plot_ts, ncol = 2),
-                             som_a,
+                             som_pie_map,
                              plot_grid(som_time_series_plot, som_season_plot, rel_widths = c(1,0.6)),
                              som_cluster_leg, nrow = 5, rel_heights = c(0.1,1,1,1,0.1))
 
@@ -444,6 +445,8 @@ dev.off()
 pdf(som_multi_plot, width = 15, height = 15)
 print(som_large_plot)
 dev.off()
+
+
 
 
 }
@@ -606,3 +609,37 @@ multicluster_analysis(raw_data = "data/16s_plastids.Rdata",
                       som_multi_plot = "figures/plastid_16s_deep_som_mutlipanel.pdf",
                       title_name = "Eukaryotic Plastid Deep Samples")
 
+
+###### All Samples ######
+
+multicluster_analysis(raw_data = "data/18s_autotrophic_euks.Rdata",
+                      env_data = "output/euks_auto_18sv9_full_data.Rdata",
+                      mvrt_n_clust = 7, som_n_clust = 3, n_clust = 4,
+                      multicluster_output = "output/euks_auto_18sv9_multi_cluster.Rdata",
+                      mvrt_multi_plot = "figures/euks_auto_18sv9_mvrt_mutlipanel.pdf",
+                      som_multi_plot = "figures/euks_auto_18sv9_som_mutlipanel.pdf",
+                      title_name = "Autotrophic Eukaryotes All Samples")
+
+multicluster_analysis(raw_data = "data/18s_heterotrophic_euks.Rdata",
+                      env_data = "output/euks_hetero_18sv9_full_data.Rdata",
+                      mvrt_n_clust = 3, som_n_clust = 3, n_clust = 4,
+                      multicluster_output = "output/euks_hetero_18sv9_multi_cluster.Rdata",
+                      mvrt_multi_plot = "figures/euks_hetero_18sv9_mvrt_mutlipanel.pdf",
+                      som_multi_plot = "figures/euks_hetero_18sv9_som_mutlipanel.pdf",
+                      title_name = "Heterotrophic Eukaryotes All Samples")
+
+multicluster_analysis(raw_data = "data/16s_bacteria_m_euks.Rdata",
+                      env_data = "output/bacteria_m_euks_16s_full_data.Rdata",
+                      mvrt_n_clust = 3, som_n_clust = 3, n_clust = 4,
+                      multicluster_output = "output/bacteria_m_euks_16s_multi_cluster.Rdata",
+                      mvrt_multi_plot = "figures/bacteria_m_euks_16s_mvrt_mutlipanel.pdf",
+                      som_multi_plot = "figures/bacteria_m_euks_16s_som_mutlipanel.pdf",
+                      title_name = "Bacteria/Archaea All Samples")
+
+multicluster_analysis(raw_data = "data/16s_cyanos.Rdata",
+                      env_data = "output/cyano_16s_full_data.Rdata",
+                      mvrt_n_clust = 3, som_n_clust = 3, n_clust = 4,
+                      multicluster_output = "output/cyano_16s_multi_cluster.Rdata",
+                      mvrt_multi_plot = "figures/cyano_16s_mvrt_mutlipanel.pdf",
+                      som_multi_plot = "figures/cyano_16s_som_mutlipanel.pdf",
+                      title_name = "Cyanobacteria All Samples")

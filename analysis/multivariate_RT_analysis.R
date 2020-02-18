@@ -169,14 +169,14 @@ multivariate_RT_analysis <- function(raw_data = "data/16s_cyanos.Rdata",
   if(length(which(colSums(scaled_inputs) == 0)) > 0){scaled_inputs <- scaled_inputs[,-which(colSums(scaled_inputs) == 0)]}
   
   
-  ind_val_out <- indval(scaled_inputs, mvrt_result$where)
-  pval.adj3 <- p.adjust(ind_val_out$pval)
+  # ind_val_out <- indval(scaled_inputs, mvrt_result$where)
+  # pval.adj3 <- p.adjust(ind_val_out$pval)
+  # 
+  # indicator_spp <- ind_val_out$maxcls[which(ind_val_out$pval <= 0.05)]
+  # 
+  # indicator_spp <- indicator_spp[-which(indicator_spp == level)]
   
-  indicator_spp <- ind_val_out$maxcls[which(ind_val_out$pval <= 0.05)]
-  
-  indicator_spp <- indicator_spp[-which(indicator_spp == level)]
-  
-  save(mvrt_result, indicator_spp, final_dat, tax_dat, file = mvrt_output)
+  save(mvrt_result, final_dat, tax_dat, file = mvrt_output)
   
 }
 
@@ -255,7 +255,7 @@ indicator_spp_identifier <- function(mvrt_dat = "output/euks_auto_18sv9_surf_mvr
   }
 
 
-
+######## MVRT analysis #####
 
 multivariate_RT_analysis(raw_data = "data/16s_cyanos.Rdata",
                          env_data = "output/cyano_16s_surf_full_data.Rdata",
@@ -326,8 +326,32 @@ multivariate_RT_analysis(raw_data = "data/18s_autotrophic_euks.Rdata",
                          mvrt_output = "output/euks_auto_18sv9_mvrt.Rdata",
                          mvrt_som_plot = "figures/euks_auto_18sv9_mvrt_som_compare.pdf",
                          mvrt_som_plot2 = "figures/euks_auto_18sv9_mvrt_som_map.pdf",
-                         som_order = c(2,1), mvrt_order = c(1,2),
+                         som_order = c(2,1), mvrt_order = c(2,1),
                          title_name = "Autotrophic Eukaryotes All Samples")
+
+multivariate_RT_analysis(raw_data = "data/18s_heterotrophic_euks.Rdata",
+                         env_data = "output/euks_hetero_18sv9_full_data.Rdata",
+                         mvrt_output = "output/euks_hetero_18sv9_mvrt.Rdata",
+                         mvrt_som_plot = "figures/euks_hetero_18sv9_mvrt_som_compare.pdf",
+                         mvrt_som_plot2 = "figures/euks_hetero_18sv9_mvrt_som_map.pdf",
+                         som_order = c(2,1), mvrt_order = c(1,2),
+                         title_name = "Heterotrophic Eukaryotes All Samples")
+
+multivariate_RT_analysis(raw_data = "data/16s_bacteria_m_euks.Rdata",
+                         env_data = "output/bacteria_m_euks_16s_full_data.Rdata",
+                         mvrt_output = "output/bacteria_m_euks_16s_mvrt.Rdata",
+                         mvrt_som_plot = "figures/bacteria_m_euks_16s_mvrt_som_compare.pdf",
+                         mvrt_som_plot2 = "figures/bacteria_m_euks_16s_mvrt_som_map.pdf",
+                         som_order = c(2,1), mvrt_order = c(2,1),
+                         title_name = "Heterotrophic Bacteria/Archaea All Samples")
+
+multivariate_RT_analysis(raw_data = "data/16s_cyanos.Rdata",
+                         env_data = "output/cyano_16s_full_data.Rdata",
+                         mvrt_output = "output/cyano_16s_mvrt.Rdata",
+                         mvrt_som_plot = "figures/cyano_16s_mvrt_som_compare.pdf",
+                         mvrt_som_plot2 = "figures/cyano_16s_mvrt_som_map.pdf",
+                         som_order = c(2,1), mvrt_order = c(2,1),
+                         title_name = "Cyanobacteria All Samples")
 
 
 ###### indicator species plots ######

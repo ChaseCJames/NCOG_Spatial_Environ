@@ -147,17 +147,19 @@ for (i in 1:dim(u_slice)[3]) {
 
 save(ow_array, eddy_array, lon, lat, lon_grid, lat_grid, file = "output/ow_eddy_slice.Rdata")
 
+load("output/ow_eddy_slice.Rdata")
+
 ow_mean <- matrix(NA,nrow(ow_array),ncol(ow_array))
 ow_coeff <- matrix(NA,nrow(ow_array),ncol(ow_array))
 eddy_sum <- matrix(NA,nrow(ow_array),ncol(ow_array))
 
-colnames(ow_mean) <- lon[lon_grid[1:47]]-360
-colnames(ow_coeff) <- lon[lon_grid[1:47]]-360
-colnames(eddy_sum) <- lon[lon_grid[1:47]]-360
+rownames(ow_mean) <- lon[lon_grid[1:47]]-360
+rownames(ow_coeff) <- lon[lon_grid[1:47]]-360
+rownames(eddy_sum) <- lon[lon_grid[1:47]]-360
 
-rownames(ow_mean) <- lat[lat_grid[1:47]]
-rownames(ow_coeff) <- lat[lat_grid[1:47]]
-rownames(eddy_sum) <- lat[lat_grid[1:47]]
+colnames(ow_mean) <- lat[lat_grid[1:47]]
+colnames(ow_coeff) <- lat[lat_grid[1:47]]
+colnames(eddy_sum) <- lat[lat_grid[1:47]]
 
 for (i in 1:nrow(ow_array)) {
   for (j in 1:ncol(ow_array)) {
@@ -188,9 +190,9 @@ coeff_table <- melt(ow_coeff)
 mean_table <- melt(ow_mean)
 sum_table <- melt(eddy_sum)
 
-colnames(coeff_table) <- c("lat", "lon", "coeff_var")
-colnames(mean_table) <- c("lat", "lon", "Mean")
-colnames(sum_table) <- c("lat", "lon", "Sum")
+colnames(coeff_table) <- c("lon", "lat", "coeff_var")
+colnames(mean_table) <- c("lon", "lat", "Mean")
+colnames(sum_table) <- c("lon", "lat", "Sum")
 
 map <- map_data("world")    
 
