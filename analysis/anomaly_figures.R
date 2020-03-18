@@ -24,7 +24,16 @@ library(magick)
 library(reshape2)
 library(metR)
 
-load("output/cyano_16s_surf_anom_map.Rdata")
+load("output/plastid_16s_glm.Rdata")
+
+som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Offshore"
+som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Nearshore"
+
+ggplot(som_plots, aes(x = NC_mean, y = freq, color = cluster)) + geom_point() +
+  stat_smooth(method="glm", method.args = list(family = "binomial")) + 
+  theme(legend.title = element_blank(), legend.background = element_rect(fill = NA, color = "black"),
+        panel.background = element_blank(), panel.border = element_rect(fill = NA, color = "black")) +
+  xlab("Nitracline Depth (m)") + ylab("Frequency") + scale_color_manual(values = c("red", "blue"))
 
 
 map <- map_data("world") 

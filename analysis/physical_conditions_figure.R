@@ -12,12 +12,19 @@ library(metR)
 library(oce)
 library(scales)
 
+
+physical_fig <- function(in_vel = "output/uv_velocity_table.Rdata",
+                         in_bath = "output/CALCOFI_bathymetry_table.Rdata",
+                         in_temp = "output/CALCOFI_temp_tables.Rdata",
+                         in_cyano = "output/cyano_16s_map.Rdata",
+                         fig_name = "figures/summary_physical_figure_clean.pdf"){
+
 map <- map_data("world")    
 
-load("output/uv_velocity_table.Rdata")
-load("output/CALCOFI_bathymetry_table.Rdata")
-load("output/CALCOFI_temp_tables.Rdata")
-load("output/cyano_16s_map.Rdata")
+load(in_vel)
+load(in_bath)
+load(in_temp)
+load(in_cyano)
 
 
 stations <-  ggplot() + 
@@ -25,7 +32,7 @@ stations <-  ggplot() +
   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
   xlab("Longitude") + ylab("Latitude") + 
   geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "n_samps"), color = "black", size =6, stroke = 0.1, shape = 21) +
-  ggtitle("A. CalCOFI NCOG Stations") + scale_fill_gradient(name = "# of Samples", low = "white", high = "red") +
+  ggtitle("CalCOFI NCOG Stations") + scale_fill_gradient(name = "# of Samples", low = "white", high = "red") +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
         plot.title = element_text(hjust = 0.5), axis.line = element_blank())
@@ -48,14 +55,14 @@ vel_bath <- ggplot() +
         panel.border = element_rect(fill = NA, colour = "black", linetype = "solid", size = 1),
         plot.title = element_text(hjust = 0.5), axis.line = element_blank()) +
   scale_mag(max = 0.1, name = "Speed (m/s)", max_size = 0.75) +
-  labs(x = "Longitude", y = "Latitude", color = "Depth (m)") + ggtitle("B. Mean Geostrophic Current Velocity") 
+  labs(x = "Longitude", y = "Latitude", color = "Depth (m)") + ggtitle("Mean Geostrophic Current Velocity") 
 
 sst <- ggplot() + 
   geom_tile(data = coeff_table, aes(x = lon, y = lat, fill = coeff_var), width =0.26, height = 0.26) +
   scale_fill_gradient2(name = "Coeff. Var SST", low = "darkblue", mid = "white", high = "darkred", limits = c(0.09,0.12), oob = squish, midpoint = 0.1066851) +geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
   xlab("Longitude") + ylab("Latitude") +
-  ggtitle("D. Coeff. Var. SST") +
+  ggtitle("Coeff. Var. SST") +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
         plot.title = element_text(hjust = 0.5), axis.line = element_blank())
@@ -65,17 +72,18 @@ sst_mean <- ggplot() +
   scale_fill_gradient2(name = "SST Mean (°C)", low = "darkblue", mid = "white", high = "darkred", limits = c(15,18), oob = squish, midpoint = 16.5) +geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
   xlab("Longitude") + ylab("Latitude") +
-  ggtitle("C. SST Mean (°C)") +
+  ggtitle("SST Mean (°C)") +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
         plot.title = element_text(hjust = 0.5), axis.line = element_blank())
 
-# theme_set(theme_cowplot(font_size=12))
-pdf("figures/summary_physical_figure.pdf", width = 12, height = 12)
-plot_grid(stations, vel_bath,
-          sst_mean, sst, ncol = 2, nrow = 2, align = "hv")
+
+pdf(fig_name, width = 12, height = 12)
+print(plot_grid(stations, vel_bath,
+          sst_mean, sst, ncol = 2, nrow = 2, align = "hv", labels = c("A.", "B.", "C.", "D.")))
 dev.off()
 
+}
 
 # bath line plot
 vel_bath <- ggplot() + 

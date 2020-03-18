@@ -186,7 +186,7 @@ cosmo_endemic_figs <- function(in_cosmo = "output/cyano_16s_cosmo_end.Rdata",
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes(x = long, y = lat, fill = Endemic_Samp), color = "black", size =6, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(low = "pink", high = "red") +
+    scale_fill_gradient(low = "white", high = "red") +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
@@ -212,25 +212,25 @@ auto_out <- cosmo_endemic_figs(in_cosmo = "output/euks_auto_18sv9_cosmo_end.Rdat
                    in_map = "output/euks_auto_18sv9_map.Rdata",
                    name = "Eukaryotic Phytoplankton")
 
-hetero_out <- cosmo_endemic_figs(in_cosmo = "output/euks_hetero_18sv9_cosmo_end.Rdata",
+hetero_out <- cosmo_endemic_figs(in_cosmo = "output/euks_hetero_18sv9_cosmo_end.Rdata",                 
                    in_map = "output/euks_hetero_18sv9_map.Rdata",
                    name = "Heterotrophic Eukaryotes")
 
 
 pdf(file = "figures/endemics_fig.pdf", width = 8, height = 8)
-plot_grid(cyano_out$endemic_plot, bact_out$endemic_plot,
-          auto_out$endemic_plot, hetero_out$endemic_plot,
+plot_grid(auto_out$endemic_plot, hetero_out$endemic_plot,
+          cyano_out$endemic_plot, bact_out$endemic_plot,
           ncol = 2 , nrow = 2)
 dev.off()
 
 pdf(file = "figures/endemics_samp_fig.pdf", width = 8, height = 8)
-plot_grid(cyano_out$sample_plot, bact_out$sample_plot,
-          auto_out$sample_plot, hetero_out$sample_plot,
+plot_grid(auto_out$sample_plot, hetero_out$sample_plot,
+          cyano_out$sample_plot, bact_out$sample_plot,
           ncol = 2 , nrow = 2)
 dev.off()
 
 load("output/cyano_16s_cosmo_end.Rdata")
-cosmo_df <- as.data.frame(matrix(nrow = 4,ncol = 2))
+cosmo_df <- as.data.frame(matrix(nrow = 1,ncol = 2))
 cosmo_df$V1 <- cosmo_names
 cosmo_df$V2 <- mean_rel_abun_cosmos
 write.csv(cosmo_df, file = "output/cyano_16s_cosmo_names.csv")
