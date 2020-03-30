@@ -48,7 +48,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   full_dat$ML_NC <- full_dat$MLD_Sigma - full_dat$NCDepth
   
   early_som_maps <- full_dat %>% 
-    filter(Year < 2017) %>%
+    filter(Year < 2017 | Year == 2019) %>%
     group_by(Sta_ID) %>%
     summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
@@ -76,7 +76,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   early_dist <- distHaversine(centroid1@coords, centroid2@coords)/100
 
   late_som_maps <- full_dat %>% 
-    filter(Year > 2016) %>%
+    filter(Year > 2016 & Year < 2019) %>%
     group_by(Sta_ID) %>%
     summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
@@ -171,19 +171,19 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
  
  som_cruise$NC_slope <- results$coef
  
- som_cruise$phase <- c(rep("Early",12),rep("Late",8))
- som_cruise$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),5))
+ som_cruise$phase <- c(rep("2014-2016",12),rep("2017-2018",8),rep("2019",4))
+ som_cruise$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),6))
  som_cruise$season <- factor(som_cruise$season, levels = c("Winter", "Spring", "Summer", "Fall"))
   
   gradient_plot <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "phase", shape = "season"), data = som_cruise) +
-    scale_color_manual(values = c("red", "blue")) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
     scale_shape_manual(values = c(0,1,2,3)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Phase", color = "Season") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Frequency of Nearshore Cluster") + ggtitle(title)
   
   print(gradient_plot)
@@ -230,7 +230,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) + 
+    scale_shape_manual(values = c(15,17,18)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -241,7 +241,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) + 
+    scale_shape_manual(values = c(15,17,18)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -253,7 +253,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) + 
+    scale_shape_manual(values = c(15,17,18)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -265,7 +265,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) + 
+    scale_shape_manual(values = c(15,17,18)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -276,7 +276,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) + 
+    scale_shape_manual(values = c(15,17,18)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -306,17 +306,21 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) < 2017)] <- "Early"
   diss_melt$Var2_phase[which(substr(diss_melt$Var2,2,5) < 2017)] <- "Early"
   
-  diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) > 2016)] <- "Late"
-  diss_melt$Var2_phase[which(substr(diss_melt$Var2,2,5) > 2016)] <- "Late"
+  diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) > 2016 & substr(diss_melt$Var1,2,5) < 2019)] <- "Late"
+  diss_melt$Var2_phase[which(substr(diss_melt$Var2,2,5) > 2016 & substr(diss_melt$Var1,2,5) < 2019)] <- "Late"
+  
+  diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) > 2018)] <- "2019"
+  diss_melt$Var2_phase[which(substr(diss_melt$Var1,2,5) > 2018)] <- "2019"
   
   diss_melt$comp_phase <- paste0(diss_melt$Var1_phase,"-",diss_melt$Var2_phase)
   diss_melt$comp_som <- paste0(diss_melt$Var1_som,"-",diss_melt$Var2_som)
   
   diss_filt <- filter(diss_melt, comp_som == "1-1" | comp_som == "2-2")
-  diss_filt <- filter(diss_filt, comp_phase == "Early-Early" | comp_phase == "Late-Late")
+  diss_filt <- filter(diss_filt, comp_phase == "Early-Early" | comp_phase == "Late-Late" | comp_phase == "2019-2019")
   
   diss_filt$comp_phase[diss_filt$comp_phase == "Early-Early"] = "2014-2016"
   diss_filt$comp_phase[diss_filt$comp_phase == "Late-Late"] = "2017-2018"
+  diss_filt$comp_phase[diss_filt$comp_phase == "2019-2019"] = "2019"
   
   if(nearshore_som == 1){
     diss_filt$comp_som[diss_filt$comp_som == "1-1"] = "Nearshore"
@@ -333,10 +337,14 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     geom_boxplot() + ylab("Bray-Curtis Similarity") + xlab("Phase/Cluster") +
     labs(fill = "Phase") + 
     theme(panel.background = element_blank(),
-          panel.border = element_rect(color = "black", fill = NA)) +
+          panel.border = element_rect(color = "black", fill = NA),
+          plot.title = element_text(hjust = 0.5)) +
     scale_x_discrete(labels = c("Nearshore\n2014-2016", "Offshore\n2014-2016",
-                                "Nearshore\n2017-2018", "Offshore\n2017-2018"))
+                                "Nearshore\n2017-2018", "Offshore\n2017-2018",
+                                "Nearshore\n2019", "Offshore\n2019")) +
+    ggtitle(title)
   
+  print(dissimilar_plot)
   
   save(early_dist, late_dist, diversity_diff, even_diff, gradient_plot, ts_plot,
        cuti_plot, beuti_plot, reg_nitrate, dissimilar_plot, file = out_diff_file)
@@ -344,6 +352,18 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   
   }
+
+
+# 16s
+
+in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
+                  "bacteria_m_euks_16s", "plastid_16s", "cyano_16s")
+
+in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
+                   "Sar Clade", "Archaea", "Bacteria",
+                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria")
+
+# All
 
 
 in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
@@ -362,7 +382,7 @@ for (i in 1:length(in_group_list)) {
   community_comparison(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
                          in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
                          similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
-                         out_diff_file = paste0("output/",in_group_list[i],"_diffs_div.Rdata"),
+                         out_diff_file = paste0("output/",in_group_list[i],"_diffs.Rdata"),
                          title = in_group_names[i],
                          upwelling_index = "output/upwelling_indicies.Rdata",
                          index_plot = paste0("figures/",in_group_list[i],"_index_plot.pdf"))

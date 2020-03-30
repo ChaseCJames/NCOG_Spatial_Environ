@@ -17,8 +17,8 @@ library(geosphere)
 library(viridis)
 
 result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/bacteria_16s_som.Rdata",
-                          SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-                          physical_data = "data/NCOG_sample_metadata.csv",
+                          SST_data = "output/CALCOFI_temp_tables.Rdata", # SLA_data = "output/CALCOFI_sla_tables.Rdata",
+                          physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
                           map_file = "output/bacteria_16s_map.Rdata", regression_file = "output/bacteria_16s_glm.Rdata",
                           dissimmilar_matrix = "output/bacteria_16s_dissimilar.Rdata", 
                           full_data_file = "output/bacteria_16s_full_data.Rdata",
@@ -28,9 +28,9 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   sst_coeff_table <- coeff_table
   sst_mean_table <- mean_table
   
-  load(SLA_data)
-  sla_coeff_table <- coeff_table
-  sla_mean_table <- mean_table
+  # load(SLA_data)
+  # sla_coeff_table <- coeff_table
+  # sla_mean_table <- mean_table
   
   load(input)
   
@@ -57,7 +57,7 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   # physical data match to biological data
   
   full_dat <- full_dat[which(!is.na(match(full_dat$eco_name, rownames(scaled_inputs)))),]
-  
+
   data <- data[which(!is.na(match(data$eco_name, rownames(scaled_inputs)))),]
   
   # distance to coast
@@ -115,7 +115,7 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   
   # running SOM
   
-  eco.som <- trainSOM(x.data = scaled_inputs, dimension = c(5, 5), nb.save = 10, maxit = 2000, 
+  eco.som <- trainSOM(x.data = scaled_inputs, dimension = c(6, 6), nb.save = 10, maxit = 2000, 
                       scaling = "none")
   
   save(eco.som, file = som_file)
@@ -204,16 +204,16 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   for (i in 1:nrow(som_maps)) {
     
     long_lat <-  c(som_maps$long[i], som_maps$lat[i])
-    sla_dat <- sla_coeff_table[,1:2]
+    # sla_dat <- sla_coeff_table[,1:2]
     sst_dat <- sst_coeff_table[,1:2]
     map_dat <- map[,1:2]
     
-    sla_dist <- distm(long_lat, sla_dat, fun = distGeo)
+    # sla_dist <- distm(long_lat, sla_dat, fun = distGeo)
     sst_dist <- distm(long_lat, sst_dat, fun = distGeo)
     map_dist <- distm(long_lat, map_dat, fun = distGeo)
     
-    coeff_val[i] <- sla_coeff_table$coeff_var[which.min(sla_dist)]
-    mean_val[i] <- sla_mean_table$Mean[which.min(sla_dist)]
+    # coeff_val[i] <- sla_coeff_table$coeff_var[which.min(sla_dist)]
+    # mean_val[i] <- sla_mean_table$Mean[which.min(sla_dist)]
     
     sst_coeff_val[i] <- sst_coeff_table$coeff_var[which.min(sst_dist)]
     sst_mean_val[i] <- sst_mean_table$Mean[which.min(sst_dist)]
@@ -223,8 +223,8 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
     
   }
   
-  som_maps$sla_mean <- mean_val
-  som_maps$sla_coeff <- coeff_val
+  # som_maps$sla_mean <- mean_val
+  # som_maps$sla_coeff <- coeff_val
   som_maps$sst_mean <- sst_mean_val
   som_maps$sst_coeff <- sst_coeff_val
   
@@ -245,186 +245,62 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
 
 # both surface and deep
 
-# 16s plastids
-set.seed(202)
-result_tables(input = "data/16s_plastids.Rdata", som_file = "output/plastid_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/plastid_16s_map.Rdata", regression_file = "output/plastid_16s_glm.Rdata",
-              dissimmilar_matrix = "output/plastid_16s_dissimilar.Rdata", 
-              full_data_file = "output/plastid_16s_full_data.Rdata",
-              sample_regime = "both")
+#16s list
 
-# 16s cyanos
-set.seed(5)
-result_tables(input = "data/16s_cyanos.Rdata", som_file = "output/cyano_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/cyano_16s_map.Rdata", regression_file = "output/cyano_16s_glm.Rdata",
-              dissimmilar_matrix = "output/cyano_16s_dissimilar.Rdata", 
-              full_data_file = "output/cyano_16s_full_data.Rdata",
-              sample_regime = "both")
+in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
+                  "bacteria_m_euks_16s", "plastid_16s", "cyano_16s")
 
-# 16s flavo
-set.seed(345)
-result_tables(input = "data/16s_flavo.Rdata", som_file = "output/flavo_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/flavo_16s_map.Rdata", regression_file = "output/flavo_16s_glm.Rdata",
-              dissimmilar_matrix = "output/flavo_16s_dissimilar.Rdata", 
-              full_data_file = "output/flavo_16s_full_data.Rdata",
-              sample_regime = "both")
+in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
+                        "16s_bacteria_m_euks", "16s_plastids", "16s_cyanos")
 
-# 16s rhodo
-set.seed(98)
-result_tables(input = "data/16s_rhodo.Rdata", som_file = "output/rhodo_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/rhodo_16s_map.Rdata", regression_file = "output/rhodo_16s_glm.Rdata",
-              dissimmilar_matrix = "output/rhodo_16s_dissimilar.Rdata", 
-              full_data_file = "output/rhodo_16s_full_data.Rdata",
-              sample_regime = "both")
+seedlist <- c(202,5,345,98,133,47,987,13,654)
 
-# 16s sar
-set.seed(133)
-result_tables(input = "data/16s_sar.Rdata", som_file = "output/sar_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/sar_16s_map.Rdata", regression_file = "output/sar_16s_glm.Rdata",
-              dissimmilar_matrix = "output/sar_16s_dissimilar.Rdata", 
-              full_data_file = "output/sar_16s_full_data.Rdata",
-              sample_regime = "both")
+for (i in 1:length(in_group_list)) {
+  set.seed(seedlist[i])
+  
+  result_tables(input = paste0("data/", in_group_list_basic[i], ".Rdata"),
+                som_file = paste0("output/", in_group_list[i], "_som.Rdata"),
+                SST_data = "output/CALCOFI_temp_tables.Rdata",
+                physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
+                map_file = paste0("output/", in_group_list[i], "_map.Rdata"),
+                regression_file = "output/bacteria_16s_glm.Rdata",
+                dissimmilar_matrix = paste0("output/", in_group_list[i], "_dissimilar.Rdata"), 
+                full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
+                sample_regime = "both")
+  
+  print(i)
+  
+}
 
-# 16s pro
-set.seed(133)
-result_tables(input = "data/16s_pro.Rdata", som_file = "output/pro_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/pro_16s_map.Rdata", regression_file = "output/pro_16s_glm.Rdata",
-              dissimmilar_matrix = "output/pro_16s_dissimilar.Rdata", 
-              full_data_file = "output/pro_16s_full_data.Rdata",
-              sample_regime = "both")
+# 18sv9 
 
-# 16s syne
-set.seed(133)
-result_tables(input = "data/16s_syne.Rdata", som_file = "output/syne_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/syne_16s_map.Rdata", regression_file = "output/syne_16s_glm.Rdata",
-              dissimmilar_matrix = "output/syne_16s_dissimilar.Rdata", 
-              full_data_file = "output/syne_16s_full_data.Rdata",
-              sample_regime = "both")
+in_group_list = c("diatom_18sv9","dino_18sv9", "syndin_18sv9",
+                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "euks_hetero_18sv9")
 
-# 16s archaea
-set.seed(51)
-result_tables(input = "data/16s_archaea.Rdata", som_file = "output/archaea_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/archaea_16s_map.Rdata", regression_file = "output/archaea_16s_glm.Rdata",
-              dissimmilar_matrix = "output/archaea_16s_dissimilar.Rdata", 
-              full_data_file = "output/archaea_16s_full_data.Rdata",
-              sample_regime = "both")
+in_group_names = c("Diatoms", "Dinoflagellates", "Syndiniales",
+                   "Haptophytes", "Chlorophytes","Metazoans", "Eukaryotic Protists")
 
-# 16s minus eukaryotes and plastids
-set.seed(192)
-result_tables(input = "data/16s_bacteria_m_euks.Rdata", som_file = "output/bacteria_m_euks_16s_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/bacteria_m_euks_16s_map.Rdata", regression_file = "output/bacteria_m_euks_16s_glm.Rdata",
-              dissimmilar_matrix = "output/bacteria_m_euks_16s_dissimilar.Rdata", 
-              full_data_file = "output/bacteria_m_euks_16s_full_data.Rdata",
-              sample_regime = "both")
+in_group_list_basic = c("18s_diatom","18s_dino", "18s_syndin",
+                        "18s_hapto", "18s_chloro", "18s_metazoa", "18s_heterotrophic_euks")
 
-# 18sv9 Autotrophic Eukaryotes
-set.seed(315)
-result_tables(input = "data/18s_autotrophic_euks.Rdata", som_file = "output/euks_auto_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/euks_auto_18sv9_map.Rdata", regression_file = "output/euks_auto_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/euks_auto_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/euks_auto_18sv9_full_data.Rdata",
-              sample_regime = "both")
+seedlist <- c(11,283,57,100,133,47,23)
 
-# 18sv9 Eukaryotes
-set.seed(987)
-result_tables(input = "data/18s_heterotrophic_euks.Rdata", som_file = "output/euks_hetero_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/euks_hetero_18sv9_map.Rdata", regression_file = "output/euks_hetero_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/euks_hetero_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/euks_hetero_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-# 18sv9 Diatom
-set.seed(89)
-result_tables(input = "data/18s_diatom.Rdata", som_file = "output/diatom_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/diatom_18sv9_map.Rdata", regression_file = "output/diatom_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/diatom_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/diatom_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-# 18sv9 Dinoflagellates
-set.seed(12)
-result_tables(input = "data/18s_dino.Rdata", som_file = "output/dino_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/dino_18sv9_map.Rdata", regression_file = "output/dino_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/dino_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/dino_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-# 18sv9 Syndiniales
-set.seed(765)
-result_tables(input = "data/18s_syndin.Rdata", som_file = "output/syndin_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/syndin_18sv9_map.Rdata", regression_file = "output/syndin_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/syndin_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/syndin_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-# 18sv9 Haptophytes
-set.seed(45)
-result_tables(input = "data/18s_hapto.Rdata", som_file = "output/hapto_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/hapto_18sv9_map.Rdata", regression_file = "output/hapto_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/hapto_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/hapto_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-# 18sv9 Metazoa
-set.seed(631)
-result_tables(input = "data/18s_metazoa.Rdata", som_file = "output/metazoa_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/metazoa_18sv9_map.Rdata", regression_file = "output/metazoa_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/metazoa_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/metazoa_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-# 18sv9 chlorophytes
-set.seed(631)
-result_tables(input = "data/18s_chloro.Rdata", som_file = "output/chloro_18sv9_som.Rdata",
-              SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-              physical_data = "data/NCOG_sample_metadata.csv",
-              map_file = "output/chloro_18sv9_map.Rdata", regression_file = "output/chloro_18sv9_glm.Rdata",
-              dissimmilar_matrix = "output/chloro_18sv9_dissimilar.Rdata", 
-              full_data_file = "output/chloro_18sv9_full_data.Rdata",
-              sample_regime = "both")
-
-
-# all 16s minus plastids
-# set.seed(928)
-# result_tables(input = "data/16s_bacteria.Rdata", som_file = "output/bacteria_16s_som.Rdata",
-#               SST_data = "output/CALCOFI_temp_tables.Rdata", SLA_data = "output/CALCOFI_sla_tables.Rdata",
-#               physical_data = "data/NCOG_sample_metadata.csv",
-#               map_file = "output/bacteria_16s_map.Rdata", regression_file = "output/bacteria_16s_glm.Rdata",
-#               dissimmilar_matrix = "output/bacteria_16s_dissimilar.Rdata", 
-#               full_data_file = "output/bacteria_16s_full_data.Rdata",
-#               sample_regime = "both")
+for (i in 1:length(in_group_list)) {
+  set.seed(seedlist[i])
+  
+  result_tables(input = paste0("data/", in_group_list_basic[i], ".Rdata"),
+                som_file = paste0("output/", in_group_list[i], "_som.Rdata"),
+                SST_data = "output/CALCOFI_temp_tables.Rdata",
+                physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
+                map_file = paste0("output/", in_group_list[i], "_map.Rdata"),
+                regression_file = "output/bacteria_16s_glm.Rdata",
+                dissimmilar_matrix = paste0("output/", in_group_list[i], "_dissimilar.Rdata"), 
+                full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
+                sample_regime = "both")
+  
+  print(i)
+  
+}
 
 
 # Surface Only

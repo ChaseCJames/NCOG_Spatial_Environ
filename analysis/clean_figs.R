@@ -126,7 +126,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust1)), color = "black", size =6, stroke = 0.1, shape = 21) +
     scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1)) +
-    ggtitle(paste0("B. ",cluster1," Cluster")) +
+    ggtitle(paste0(cluster1)) +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
@@ -141,7 +141,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust2)), color = "black", size =6, stroke = 0.1, shape = 21) +
     scale_fill_gradient(low = "white", high = "darkblue", limits = c(0,1)) +
-    ggtitle(paste0("A. ", cluster2," Cluster")) +
+    ggtitle(paste0(cluster2)) +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
@@ -197,7 +197,7 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm.Rdata",
   
   
   
-  pdf(file = paste0(figure_name,var,"_",Sys.Date(),".pdf"), width = 5, height = 3)
+  pdf(file = paste0(figure_name,var,".pdf"), width = 5, height = 3)
   print(reg_plot)
   dev.off()
   
@@ -475,7 +475,7 @@ beta_diversity_figure <- function(full_data_file = "output/bacteria_m_euks_16s_f
   diss_class$comp[diss_class$comp == "Offshore-Offshore"] = "Offshore"
   
   bc_plot <- ggplot(diss_class, aes(x = comp, y = value, fill = comp)) + geom_violin() +
-    geom_boxplot(fill = "white", width = 0.1) + labs(fill = "") +
+    geom_boxplot(fill = "white", width = 0.05) + labs(fill = "") +
     scale_fill_manual(values = c("red","blue")) + xlab("") +
     ylab("Bray-Curtis\nDissimilarity") +
     theme(panel.background = element_blank(),
@@ -483,6 +483,13 @@ beta_diversity_figure <- function(full_data_file = "output/bacteria_m_euks_16s_f
           legend.position = "bottom", plot.title = element_text(hjust = 0.5)) +
     ggtitle(main)
   
+  diss_near <- diss_class[which(diss_class$comp == "Nearshore"),]
+  diss_off <- diss_class[which(diss_class$comp == "Offshore"),]
+  
+  t_test <- t.test(diss_near$value, diss_off$value)
+  
+  print(t_test)
+                          
   pdf(file = figure_name, width = 4, height = 5)
   print(bc_plot)
   dev.off()
@@ -494,9 +501,9 @@ beta_diversity_figure <- function(full_data_file = "output/bacteria_m_euks_16s_f
 
 aic_table_func <- function(som_maps = cyano_plots){  
   
-  som_glm <- som_maps[,c(1:3,7:25,29:32)]
+  som_glm <- som_maps
   
-  model_AIC <- matrix(NA,21,2)
+  model_AIC <- matrix(NA,19,2)
   
   # temperature
   
@@ -584,58 +591,58 @@ aic_table_func <- function(som_maps = cyano_plots){
   
   # SLA
   
-  glm_mean_sla <- glm(som_1 ~  sla_mean, data = som_glm, family = binomial)
-  ms_sum <- summary(glm_mean_sla)
-  model_AIC[7,2] <- ms_sum$aic
-  model_AIC[7,1] <- "Mean SLA"
-  
-  glm_coeff_sla <- glm(som_1 ~  sla_coeff, data = som_glm, family = binomial)
-  cs_sum <- summary(glm_coeff_sla)
-  model_AIC[16,2] <- cs_sum$aic
-  model_AIC[16,1] <- "Coeff. Var. SLA"
+  # glm_mean_sla <- glm(som_1 ~  sla_mean, data = som_glm, family = binomial)
+  # ms_sum <- summary(glm_mean_sla)
+  # model_AIC[7,2] <- ms_sum$aic
+  # model_AIC[7,1] <- "Mean SLA"
+  # 
+  # glm_coeff_sla <- glm(som_1 ~  sla_coeff, data = som_glm, family = binomial)
+  # cs_sum <- summary(glm_coeff_sla)
+  # model_AIC[16,2] <- cs_sum$aic
+  # model_AIC[16,1] <- "Coeff. Var. SLA"
   
   # MLD
   
   glm_mean_mld <- glm(som_1 ~  MLD_mean, data = som_glm, family = binomial)
   ms_sum <- summary(glm_mean_mld)
-  model_AIC[8,2] <- ms_sum$aic
-  model_AIC[8,1] <- "Mean MLD"
+  model_AIC[7,2] <- ms_sum$aic
+  model_AIC[7,1] <- "Mean MLD"
   
   glm_coeff_mld <- glm(som_1 ~  MLD_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_mld)
-  model_AIC[17,2] <- cs_sum$aic
-  model_AIC[17,1] <- "Coeff. Var. MLD"
+  model_AIC[16,2] <- cs_sum$aic
+  model_AIC[16,1] <- "Coeff. Var. MLD"
   
   # NC Depth
   
   glm_mean_nc <- glm(som_1 ~  NC_mean, data = som_glm, family = binomial)
   ms_sum <- summary(glm_mean_nc)
-  model_AIC[9,2] <- ms_sum$aic
-  model_AIC[9,1] <- "Mean NCD"
+  model_AIC[8,2] <- ms_sum$aic
+  model_AIC[8,1] <- "Mean NCD"
   
   glm_coeff_nc <- glm(som_1 ~  NC_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_nc)
-  model_AIC[18,2] <- cs_sum$aic
-  model_AIC[18,1] <- "Coeff. Var. NCD"
+  model_AIC[17,2] <- cs_sum$aic
+  model_AIC[17,1] <- "Coeff. Var. NCD"
   
   # Distance to Coast
   
   glm_mean_dc <- glm(som_1 ~  Dist_mean, data = som_glm, family = binomial)
   ms_sum <- summary(glm_mean_dc)
-  model_AIC[19,2] <- ms_sum$aic
-  model_AIC[19,1] <- "Distance to Coast"
+  model_AIC[18,2] <- ms_sum$aic
+  model_AIC[18,1] <- "Distance to Coast"
   
   # Chlorophyll
   
   glm_mean_chl <- glm(som_1 ~  Chl_mean, data = som_glm, family = binomial)
   ms_sum <- summary(glm_mean_chl)
-  model_AIC[20,2] <- ms_sum$aic
-  model_AIC[20,1] <- "Mean Chl-a"
+  model_AIC[9,2] <- ms_sum$aic
+  model_AIC[9,1] <- "Mean Chl-a"
   
   glm_coeff_chl <- glm(som_1 ~  Chl_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_chl)
-  model_AIC[21,2] <- cs_sum$aic
-  model_AIC[21,1] <- "Coeff. Var. Chl-a"
+  model_AIC[19,2] <- cs_sum$aic
+  model_AIC[19,1] <- "Coeff. Var. Chl-a"
   
   
   return(model_AIC)
@@ -644,12 +651,12 @@ aic_table_func <- function(som_maps = cyano_plots){
 
 aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){  
   
-  som_glm <- som_maps[,c(1,26:28,7:25,29:32)]
+  som_glm <- som_maps
   
   colnames(som_glm)[i] <- "response"
   
-  model_AIC <- matrix(NA,21,2)
-  model_p_val <- matrix(NA,21,2)
+  model_AIC <- matrix(NA,19,2)
+  model_p_val <- matrix(NA,19,2)
   
   
   # temperature
@@ -738,58 +745,58 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   
   # SLA
   
-  glm_mean_sla <- glm(response ~  sla_mean, data = som_glm)
-  ms_sum <- summary(glm_mean_sla)
-  model_AIC[7,2] <- ms_sum$aic
-  model_AIC[7,1] <- "Mean SLA"
-  
-  glm_coeff_sla <- glm(response ~  sla_coeff, data = som_glm)
-  cs_sum <- summary(glm_coeff_sla)
-  model_AIC[16,2] <- cs_sum$aic
-  model_AIC[16,1] <- "Coeff. Var. SLA"
+  # glm_mean_sla <- glm(response ~  sla_mean, data = som_glm)
+  # ms_sum <- summary(glm_mean_sla)
+  # model_AIC[7,2] <- ms_sum$aic
+  # model_AIC[7,1] <- "Mean SLA"
+  # 
+  # glm_coeff_sla <- glm(response ~  sla_coeff, data = som_glm)
+  # cs_sum <- summary(glm_coeff_sla)
+  # model_AIC[16,2] <- cs_sum$aic
+  # model_AIC[16,1] <- "Coeff. Var. SLA"
   
   # MLD
   
   glm_mean_mld <- glm(response ~  MLD_mean, data = som_glm)
   ms_sum <- summary(glm_mean_mld)
-  model_AIC[8,2] <- ms_sum$aic
-  model_AIC[8,1] <- "Mean MLD"
+  model_AIC[7,2] <- ms_sum$aic
+  model_AIC[7,1] <- "Mean MLD"
   
   glm_coeff_mld <- glm(response ~  MLD_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_mld)
-  model_AIC[17,2] <- cs_sum$aic
-  model_AIC[17,1] <- "Coeff. Var. MLD"
+  model_AIC[16,2] <- cs_sum$aic
+  model_AIC[16,1] <- "Coeff. Var. MLD"
   
   # NC Depth
   
   glm_mean_nc <- glm(response ~  NC_mean, data = som_glm)
   ms_sum <- summary(glm_mean_nc)
-  model_AIC[9,2] <- ms_sum$aic
-  model_AIC[9,1] <- "Mean NCD"
+  model_AIC[8,2] <- ms_sum$aic
+  model_AIC[8,1] <- "Mean NCD"
   
   glm_coeff_nc <- glm(response ~  NC_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_nc)
-  model_AIC[18,2] <- cs_sum$aic
-  model_AIC[18,1] <- "Coeff. Var. NCD"
+  model_AIC[17,2] <- cs_sum$aic
+  model_AIC[17,1] <- "Coeff. Var. NCD"
   
   # Distance to Coast
   
   glm_mean_dc <- glm(response ~  Dist_mean, data = som_glm)
   ms_sum <- summary(glm_mean_dc)
-  model_AIC[19,2] <- ms_sum$aic
-  model_AIC[19,1] <- "Distance to Coast"
+  model_AIC[18,2] <- ms_sum$aic
+  model_AIC[18,1] <- "Distance to Coast"
   
   # Chlorophyll
   
   glm_mean_chl <- glm(response ~  Chl_mean, data = som_glm)
   ms_sum <- summary(glm_mean_chl)
-  model_AIC[20,2] <- ms_sum$aic
-  model_AIC[20,1] <- "Mean Chl-a"
+  model_AIC[9,2] <- ms_sum$aic
+  model_AIC[9,1] <- "Mean Chl-a"
   
   glm_coeff_chl <- glm(response ~  Chl_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_chl)
-  model_AIC[21,2] <- cs_sum$aic
-  model_AIC[21,1] <- "Coeff. Var. Chl-a"
+  model_AIC[19,2] <- cs_sum$aic
+  model_AIC[19,1] <- "Coeff. Var. Chl-a"
   
   return(model_AIC)
   
@@ -804,7 +811,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
                                                      "Eukaryotic\n Phytoplankton", "Heterotrophic\n Eukaryotes", 
                                                      "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea", "Diatoms",
                                                      "Dinoflagellates", "Syndiniales", "Haptophytes", "Metazoans"),
-                                  minimum_tp = 8, width_plot = 15,
+                                  minimum_tp = 4, width_plot = 15,
                                   figure_name = paste0("figures/full_aic_table_logit_",Sys.Date(),".pdf"),
                                   figure_name_2 = paste0("figures/full_aic_plot_logit_",Sys.Date(),".pdf"),
                                   title_name = "Variable Importance"){
@@ -815,11 +822,11 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   for (i in 1:length(in_group_list)) {
     
     load(paste0("output/",in_group_list[i], "_map.Rdata"))
-    som_maps <- som_maps[which(som_maps$n_samps > (minimum_tp-1)),]
-    AIC_table <- aic_table_func(som_maps = som_maps)
+    som_maps2 <- som_maps[which(som_maps$n_samps > (minimum_tp-1)),]
+    AIC_table <- aic_table_func(som_maps = som_maps2)
     AIC_table <- as.data.frame(AIC_table)
     colnames(AIC_table) <- c("Variables","AIC")
-    AIC_table <- AIC_table[c(1,3,4,5,6,20,9,10,12,13,14,15,21,18,19),]
+    AIC_table <- AIC_table[c(1,3,4,5,6,9,8,10,12,13,14,15,19,17,18),]
     AIC_table[,2] <- as.numeric(as.character(AIC_table[,2]))
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     
@@ -929,7 +936,7 @@ full_aic_table_figure_diversity <- function(in_group_list = c("cyano_16s","flavo
     AIC_table <- aic_table_func_diveristy(som_maps = som_maps, i = col)
     AIC_table <- as.data.frame(AIC_table, stringsAsFactors = FALSE)
     colnames(AIC_table) <- c("Variables","AIC")
-    AIC_table <- AIC_table[c(1,3,4,5,6,20,9,10,12,13,14,15,21,18,19),]
+    AIC_table <- AIC_table[c(1,3,4,5,6,9,8,10,12,13,14,15,19,17,18),]
     AIC_table[,2] <- as.numeric(AIC_table[,2])
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     
@@ -1032,6 +1039,8 @@ physical_fig()
 
 #### SOM Maps ####
 
+# All
+
 in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
                   "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                   "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
@@ -1047,7 +1056,7 @@ in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodob
 for (i in 1:length(in_group_list)) {
   
   som_figure(map_file = paste0("output/",in_group_list[i],"_map.Rdata"),
-             figure_name = paste0("figures/som_maps/", in_group_list[i],"_",Sys.Date(),".pdf"),
+             figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot.pdf"),
              main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore")
   
 }
@@ -1128,83 +1137,80 @@ for (i in 1:length(in_group_list)) {
 
 #### AIC Figures ####
 
-full_aic_table_figure(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
+full_aic_table_figure(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                         "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                         "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea",
+                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
                                          "Diatoms",
                                          "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                      minimum_tp = 8, width_plot = 18,
+                      minimum_tp = 4, width_plot = 16,
                       figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit",".pdf"),
                       title_name = "Variable Importance")
 
-full_aic_table_figure(in_group_list = c("bacteria_m_euks_16s", "cyano_16s","plastid_16s",
+full_aic_table_figure(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
                                         "euks_hetero_18sv9"),
-                      in_group_names = c("Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
+                      in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
                                          "Eukaryotic\n Protists"),
-                      minimum_tp = 8, width_plot = 8,
+                      minimum_tp = 4, width_plot = 10,
                       figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit",".pdf"),
                       title_name = "Variable Importance")
 
 
-
 # Diversity
 
-full_aic_table_figure_diversity(in_group_list = c("cyano_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                                                  "plastid_16s", "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                  "hapto_18sv9", "metazoa_18sv9"),
-                                in_group_names = c("Cyanobacteria", "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea",
-                                                   "Eukaryotic\n Plastids", "Diatoms",
-                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Metazoans"),
+full_aic_table_figure_diversity(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
+                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
+                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
+                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
+                                                   "Diatoms",
+                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
                                 figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit_even",".pdf"),
                                 title_name = "Variable Importance Evenness", # col 2 = even, col 3 = shan col 4 = rich
                                 col = 2, color_fill = "purple")
 
-full_aic_table_figure_diversity(in_group_list = c("cyano_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                                                  "plastid_16s", "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                  "hapto_18sv9", "metazoa_18sv9"),
-                                in_group_names = c("Cyanobacteria", "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea",
-                                                   "Eukaryotic\n Plastids", "Diatoms",
-                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Metazoans"),
+full_aic_table_figure_diversity(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
+                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
+                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
+                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
+                                                   "Diatoms",
+                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
                                 figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit_shannon",".pdf"),
-                                title_name = "Variable Importance Shannon", # col 2 = even, col 3 = shan col 4 = rich
+                                title_name = "Variable Importance Shannon Diversity", # col 2 = even, col 3 = shan col 4 = rich
                                 col = 3, color_fill = "red")
 
-full_aic_table_figure_diversity(in_group_list = c("cyano_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                                                  "plastid_16s", "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                  "hapto_18sv9", "metazoa_18sv9"),
-                                in_group_names = c("Cyanobacteria", "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea",
-                                                   "Eukaryotic\n Plastids", "Diatoms",
-                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Metazoans"),
+full_aic_table_figure_diversity(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
+                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
+                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
+                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
+                                                   "Diatoms",
+                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
                                 figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit_rich",".pdf"),
                                 title_name = "Variable Importance Richness", # col 2 = even, col 3 = shan col 4 = rich
                                 col = 4, color_fill = "blue")
 
 # Basic Groups
 
-full_aic_table_figure_diversity(in_group_list = c("bacteria_m_euks_16s", "cyano_16s","plastid_16s",
+full_aic_table_figure_diversity(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
                                                    "euks_hetero_18sv9"),
-                                in_group_names = c("Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
+                                in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
                                                    "Eukaryotic\n Protists"),
                                 figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit_even",".pdf"),
                                 title_name = "Variable Importance Evenness", # col 2 = even, col 3 = shan col 4 = rich
                                 col = 2, color_fill = "purple", width_plot = 8)
 
-full_aic_table_figure_diversity(in_group_list = c("bacteria_m_euks_16s", "cyano_16s","plastid_16s",
+full_aic_table_figure_diversity(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
                                                    "euks_hetero_18sv9"),
-                                in_group_names = c("Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
+                                in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
                                                    "Eukaryotic\n Protists"),
                                 figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit_shannon",".pdf"),
                                 title_name = "Variable Importance\nShannon Diversity", # col 2 = even, col 3 = shan col 4 = rich
                                 col = 3, color_fill = "red", width_plot = 8)
 
-full_aic_table_figure_diversity(in_group_list = c("bacteria_m_euks_16s", "cyano_16s","plastid_16s",
+full_aic_table_figure_diversity(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
                                                   "euks_hetero_18sv9"),
-                                in_group_names = c("Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
+                                in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
                                                    "Eukaryotic\n Protists"),
                                 figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit_rich",".pdf"),
                                 title_name = "Variable Importance Richness", # col 2 = even, col 3 = shan col 4 = rich
                                 col = 4, color_fill = "blue", width_plot = 8)
-
-
 

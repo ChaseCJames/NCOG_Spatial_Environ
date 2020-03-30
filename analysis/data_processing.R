@@ -23,14 +23,14 @@ excludes <- read.delim("data/exclude_samples.txt", header = FALSE)
 
 ####### Splitting 16s plastids and everything else #####
 
-# read in 16s
-sixteen_s <- read.csv("data/16s_asv_count_tax_final.csv", stringsAsFactors = FALSE)
+# read in 16s (2014-2019)
+sixteen_s <- read.csv("data/16_asv_count_tax_final_19.csv", stringsAsFactors = FALSE)
 
 six_id_names <- sixteen_s$Feature.ID
 
 six_tax_id <- sixteen_s[,c(1,(ncol(sixteen_s)-3):ncol(sixteen_s))]
 
-sixteen_s <- sixteen_s[,-c(1,(ncol(sixteen_s)-30):ncol(sixteen_s))]
+sixteen_s <- sixteen_s[,-c(1,656:670,863:884,1033:1036)]
 
 sixteen_s <- apply(sixteen_s, 2, as.numeric)
 
@@ -231,7 +231,7 @@ save(scaled_inputs, syne_sixteen, six_tax_id, asv_table, file = "data/16s_syne.R
 
 ###### Splitting 18sv9 between autotrophs and everything else #####
 
-eighteen_s <- read.csv("data/18sV9_asv_count_tax_final.csv", stringsAsFactors = FALSE)
+eighteen_s <- read.csv("data/18Sv9_asv_count_tax_final_19.csv", stringsAsFactors = FALSE)
 
 eight_id_names <- eighteen_s$Feature.ID
 
@@ -250,7 +250,7 @@ eight_tp <- rownames(eighteen_s)
 colnames(eighteen_s) <- eight_id_names
 
 # remove mocks from data and rows with no reads
-eighteen_s <- eighteen_s[-c(479:491,669:680,873:878),]
+eighteen_s <- eighteen_s[-c(479:489,667:678,871:880),]
 
 # remove bad samples
 eighteen_s <- eighteen_s[-which(!is.na(match(rownames(eighteen_s), paste0("X",excludes$V1)))),]
@@ -260,15 +260,15 @@ eighteen_s <- eighteen_s[-which(!is.na(match(rownames(eighteen_s), paste0("X",ex
 id_vector <- vector()
 
 for (i in 1:nrow(eight_tax_id)) {
-  val <- which.max(c(eight_tax_id$Confidence_Silva[[i]], eight_tax_id$Confidence_PR2[[i]]))
+  val <- which.max(c(eight_tax_id$Silva_Confidence[[i]], eight_tax_id$PR2_Confidence[[i]]))
   if(val == 1){a = 4}else{a = 2}
   id_vector[i] <- eight_tax_id[i,a]
 }
 
 eight_tax_id$Taxon <- id_vector
 
-split_taxa <- separate(eight_tax_id, Taxon_PR2, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
-split_silva <- separate(eight_tax_id, Taxon_Silva, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
+split_taxa <- separate(eight_tax_id, PR2_Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
+split_silva <- separate(eight_tax_id, Silva_Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
 
 euks <- which(split_silva$A == "D_0__Eukaryota" | split_silva$A == "Unassigned")
 
@@ -291,7 +291,11 @@ eight_auto <- eighteen_s[,autotrophs]
 non_auto <- 1:ncol(eighteen_s)
 non_auto <- non_auto[-autotrophs]
 
-eight_hetero <- eighteen_s[,c(non_auto, which(split_taxa$C != "Metazoa"))]
+non_meta <- which(split_taxa$C != "Metazoa")
+
+eight_hetero <- eighteen_s[,unique(non_auto,non_meta)]
+
+
 
 diatom_eighteen <- eighteen_s[,which(split_taxa$D == "Bacillariophyta")]
 
@@ -320,6 +324,7 @@ syndin_sums[which(syndin_sums == 0)] <- 1
 hapto_sums[which(hapto_sums == 0)] <- 1
 metazoa_sums[which(metazoa_sums == 0)] <- 1
 chloro_sums[which(chloro_sums == 0)] <- 1
+hetero_sums[which(hetero_sums == 0)] <- 1
 
 auto_copy <- eight_auto
 hetero_copy <- eight_hetero

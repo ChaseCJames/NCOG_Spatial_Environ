@@ -18,13 +18,15 @@ library(geosphere)
 library(viridis)
 
 diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
-                                   in_map = "output/euks_auto_18sv9_map.Rdata",
-                                   out_diff_file = "output/euks_auto_18sv9_diffs_div.Rdata",
-                                   title = "Eukaryotic Phytoplankton",
-                                   upwelling_index = "output/upwelling_indicies.Rdata"){
+                                 in_map = "output/euks_auto_18sv9_map.Rdata",
+                                 in_raw = "data/18s_autotrophic_euks.Rdata",
+                                 out_diff_file = "output/euks_auto_18sv9_diffs_div.Rdata",
+                                 title = "Eukaryotic Phytoplankton",
+                                 upwelling_index = "output/upwelling_indicies.Rdata",
+                                 index_plot = "figures/euks_auto_18sv9_index_plot_div.pdf"){
   
   load(in_file)
-  load(similar_mat)
+  load(in_raw)
   
   full_dat$Year <- as.numeric(substr(full_dat$Cruise,1,4))
   
@@ -33,7 +35,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   full_dat$ML_NC <- full_dat$MLD_Sigma - full_dat$NCDepth
   
   early_som_maps <- full_dat %>% 
-    filter(Year < 2017) %>%
+    filter(Year < 2017 | Year == 2019) %>%
     group_by(Sta_ID) %>%
     summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
@@ -61,7 +63,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   early_dist <- distHaversine(centroid1@coords, centroid2@coords)/100
   
   late_som_maps <- full_dat %>% 
-    filter(Year > 2016) %>%
+    filter(Year > 2016 & Year < 2019) %>%
     group_by(Sta_ID) %>%
     summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
@@ -156,22 +158,46 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   som_cruise$NC_slope <- results$coef
   
-  som_cruise$phase <- c(rep("Early",12),rep("Late",8))
-  som_cruise$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),5))
+  som_cruise$phase <- c(rep("2014-2016",12),rep("2017-2018",8), rep("2019",4))
+  som_cruise$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),6))
   som_cruise$season <- factor(som_cruise$season, levels = c("Winter", "Spring", "Summer", "Fall"))
+  
+  # total diversity stats
+  
+  asv_table$cruise <- substr(rownames(asv_table),2,7)
+  
+  asv_cruise <- asv_table %>% group_by(cruise) %>% summarise_all(list(~ sum(.,na.rm = TRUE)))
+  
+  asv_cruise$total_div <- diversity(asv_cruise[,-1], MARGIN = 1, index = "shannon")
+  
+  som_cruise$total_shannon <- asv_cruise$total_div[match(som_cruise$Cruise, asv_cruise$cruise)]
+  
   
   gradient_plot <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "phase", shape = "season"), data = som_cruise) +
-    scale_color_manual(values = c("red", "blue")) +
+    scale_color_manual(values = c("red", "blue", "gold3")) +
     scale_shape_manual(values = c(0,1,2,3)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Phase", color = "Season") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Mean Shannon Diversity\nPer Cruise") + ggtitle(title)
   
   print(gradient_plot)
+  
+  gradient_plot2 <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "total_shannon")) +
+    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
+    geom_point(size = 3, aes_string(color = "phase", shape = "season"), data = som_cruise) +
+    scale_color_manual(values = c("red", "blue", "gold3")) +
+    scale_shape_manual(values = c(0,1,2,3)) + 
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust = 0.5)) +
+    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Total Shannon Diversity\nPer Cruise") + ggtitle(title)
+  
+  print(gradient_plot2)
 
   ts_plot <- ggplot(som_cruise, aes_string(x = "Date", y = "shannon")) +
     geom_line(color = "black", size = 1) +
@@ -185,6 +211,19 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     ylab("Mean Shannon Diversity\nPer Cruise")  + ggtitle(title)
 
   print(ts_plot)
+  
+  ts_plot2 <- ggplot(som_cruise, aes_string(x = "Date", y = "total_shannon")) +
+    geom_line(color = "black", size = 1) +
+    geom_point(size = 3, aes_string(color = "season"), data = som_cruise) +
+    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
+    scale_shape_manual(values = c(15,17)) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust=0.5)) +
+    labs(shape = "Phase", color = "Season") + xlab("Date") +
+    ylab("Mean Shannon Diversity\nPer Cruise")  + ggtitle(title)
+  
+  print(ts_plot2)
 
   load(upwelling_index)
 
@@ -215,7 +254,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) +
+    scale_shape_manual(values = c(15,17,18)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -226,7 +265,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) +
+    scale_shape_manual(values = c(15,17,18)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -238,7 +277,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) +
+    scale_shape_manual(values = c(15,17,18)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -250,7 +289,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) +
+    scale_shape_manual(values = c(15,17,18)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -261,7 +300,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17)) +
+    scale_shape_manual(values = c(15,17,18)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -279,11 +318,26 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   print(index_plots)
   dev.off()
 
-  save(early_dist, late_dist, diversity_diff, even_diff, gradient_plot, ts_plot,
+  save(early_dist, late_dist, diversity_diff, even_diff, 
+       gradient_plot, ts_plot, gradient_plot2, ts_plot2,
        cuti_plot, beuti_plot, reg_nitrate, file = out_diff_file)
   
 }
 
+
+# 16s
+
+in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
+                  "bacteria_m_euks_16s", "plastid_16s", "cyano_16s")
+
+in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
+                        "16s_bacteria_m_euks", "16s_plastids", "16s_cyanos")
+
+in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
+                   "Sar Clade", "Archaea", "Bacteria",
+                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria")
+
+# All
 
 in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
                   "diatom_18sv9","dino_18sv9", "syndin_18sv9",
@@ -296,14 +350,20 @@ in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodob
                    "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
                    "Eukaryotic Protists")
 
+in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
+                        "18s_diatom","18s_dino", "18s_syndin",
+                        "18s_hapto", "18s_chloro", "18s_metazoa", "16s_bacteria_m_euks",
+                        "16s_plastids", "16s_cyanos", "18s_heterotrophic_euks")
+
 for (i in 1:length(in_group_list)) {
   
   diversity_comparison(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
                          in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                         in_raw = paste0("data/", in_group_list_basic[i],".Rdata"),
                          out_diff_file = paste0("output/",in_group_list[i],"_diffs_div.Rdata"),
                          title = in_group_names[i],
                          upwelling_index = "output/upwelling_indicies.Rdata",
-                         index_plot = paste0("figures/",in_group_list[i],"_index_plot.pdf"))
+                         index_plot = paste0("figures/",in_group_list[i],"_index_plot_div.pdf"))
   
 }
 
@@ -316,7 +376,9 @@ diversity_plots <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
                               in_cyano_full = "output/cyano_16s_map.Rdata",
                               in_bact_full = "output/bacteria_m_euks_16s_map.Rdata",
                               gradient_plot_file = "figures/gradient_plot_div.pdf",
-                              time_series_plot = "figures/ts_plot_div.pdf"){
+                              time_series_plot = "figures/ts_plot_div.pdf",
+                              gradient_plot_file2 = "figures/gradient_plot_total_div.pdf",
+                              time_series_plot2 = "figures/ts_plot_total_div.pdf"){
 
   dist <- as.data.frame(matrix(NA,4,3))
   colnames(dist) <- c("Early", "Late", "Diff")
@@ -325,7 +387,8 @@ diversity_plots <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
   load(in_phyto_full)
   phyto_ts <- ts_plot
   phyto_gradient <- gradient_plot
-
+  phyto_ts2 <- ts_plot2
+  phyto_gradient2 <- gradient_plot2
   phyto_full <- som_maps
   
   
@@ -333,18 +396,24 @@ diversity_plots <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
   load(in_euks_full)
   euk_ts <- ts_plot
   euk_gradient <- gradient_plot
+  euk_ts2 <- ts_plot2
+  euk_gradient2 <- gradient_plot2
   euk_full <- som_maps
   
   load(in_cyano)
   load(in_cyano_full)
   cyano_ts <- ts_plot
   cyano_gradient <- gradient_plot
+  cyano_ts2 <- ts_plot2
+  cyano_gradient2 <- gradient_plot2
   cyano_full <- som_maps
   
   load(in_bact)
   load(in_bact_full)
   bact_ts <- ts_plot
   bact_gradient <- gradient_plot
+  bact_ts2 <- ts_plot2
+  bact_gradient2 <- gradient_plot2
   bact_full <- som_maps
   
   legs <- get_legend(phyto_gradient)
@@ -363,6 +432,22 @@ diversity_plots <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
   print(grad_plot)
   dev.off()
   
+  legs2 <- get_legend(phyto_gradient2)
+  phyto_gradient2 <- phyto_gradient2 + theme(legend.position = "none") + xlab("")  + 
+    ylab("Total Shannon Diversity\nPer Cruise")
+  euk_gradient2 <- euk_gradient2 + theme(legend.position = "none") + xlab("") + ylab("")
+  cyano_gradient2 <- cyano_gradient2 + theme(legend.position = "none")  + 
+    ylab("Total Shannon Diversity\nPer Cruise") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+  bact_gradient2 <- bact_gradient2 + theme(legend.position = "none") + ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+  
+  grad_plot2 <- plot_grid(plot_grid(phyto_gradient2, euk_gradient2,
+                                   cyano_gradient2, bact_gradient2),
+                         legs2, ncol = 2, rel_widths = c(1,0.2))
+  
+  pdf(file = gradient_plot_file2, width = 9, height = 7)
+  print(grad_plot2)
+  dev.off()
+  
   ts_leg <- get_legend(phyto_ts)
   phyto_ts <- phyto_ts + theme(legend.position = "none") + xlab("")
   euk_ts <- euk_ts + theme(legend.position = "none") + xlab("")
@@ -374,6 +459,20 @@ diversity_plots <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
 
   pdf(file = time_series_plot, width = 8, height = 12)
   print(ts_plot)
+  dev.off()
+  
+  
+  ts_leg2 <- get_legend(phyto_ts2)
+  phyto_ts2 <- phyto_ts2 + theme(legend.position = "none") + xlab("")
+  euk_ts2 <- euk_ts2 + theme(legend.position = "none") + xlab("")
+  cyano_ts2 <- cyano_ts2 + theme(legend.position = "none") + xlab("")
+  bact_ts2 <- bact_ts2 + theme(legend.position = "none")
+  
+  ts_plot2 <- plot_grid(plot_grid(phyto_ts2, euk_ts2, cyano_ts2, bact_ts2, nrow = 4), ts_leg2,
+                       ncol = 2, rel_widths = c(1,0.2))
+  
+  pdf(file = time_series_plot2, width = 8, height = 12)
+  print(ts_plot2)
   dev.off()
   
 }
