@@ -325,17 +325,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
 }
 
 
-# 16s
 
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "bacteria_m_euks_16s", "plastid_16s", "cyano_16s")
-
-in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
-                        "16s_bacteria_m_euks", "16s_plastids", "16s_cyanos")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria")
 
 # All
 

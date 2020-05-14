@@ -9,7 +9,6 @@ library(ggmap)
 library(cowplot)
 library(reshape2)
 library(metR)
-library(oce)
 library(zoo)
 library(lubridate)
 library(fpp2)
@@ -108,11 +107,10 @@ cuti_plot <- ggplot(cuti_df, aes(x = Date, y = Value, color = Index)) + geom_lin
   ylab("Coastal Upwelling Transport Index\n(CUTI)")
 
 yearly_cuti <- ggplot(cuti_df, aes(x = Year_Day, y = month2_MA, group = interaction(Year, Phase), color = Year)) +
-  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2","gold2")) +
+  geom_line(size = 1, lty = 4) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2","black")) +
   theme(panel.background = element_blank(),
-        panel.border = element_rect(fill = NA, color = "black"),
-        legend.position = "none") +
-  ylab("Coastal Upwelling Transport Index\n(CUTI)") + xlab("Year Day")
+        panel.border = element_rect(fill = NA, color = "black")) +
+  ylab("Coastal Upwelling\nTransport Index\n(CUTI)") + xlab("Year Day")
 
 beuti_df <- filter(index_vals, Index == "BEUTI")
 
@@ -133,9 +131,8 @@ beuti_plot <- ggplot(beuti_df, aes(x = Date, y = Value, color = Index)) + geom_l
 yearly_beuti <- ggplot(beuti_df, aes(x = Year_Day, y = month2_MA, group = interaction(Year, Phase), color = Year)) +
   geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2")) +
   theme(panel.background = element_blank(),
-        panel.border = element_rect(fill = NA, color = "black"),
-        legend.position = "none") +
-  ylab("Biologically Effective Upwelling Transport Index\n(BEUTI)") + xlab("Year Day")
+        panel.border = element_rect(fill = NA, color = "black")) +
+  ylab("Biologically Effective Upwelling\n Transport Index\n(BEUTI)") + xlab("Year Day")
 
 nitrate_df <- filter(index_vals, Index == "Nitrate")
 
@@ -169,16 +166,14 @@ yearly_nitrate1 <- ggplot(nitrate_df, aes(x = Year_Day, y = month2_MA, group = i
 legend_1 <- get_legend(yearly_nitrate)
 legend_2 <- get_legend(yearly_nitrate1)
 
-yearly_nitrate <- yearly_nitrate + theme(legend.position = "none")
-
 # pdf(file = "figures/coastal_upwelling_indicies.pdf", width = 12, height = 4)
 # print(plot_grid(cuti_plot, beuti_plot, nitrate_plot, ncol = 3))
 # dev.off()
 
-pdf("figures/yearly_upwelling_index.pdf", width = 12, height = 4)
-plot_grid(yearly_cuti,yearly_beuti,yearly_nitrate,legend_1,
-          ncol = 4, rel_widths = c(1,1,1,0.2))
-dev.off()
+# pdf("figures/yearly_upwelling_index.pdf", width = 12, height = 4)
+# plot_grid(yearly_cuti,yearly_beuti,yearly_nitrate,legend_1,
+#           ncol = 4, rel_widths = c(1,1,1,0.2))
+# dev.off()
 
 index_vals_mat <- as.data.frame(matrix(NA,length(regional_BEUTI),4))
 
@@ -197,7 +192,7 @@ cuti_ma <- ggplot() +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "none") +
-  ylab("Coastal Upwelling Transport Index\n(CUTI)") +
+  ylab("Coastal Upwelling\nTransport Index\n(CUTI)") +
   scale_x_date(breaks = pretty_breaks(6)) + xlab("")
 
 beuti_ma <- ggplot() +
@@ -206,7 +201,7 @@ beuti_ma <- ggplot() +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "none") +
-  ylab("Biologically Effective Upwelling Transport Index\n(BEUTI)") + 
+  ylab("Biologically Effective Upwelling\nTransport Index\n(BEUTI)") + 
   scale_x_date(breaks = pretty_breaks(6)) + xlab("")
 
 nitrate_ma <- ggplot() +
@@ -220,10 +215,10 @@ nitrate_ma <- ggplot() +
 
 title_plot <- ggdraw() + draw_label("Upwelling Indicies\n2014-2018", fontface='bold')
 
-pdf("figures/upwelling_indicies_time.pdf", width = 5, height = 12)
-plot_grid(title_plot, cuti_ma, beuti_ma, nitrate_ma, nrow = 4,
-          rel_heights = c(0.2,1,1,1))
-dev.off()
+# pdf("figures/upwelling_indicies_time.pdf", width = 5, height = 12)
+# plot_grid(title_plot, cuti_ma, beuti_ma, nitrate_ma, nrow = 4,
+#           rel_heights = c(0.2,1,1,1))
+# dev.off()
 
 cuti_ma_bw <- ggplot() + 
   geom_point(data = cuti_df, aes(x = Date, y = Value), color = "grey", alpha = 0.5) +
@@ -231,7 +226,7 @@ cuti_ma_bw <- ggplot() +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "none") +
-  ylab("Coastal Upwelling Transport Index\n(CUTI)") +
+  ylab("Coastal Upwelling\nTransport Index\n(CUTI)") +
   scale_x_date(breaks = pretty_breaks(6)) + xlab("")
 
 beuti_ma_bw <- ggplot() +
@@ -240,7 +235,7 @@ beuti_ma_bw <- ggplot() +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "none") +
-  ylab("Biologically Effective Upwelling Transport Index\n(BEUTI)") + 
+  ylab("Biologically Effective Upwelling\nTransport Index\n(BEUTI)") + 
   scale_x_date(breaks = pretty_breaks(6)) + xlab("")
 
 nitrate_ma_bw <- ggplot() +
@@ -264,10 +259,10 @@ yearly_nitrate <- yearly_nitrate  + ylab("")
 side_panel_b <- plot_grid(title_plot2,yearly_cuti,yearly_beuti,yearly_nitrate,legend_2,
           nrow = 5, rel_heights = c(0.2,1,1,1,0.2))
 
-pdf("figures/full_upwelling_figure.pdf", width = 12, height = 12)
-plot_grid(side_panel_a, side_panel_b, labels = c("A.", "B."), ncol = 2)
-dev.off()
+# pdf("figures/full_upwelling_figure.pdf", width = 12, height = 12)
+# plot_grid(side_panel_a, side_panel_b, labels = c("A.", "B."), ncol = 2)
+# dev.off()
 
 save(index_vals_mat, file = "output/upwelling_indicies.Rdata")
 
-
+save(cuti_ma_bw, beuti_ma_bw, nitrate_ma_bw,yearly_cuti,yearly_beuti, yearly_nitrate, file = "output/upwelling_plots.Rdata")

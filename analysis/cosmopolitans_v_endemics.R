@@ -2,8 +2,8 @@ library(tidyverse)
 library(rworldmap)
 library(ggplot2)
 library(ggmap)
-library(cowplot)
 library(scales)
+library(patchwork)
 
 station_cosmo_endemics <- function(in_data = "data/16s_cyanos.Rdata",
                              output = "output/cyano_16s_cosmo_end.Rdata",
@@ -36,7 +36,6 @@ station_rel <- scale_gather %>%
   group_by(station, ASV) %>%
   summarise(mean_rel = mean(Count,na.rm = TRUE))
 
-
 wide_station <- pivot_wider(station_sums, names_from = ASV, values_from = total_count)
 
 # Cosmopolitans
@@ -60,10 +59,10 @@ cosmo_names <- six_tax_id$Silva_Taxon[which(!is.na(match(six_tax_id$Feature.ID, 
 if(type == "eight"){
   eight_tax_id$Feature.ID[which(!is.na(match(eight_tax_id$Feature.ID, names(cosmos))))]
   if(type2 == "auto"){
-    cosmo_names <- eight_tax_id$Taxon_PR2[which(!is.na(match(eight_tax_id$Feature.ID, names(cosmos))))]
+    cosmo_names <- eight_tax_id$PR2_Taxon[which(!is.na(match(eight_tax_id$Feature.ID, names(cosmos))))]
   }
   if(type2 == "hetero"){
-    cosmo_names <- eight_tax_id$Taxon_Silva[which(!is.na(match(eight_tax_id$Feature.ID, names(cosmos))))]
+    cosmo_names <- eight_tax_id$Silva_Taxon[which(!is.na(match(eight_tax_id$Feature.ID, names(cosmos))))]
   }
 }
 
@@ -81,10 +80,10 @@ if(type == "six"){
 if(type == "eight"){
   eight_tax_id$Feature.ID[which(!is.na(match(eight_tax_id$Feature.ID, names(endemics))))]
   if(type2 == "auto"){
-    end_names <- eight_tax_id$Taxon_PR2[which(!is.na(match(eight_tax_id$Feature.ID, names(endemics))))]
+    end_names <- eight_tax_id$PR2_Taxon[which(!is.na(match(eight_tax_id$Feature.ID, names(endemics))))]
   }
   if(type2 == "hetero"){
-    end_names <- eight_tax_id$Taxon_Silva[which(!is.na(match(eight_tax_id$Feature.ID, names(endemics))))]
+    end_names <- eight_tax_id$Silva_Taxon[which(!is.na(match(eight_tax_id$Feature.ID, names(endemics))))]
   }
 }
 
@@ -119,6 +118,10 @@ station_cosmo_endemics(in_data = "data/18s_autotrophic_euks.Rdata",
 station_cosmo_endemics(in_data = "data/18s_heterotrophic_euks.Rdata",
                        output = "output/euks_hetero_18sv9_cosmo_end.Rdata",
                        type = "eight", type2 = "hetero")
+
+station_cosmo_endemics(in_data = "data/16s_archaea.Rdata",
+                       output = "output/archaea_16s_cosmo_end.Rdata",
+                       type = "six", type2 = NULL)
 
 
 
@@ -206,27 +209,34 @@ cyano_out <- cosmo_endemic_figs(in_cosmo = "output/cyano_16s_cosmo_end.Rdata",
 
 bact_out <- cosmo_endemic_figs(in_cosmo = "output/bacter_m_euks_16s_cosmo_end.Rdata",
                    in_map = "output/bacteria_m_euks_16s_map.Rdata",
-                   name = "Bacteria/Archaea")
+                   name = "Bacteria")
 
 auto_out <- cosmo_endemic_figs(in_cosmo = "output/euks_auto_18sv9_cosmo_end.Rdata",
                    in_map = "output/euks_auto_18sv9_map.Rdata",
-                   name = "Eukaryotic Phytoplankton")
+                   name = "Photosynthetic Eukaryotic Protist")
 
 hetero_out <- cosmo_endemic_figs(in_cosmo = "output/euks_hetero_18sv9_cosmo_end.Rdata",                 
                    in_map = "output/euks_hetero_18sv9_map.Rdata",
-                   name = "Heterotrophic Eukaryotes")
+                   name = "Heterotrophic Eukaryotic Protists")
+
+archea_out <- cosmo_endemic_figs(in_cosmo = "output/archaea_16s_cosmo_end.Rdata",                 
+                                 in_map = "output/archaea_16s_map.Rdata",
+                                 name = "Archaea")
 
 
-pdf(file = "figures/endemics_fig.pdf", width = 8, height = 8)
-plot_grid(auto_out$endemic_plot, hetero_out$endemic_plot,
-          cyano_out$endemic_plot, bact_out$endemic_plot,
-          ncol = 2 , nrow = 2)
+end_plot <- auto_out$endemic_plot + hetero_out$endemic_plot + plot_spacer() +
+            cyano_out$endemic_plot + bact_out$endemic_plot + archea_out$endemic_plot
+
+pdf(file = "figures/endemics_fig.pdf", width = 12, height = 8)
+print(end_plot)
 dev.off()
 
-pdf(file = "figures/endemics_samp_fig.pdf", width = 8, height = 8)
-plot_grid(auto_out$sample_plot, hetero_out$sample_plot,
-          cyano_out$sample_plot, bact_out$sample_plot,
-          ncol = 2 , nrow = 2)
+samp_plot <- auto_out$sample_plot + hetero_out$sample_plot + plot_spacer() +
+             cyano_out$sample_plot + bact_out$sample_plot + archea_out$sample_plot
+
+
+pdf(file = "figures/endemics_samp_fig.pdf", width = 12, height = 8)
+print(samp_plot)
 dev.off()
 
 load("output/cyano_16s_cosmo_end.Rdata")
@@ -235,20 +245,26 @@ cosmo_df$V1 <- cosmo_names
 cosmo_df$V2 <- mean_rel_abun_cosmos
 write.csv(cosmo_df, file = "output/cyano_16s_cosmo_names.csv")
 
+load("output/archaea_16s_cosmo_end.Rdata")
+cosmo_df <- as.data.frame(matrix(nrow = 4,ncol = 2))
+cosmo_df$V1 <- cosmo_names
+cosmo_df$V2 <- mean_rel_abun_cosmos
+write.csv(cosmo_df, file = "output/archaea_16s_cosmo_names.csv")
+
 load("output/bacter_m_euks_16s_cosmo_end.Rdata")
-cosmo_df <- as.data.frame(matrix(nrow = 33,ncol = 2))
+cosmo_df <- as.data.frame(matrix(nrow = 31,ncol = 2))
 cosmo_df$V1 <- cosmo_names
 cosmo_df$V2 <- mean_rel_abun_cosmos
 write.csv(cosmo_df, file = "output/bacter_m_euks_16s_cosmo_names.csv")
 
 load("output/euks_auto_18sv9_cosmo_end.Rdata")
-cosmo_df <- as.data.frame(matrix(nrow = 10,ncol = 2))
+cosmo_df <- as.data.frame(matrix(nrow = 11,ncol = 2))
 cosmo_df$V1 <- cosmo_names
 cosmo_df$V2 <- mean_rel_abun_cosmos
 write.csv(cosmo_df, file = "output/euks_auto_18sv9_cosmo_names.csv")
 
 load("output/euks_hetero_18sv9_cosmo_end.Rdata")
-cosmo_df <- as.data.frame(matrix(nrow = 11,ncol = 2))
+cosmo_df <- as.data.frame(matrix(nrow = 18,ncol = 2))
 cosmo_df$V1 <- cosmo_names
 cosmo_df$V2 <- mean_rel_abun_cosmos
 write.csv(cosmo_df, file = "output/euks_hetero_18sv9_cosmo_names.csv")

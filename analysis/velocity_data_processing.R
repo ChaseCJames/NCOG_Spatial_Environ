@@ -10,6 +10,7 @@ library(cowplot)
 library(reshape2)
 library(metR)
 library(oce)
+library(geosphere)
 
 # GLOBAL OCEAN GRIDDED L4 SEA SURFACE HEIGHTS AND DERIVED VARIABLES REPROCESSED (1993-ONGOING)
 # http://marine.copernicus.eu/services-portfolio/access-to-products/
@@ -138,6 +139,8 @@ for(i in 1:length(lon_grid)){
   }
 }
 
+abs_vel_mean <- abs(grid_mean_u) + abs(grid_mean_v)
+
 coeff_table_u <- melt(grid_coeff_u)
 mean_table_u <- melt(grid_mean_u)
 sd_table_u <- melt(grid_sd_u)
@@ -145,6 +148,46 @@ sd_table_u <- melt(grid_sd_u)
 coeff_table_v <- melt(grid_coeff_v)
 mean_table_v <- melt(grid_mean_v)
 sd_table_v <- melt(grid_sd_v)
+
+# first diff mean v
+
+abs_melt <- melt(abs_vel_mean)
+colnames(abs_melt) <- c("lon", "lat", "Mean")
+
+coast_calc <- vector()
+
+map <- map_data("world")  
+
+for (i in 1:nrow(abs_melt)) {
+  
+  long_lat <-  c(abs_melt$lon[i], abs_melt$lat[i])
+  
+  if (length(which(!is.na(long_lat))) == 2) {
+    
+    map_dist <- map[,1:2]
+    
+    distances <- distm(long_lat, map_dist, fun = distGeo)
+    
+    coast_calc[i] <- min(distances, na.rm = TRUE)
+    
+  }
+  
+  else{coast_calc[i] <- NA}
+  
+}
+
+abs_melt$dist_to_coast <- coast_calc/1000
+abs_melt <- abs_melt[complete.cases(abs_melt),]
+
+loess_out <- loess(Mean ~ dist_to_coast, data = abs_melt)
+
+abs_melt$smooth_fit <- predict(loess_out)
+
+abs_melt <- abs_melt[order(abs_melt$dist_to_coast, decreasing = FALSE),]
+
+plot(abs_melt$dist_to_coast, abs_melt$smooth_fit, type = "l", xlab = "Distance to Coast (km)", ylab = "Velocity (m/s)")
+
+###
 
 colnames(coeff_table_u) <- c("lon", "lat", "coeff_var")
 colnames(mean_table_u) <- c("lon", "lat", "Mean")
@@ -167,6 +210,8 @@ save(coeff_table_u = coeff_table_u, mean_table_u = mean_table_u, sd_table_u = sd
      file = "output/CALCOFI_uv_current_tables.Rdata")
 
 # Figures
+
+load("output/CALCOFI_uv_current_tables.Rdata")
 
 colnames(mean_table_u)[3] <- "Mean_U"
 colnames(mean_table_v)[3] <- "Mean_V"

@@ -16,6 +16,8 @@ library(vegan)
 library(spatialEco)
 library(geosphere)
 library(viridis)
+library(purrr)
+library(reshape2)
 
 community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
                                    similar_mat = "output/euks_auto_18sv9_dissimilar.Rdata",
@@ -353,15 +355,6 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   }
 
-
-# 16s
-
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "bacteria_m_euks_16s", "plastid_16s", "cyano_16s")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria")
 
 # All
 

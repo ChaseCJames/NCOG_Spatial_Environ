@@ -272,19 +272,23 @@ split_silva <- separate(eight_tax_id, Silva_Taxon, sep = ";", into = c("A","B","
 
 euks <- which(split_silva$A == "D_0__Eukaryota" | split_silva$A == "Unassigned")
 
-archaeplastids <- which(split_taxa$B == "Archaeplastida")
-haptophytes <- which(split_taxa$C == "Haptophyta")
-cryptophytes <- which(split_taxa$C == "Cryptophyta")
-euglenids <- which(split_taxa$E == "Euglenida")
-acantharea <- which(split_taxa$D == "Acantharea")
+chlorophytes <- which(split_taxa$C == "Chlorophyta")
 dinos_minus_syn <- which(split_taxa$C == "Dinoflagellata" &
                            split_taxa$D != "Syndiniales")
-sindins <- which(split_taxa$D == "Syndiniales")
+cryptophytes <- which(split_taxa$C == "Cryptophyta")
+haptophytes <- which(split_taxa$C == "Haptophyta")
 ochrophytes <- which(split_taxa$C == "Ochrophyta")
+cercozoa <- which(split_taxa$C == "Cercozoa" & 
+                    split_taxa$D != "Filosa-Sarcomonadea")
 
-autotrophs <- c(archaeplastids, haptophytes, cryptophytes,
-                acantharea,
-                ochrophytes)
+sindins <- which(split_taxa$D == "Syndiniales")
+
+
+
+
+
+autotrophs <- c(chlorophytes, dinos_minus_syn, cryptophytes,
+                haptophytes, ochrophytes, cercozoa)
 
 eight_auto <- eighteen_s[,autotrophs]
 
@@ -309,6 +313,12 @@ metazoa_eighteen <- eighteen_s[, which(split_taxa$C == "Metazoa")]
 
 chloro_eighteen <- eighteen_s[,which(split_taxa$C == "Chlorophyta")]
 
+# combine all
+
+eighteen_s <- eighteen_s[-which(is.na(match(rownames(eighteen_s),rownames(sixteen_s)))),]
+
+totals <- bind_cols(eighteen_s, sixteen_s)
+
 auto_sums <- rowSums(eight_auto, na.rm = TRUE)
 hetero_sums <- rowSums(eight_hetero, na.rm = TRUE)
 diatom_sums <- rowSums(diatom_eighteen, na.rm = TRUE)
@@ -317,6 +327,8 @@ syndin_sums <- rowSums(syndin_eighteen, na.rm = TRUE)
 hapto_sums <- rowSums(hapto_eighteen, na.rm = TRUE)
 metazoa_sums <- rowSums(metazoa_eighteen, na.rm = TRUE)
 chloro_sums <- rowSums(chloro_eighteen, na.rm = TRUE)
+totals_sums <- rowSums(totals, na.rm = TRUE)
+
 
 diatom_sums[which(diatom_sums == 0)] <- 1
 dino_sums[which(dino_sums == 0)] <- 1
@@ -325,6 +337,7 @@ hapto_sums[which(hapto_sums == 0)] <- 1
 metazoa_sums[which(metazoa_sums == 0)] <- 1
 chloro_sums[which(chloro_sums == 0)] <- 1
 hetero_sums[which(hetero_sums == 0)] <- 1
+auto_sums[which(auto_sums ==0)] <- 1
 
 auto_copy <- eight_auto
 hetero_copy <- eight_hetero
@@ -334,6 +347,7 @@ syndin_copy <- syndin_eighteen
 hapto_copy <- hapto_eighteen
 metazoa_copy <- metazoa_eighteen
 chloro_copy <- chloro_eighteen
+total_copy <- totals
 
 eight_auto <- as.matrix(eight_auto)
 eight_hetero <- as.matrix(eight_hetero)
@@ -343,6 +357,7 @@ syndin_eighteen <- as.matrix(syndin_eighteen)
 hapto_eighteen <- as.matrix(hapto_eighteen)
 metazoa_eighteen <- as.matrix(metazoa_eighteen)
 chloro_eighteen <- as.matrix(chloro_eighteen)
+totals <- as.matrix(totals)
 
 for (i in 1:nrow(eight_auto)){
   
@@ -354,8 +369,12 @@ for (i in 1:nrow(eight_auto)){
   hapto_eighteen[i,] <- hapto_eighteen[i,]/hapto_sums[i]
   metazoa_eighteen[i,] <- metazoa_eighteen[i,]/metazoa_sums[i]
   chloro_eighteen[i,] <- chloro_eighteen[i,]/chloro_sums[i]
-  
 }
+
+for (i in 1:nrow(totals)){
+totals[i,] <- totals[i,]/totals_sums[i]
+}
+
 
 eight_auto <- as.data.frame(eight_auto)
 eight_hetero <- as.data.frame(eight_hetero)
@@ -365,6 +384,7 @@ syndin_eighteen <- as.data.frame(syndin_eighteen)
 hapto_eighteen <- as.data.frame(hapto_eighteen)
 metazoa_eighteen <- as.data.frame(metazoa_eighteen)
 chloro_eighteen <- as.data.frame(chloro_eighteen)
+totals <- as.data.frame(totals)
 
 # autotrophic 18sv9
 
@@ -430,9 +450,12 @@ asv_table <- chloro_copy
 
 save(scaled_inputs, chloro_eighteen, eight_tax_id, asv_table, file = "data/18s_chloro.Rdata")
 
-# icthyoplankton
+# totals
 
-# load("data/icthyoplankton.Rdata")
-# 
-# icthy_mat <- spread(calcofi_filt, key = scientific_name, value = larvae_10m2, fill = 0)
+rownames(totals) <- rownames(sixteen_s)
+scaled_inputs <- totals
+scaled_inputs <- as.matrix(scaled_inputs)
+rownames(total_copy) <- rownames(sixteen_s)
+asv_table <- total_copy
 
+save(scaled_inputs, totals, asv_table, file = "data/totals.Rdata")

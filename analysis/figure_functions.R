@@ -1,6 +1,5 @@
 library(SOMbrero)
 library(tidyverse)
-library(oce)
 library(rworldmap)
 library(ggplot2)
 library(ggmap)
@@ -25,6 +24,8 @@ library(reshape2)
 library(metR)
 library(ncdf4)
 library(patchwork)
+library(MASS)
+
 
 #### SOM Figure ####
 
@@ -33,10 +34,10 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
                        main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
                        tsize = 12, psize = 6){
   
-
+  
   
   map <- map_data("world")   
-
+  
   load(map_file)
   
   # find centroids
@@ -62,7 +63,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize))
-
+  
   if(clust1 == 1){p1 <- p1 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "blue", size = 5, pch = 10)}
   if(clust1 == 2){p1 <- p1 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "blue", size = 5, pch = 10)}
   
@@ -86,7 +87,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
   
   title <- ggdraw() + draw_label(main, fontface='bold')
   a <- plot_grid(title,plot_grid(p2,p1), nrow = 2,
-            rel_heights = c(0.1,1))
+                 rel_heights = c(0.1,1))
   
   pdf(file = figure_name, width = 6, height = 4)
   print(a)
@@ -106,9 +107,9 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
 
 regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm.Rdata",
                               map_file = "output/bacteria_m_euks_16s_map.Rdata",   
-                       figure_name = "figures/glm_plots/bacteria_m_euks_16s_som_",
-                       main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
-                       var = "NC_mean", var_name = "Nitracline Depth (m)"){
+                              figure_name = "figures/glm_plots/bacteria_m_euks_16s_som_",
+                              main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
+                              var = "NC_mean", var_name = "Nitracline Depth (m)"){
   
   
   load(glm_file)
@@ -122,7 +123,7 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm.Rdata",
   
   clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
   clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
-
+  
   if(clust1 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Nearshore"}
   if(clust1 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Nearshore"}
   
@@ -151,8 +152,8 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm.Rdata",
 
 diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
                              full_dat = "output/bacteria_m_euks_16s_full_data.Rdata",
-                       figure_start = "figures/diversity/bacteria_16s_",
-                       main = "16s Bacteria"){
+                             figure_start = "figures/diversity/bacteria_16s_",
+                             main = "16s Bacteria"){
   
   
   map <- map_data("world")   
@@ -220,7 +221,7 @@ diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           legend.title = element_blank(),
           plot.title = element_text(hjust=0.5)) + xlab("") + ylab("Evenness") +
     ggtitle(paste0(main,"\nEvenness"))
-
+  
   vio_rich <- ggplot(full_dat, aes(x = som_id, y = richness, fill = som_id)) +
     geom_violin() + geom_boxplot(width=0.1, fill = "white") +
     scale_fill_manual(values = c("red", "blue")) + 
@@ -287,7 +288,7 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
   
   asv_sums$station <- full_dat$Sta_ID[match(rownames(asv_sums), full_dat$eco_name)]
   
-  asv_sums <- asv_sums[which(!is.na(asv_sums$station)),]
+  if(length(which(is.na(asv_sums$station))) > 0){asv_sums <- asv_sums[which(!is.na(asv_sums$station)),]}
   
   station_sums <- asv_sums %>% 
     group_by(station) %>% 
@@ -346,9 +347,9 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
   
   div_plot <- ggplot(som_maps, aes(x = Dist_mean)) + 
     geom_point(aes(y = shannon, color = "Alpha Diversity")) +
-    stat_smooth(aes(y = shannon), method = "loess", level = 0.95, color = "black") +
+    stat_smooth(aes(y = shannon), method = "loess", level = 0.95, color = "royalblue2") +
     geom_point(aes(y = Gamma_Diversity, color = "Gamma Diversity")) +
-    stat_smooth(aes(y = Gamma_Diversity), method = "loess", level = 0.95, color = "black") +
+    stat_smooth(aes(y = Gamma_Diversity), method = "loess", level = 0.95, color = "seagreen3") +
     scale_y_continuous(sec.axis = sec_axis(~., name = "Gamma Diversity")) +
     ylab("Alpha Diversity") + xlab("Distance to Coast (km)") +
     theme(legend.title = element_blank(),
@@ -367,7 +368,7 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
 }
 
 
-beta_diversity_figure <- function(full_data_file = "output/bacteria_m_euks_16s_full_data.Rdata",
+beta_diversity_figure2 <- function(full_data_file = "output/bacteria_m_euks_16s_full_data.Rdata",
                                   bc_data_file = "output/bacteria_m_euks_16s_dissimilar.Rdata",
                                   map_file = "output/bacteria_m_euks_16s_map.Rdata", minimum_tp = 8,
                                   figure_name = paste0("figures/bacteria_m_euks_16s_beta_",Sys.Date(),".pdf"),
@@ -436,7 +437,90 @@ beta_diversity_figure <- function(full_data_file = "output/bacteria_m_euks_16s_f
   t_test <- t.test(diss_near$value, diss_off$value)
   
   print(t_test)
-                          
+  
+  pdf(file = figure_name, width = 4, height = 5)
+  print(bc_plot)
+  dev.off()
+  
+  return(bc_plot)
+  
+  
+}
+
+beta_diversity_figure <- function(full_data_file = "output/bacteria_m_euks_16s_full_data.Rdata",
+                                  bc_data_file = "output/bacteria_m_euks_16s_dissimilar.Rdata",
+                                  raw_data_file = "data/16s_bacteria_m_euks.Rdata",
+                                  map_file = "output/bacteria_m_euks_16s_map.Rdata", minimum_tp = 8,
+                                  figure_name = paste0("figures/bacteria_m_euks_16s_beta_",Sys.Date(),".pdf"),
+                                  main = "16s Bacteria"){
+  
+  
+  load(full_data_file)
+  load(bc_data_file)  
+  load(map_file)
+  load(raw_data_file)
+  
+  map <- map_data("world")   
+  
+  colnames(dissimilar) <- rownames(asv_table)
+  rownames(dissimilar) <- rownames(asv_table)
+  
+  # remove northern sites
+  
+  ns <- which(substr(colnames(dissimilar), 10,11) < 76)
+  
+  dissimilar <- dissimilar[-ns,-ns]
+  
+  # remove lower tri
+  
+  dissimilar[lower.tri(dissimilar, diag = TRUE)] <- NA
+  
+  # som id
+  
+  dissimilar <- as.data.frame(dissimilar)
+  
+  dissimilar$Sta_ID <- full_dat$Sta_ID[match(colnames(dissimilar), full_dat$eco_name)]
+  
+  diss_df <- pivot_longer(dissimilar, -Sta_ID, values_drop_na = TRUE)
+  
+  stationsplit <- strsplit(diss_df$name,"_")
+  
+  station_func <- function(df) paste0(df[2]," ",df[3])
+
+  diss_df$name <- unlist(lapply(stationsplit, station_func))
+  
+  diss_sta <- diss_df[which(diss_df$Sta_ID == diss_df$name),]
+  
+  stations <- diss_sta %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_beta = mean(value, na.rm = TRUE))
+  
+  som_maps$mean_beta <- (1 - stations$mean_beta[match(som_maps$Sta_ID, stations$Sta_ID)])
+  
+  bc_plot <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps %>% filter(n_samps > 30), aes(x = long, y = lat, fill = mean_beta), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = mean(som_maps$mean_beta)) +
+    ggtitle(paste0(main,"\nMean Bray-Curtis Similarity")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = test, aes(x = long, y = lat, fill = mean_beta), color = "black", size =6, stroke = 0.1, shape = 21) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = mean(test$mean_beta)) +
+    ggtitle(paste0(main,"\nMean Bray-Curtis Similarity")) +
+    theme(legend.title = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
   pdf(file = figure_name, width = 4, height = 5)
   print(bc_plot)
   dev.off()
@@ -519,12 +603,12 @@ aic_table_func <- function(som_maps = cyano_plots){
   glm_mean_sio3 <- glm(som_1 ~  SiO3_mean, data = som_glm, family = binomial)
   ms_sum <- summary(glm_mean_sio3)
   model_AIC[6,2] <- ms_sum$aic
-  model_AIC[6,1] <- "Mean SiO3"
+  model_AIC[6,1] <- "Mean SiO4"
   
   glm_coeff_sio3 <- glm(som_1 ~  SiO3_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_sio3)
   model_AIC[15,2] <- cs_sum$aic
-  model_AIC[15,1] <- "Coeff. Var. SiO3"
+  model_AIC[15,1] <- "Coeff. Var. SiO4"
   
   # C14
   
@@ -673,12 +757,12 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   glm_mean_sio3 <- glm(response ~  SiO3_mean, data = som_glm)
   ms_sum <- summary(glm_mean_sio3)
   model_AIC[6,2] <- ms_sum$aic
-  model_AIC[6,1] <- "Mean SiO3"
+  model_AIC[6,1] <- "Mean SiO4"
   
   glm_coeff_sio3 <- glm(response ~  SiO3_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_sio3)
   model_AIC[15,2] <- cs_sum$aic
-  model_AIC[15,1] <- "Coeff. Var. SiO3"
+  model_AIC[15,1] <- "Coeff. Var. SiO4"
   
   # C14
   
@@ -765,7 +849,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
                                   figure_name_2 = paste0("figures/full_aic_plot_logit_",Sys.Date(),".pdf"),
                                   title_name = "Variable Importance", tsize = 12){
   # load data
-
+  
   map_list <- list()
   
   for (i in 1:length(in_group_list)) {
@@ -780,8 +864,8 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     
     map_list[[i]] <- AIC_table
-
-    }
+    
+  }
   
   AIC_full <- full_join(map_list[[1]], map_list[[2]], by = "Variables")
   
@@ -841,11 +925,11 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   plot_df$Variables <- as.factor(plot_df$Variables)
   plot_df$Variables <- factor(plot_df$Variables, levels = c("Distance to Coast",
                                                             "Coeff. Var. NCD","Coeff. Var. Chl-a",
-                                                            "Coeff. Var. SiO3","Coeff. Var. PO4",
+                                                            "Coeff. Var. SiO4","Coeff. Var. PO4",
                                                             "Coeff. Var. NO3", "Coeff. Var. Salinity",
                                                             "Coeff. Var. Temp",
                                                             "Mean NCD", "Mean Chl-a",
-                                                            "Mean SiO3", "Mean PO4",
+                                                            "Mean SiO4", "Mean PO4",
                                                             "Mean NO3","Mean Salinity",
                                                             "Mean Temp" ))
   
@@ -862,8 +946,8 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
                 axis.text = element_text(size = tsize),
                 axis.title = element_text(size = tsize)) +
           scale_size_continuous(range = c(1,18)) + xlab("") + ylab(""))
- 
-   dev.off()
+  
+  dev.off()
   
   a <- ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC)) + 
     geom_point(fill = "red", color = "black", alpha = 0.6, shape = 21) +
@@ -970,11 +1054,11 @@ full_aic_table_figure_diversity <- function(in_group_list = c("cyano_16s","flavo
   plot_df$Variables <- as.factor(plot_df$Variables)
   plot_df$Variables <- factor(plot_df$Variables, levels = c("Distance to Coast",
                                                             "Coeff. Var. NCD","Coeff. Var. Chl-a",
-                                                            "Coeff. Var. SiO3","Coeff. Var. PO4",
+                                                            "Coeff. Var. SiO4","Coeff. Var. PO4",
                                                             "Coeff. Var. NO3", "Coeff. Var. Salinity",
                                                             "Coeff. Var. Temp",
                                                             "Mean NCD", "Mean Chl-a",
-                                                            "Mean SiO3", "Mean PO4",
+                                                            "Mean SiO4", "Mean PO4",
                                                             "Mean NO3","Mean Salinity",
                                                             "Mean Temp" ))
   
@@ -1079,13 +1163,13 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   glm_mean_sio3 <- glm(response ~  SiO3_mean, data = som_glm)
   ms_sum <- summary(glm_mean_sio3)
   model_AIC[6,2] <- ms_sum$aic
-  model_AIC[6,1] <- "Mean SiO3"
+  model_AIC[6,1] <- "Mean SiO4"
   model_AIC[6,3] <- cor(som_glm$SiO3_mean, som_glm$response, use = "pairwise.complete.obs")
   
   glm_coeff_sio3 <- glm(response ~  SiO3_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_sio3)
   model_AIC[15,2] <- cs_sum$aic
-  model_AIC[15,1] <- "Coeff. Var. SiO3"
+  model_AIC[15,1] <- "Coeff. Var. SiO4"
   model_AIC[15,3] <- cor(som_glm$SiO3_coeff, som_glm$response, use = "pairwise.complete.obs")
   
   # MLD
@@ -1144,13 +1228,13 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
 
 
 full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                                                              "plastid_16s", "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                              "hapto_18sv9", "metazoa_18sv9"),
-                                            in_group_names = c("Cyanobacteria", "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea",
-                                                               "Eukaryotic\n Plastids", "Diatoms",
-                                                               "Dinoflagellates", "Syndiniales", "Haptophytes", "Metazoans"),
-                                            figure_name_2 = paste0("figures/group_aic_plot_logit_even_",Sys.Date(),".pdf"),
-                                            col = 27, width_plot = 15, tsize = 12){
+                                                                   "plastid_16s", "diatom_18sv9","dino_18sv9", "syndin_18sv9",
+                                                                   "hapto_18sv9", "metazoa_18sv9"),
+                                                 in_group_names = c("Cyanobacteria", "Flavobacteriales","Rhodobacterales", "Sar Clade", "Archaea",
+                                                                    "Eukaryotic\n Plastids", "Diatoms",
+                                                                    "Dinoflagellates", "Syndiniales", "Haptophytes", "Metazoans"),
+                                                 figure_name_2 = paste0("figures/group_aic_plot_logit_even_",Sys.Date(),".pdf"),
+                                                 col = 27, width_plot = 15, tsize = 12){
   # load data
   
   map_list <- list()
@@ -1205,18 +1289,19 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
   plot_df$Variables <- as.factor(plot_df$Variables)
   plot_df$Variables <- factor(plot_df$Variables, levels = c("Distance to Coast",
                                                             "Coeff. Var. NCD","Coeff. Var. Chl-a",
-                                                            "Coeff. Var. SiO3","Coeff. Var. PO4",
+                                                            "Coeff. Var. SiO4","Coeff. Var. PO4",
                                                             "Coeff. Var. NO3", "Coeff. Var. Salinity",
                                                             "Coeff. Var. Temp",
                                                             "Mean NCD", "Mean Chl-a",
-                                                            "Mean SiO3", "Mean PO4",
+                                                            "Mean SiO4", "Mean PO4",
                                                             "Mean NO3","Mean Salinity",
                                                             "Mean Temp" ))
   
   pdf(figure_name_2, width = width_plot, height = 8)
   print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = slope)) + 
           geom_point(color = "black", alpha = 0.6, shape = 21) +
-    scale_fill_gradient2(low = "darkblue", high = "darkred", mid = "white", midpoint = 0) +
+          scale_fill_gradient2(low = "darkblue", high = "darkred", mid = "white",
+                               midpoint = 0, limits = c(-1,1)) +
           labs(fill = "Correlation") + ylab("Variable") +
           theme(panel.background = element_blank(),
                 panel.border = element_rect(color = "black", fill = NA),
@@ -1228,6 +1313,377 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
   dev.off()
   
 }
+
+##### Community Differences Plot #####
+
+fig_commun_map_func <- function(in_all = "output/total_dissimilar.Rdata",
+                       in_dat = "output/total_full_data.Rdata",
+                       in_map = "output/total_map.Rdata",
+                       community_diff_fig = "figures/figure_outline/fig_x.pdf",
+                       tsize = 12, psize = 12, group = "Total ASVs"){
+  
+  load(in_all)
+  load(in_dat)
+  load(in_map)
+  
+  samps <- rownames(dissimilar)
+  mat <- matrix(NA, nrow(dissimilar), 6)
+  mat[,1] <- as.numeric(substr(samps,2,5))
+  mat[,2] <- substr(samps,6,7)
+  mat[,4] <- match(samps,full_dat$eco_name)
+  
+  mat[which(as.numeric(mat[,2]) < 3),3] <- "Winter" 
+  mat[which(as.numeric(mat[,2]) == 4),3] <- "Spring" 
+  mat[which(as.numeric(mat[,2]) > 5 & as.numeric(mat[,2]) < 9),3] <- "Summer"
+  mat[which(as.numeric(mat[,2]) > 8),3] <- "Fall" 
+  
+  mat[which(as.numeric(mat[,1]) < 2017),5] <- "Early"
+  mat[which(as.numeric(mat[,1]) > 2016 & as.numeric(mat[,1]) < 2019),5] <- "Late"
+  
+  depth_list <- strsplit(samps, "_")
+  mat[,6] <- as.numeric(sapply(depth_list, "[[",4))
+  
+  all_diss <- dissimilar[which(mat[,5] == "Early" & as.numeric(mat[,6]) < 16),
+                         which(mat[,5] == "Late" & as.numeric(mat[,6]) < 16)]
+  
+  all_comp <- as.data.frame(all_diss)
+  all_comp$early_samps <- rownames(all_comp)
+  
+  all_long <- all_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  all_long <- all_long[which(substr(all_long$early_samps,9,19)==substr(all_long$late_samps,9,19)),]
+
+  all_long$Sta_ID <- paste0(substr(all_long$early_samps,9,13)," ",substr(all_long$early_samps,15,19))
+  
+  all_mean <- all_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  som_maps$bc_vals <- 1-all_mean$mean_bc[match(som_maps$Sta_ID, all_mean$Sta_ID)]
+  
+  map <- map_data("world")
+
+  example_plot <- ggplot() +
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    geom_point(data = som_maps[complete.cases(som_maps$bc_vals),],
+               aes_string(x = "long", y = "lat", fill = "bc_vals"),
+               color = "black", size =psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+          plot.title = element_text(), axis.line = element_blank(),
+          legend.justification=c(1,1),
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) +
+    ggtitle(group,paste0("Bray-Curtis Similarity\n(2014-2016) vs (2017-2018)"))
+  
+  
+  pdf(file = community_diff_fig, width = 8, height = 8)
+  print(example_plot)
+  dev.off()
+  
+  
+}
+
+fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdata",
+                                in_dat = "output/total_full_data.Rdata",
+                                in_map = "output/total_map.Rdata",
+                                community_diff_fig = "figures/figure_outline/fig_x2.pdf",
+                                tsize = 12, psize = 12, group = "Total ASVs"){
+  
+  load(in_all)
+  load(in_dat)
+  load(in_map)
+  
+  samps <- rownames(dissimilar)
+  mat <- matrix(NA,nrow(dissimilar), 6)
+  mat[,1] <- as.numeric(substr(samps,2,5))
+  mat[,2] <- substr(samps,6,7)
+  mat[,4] <- match(samps,full_dat$eco_name)
+  
+  mat[which(as.numeric(mat[,2]) < 3),3] <- "Winter" 
+  mat[which(as.numeric(mat[,2]) == 4),3] <- "Spring" 
+  mat[which(as.numeric(mat[,2]) > 5 & as.numeric(mat[,2]) < 9),3] <- "Summer"
+  mat[which(as.numeric(mat[,2]) > 8),3] <- "Fall" 
+  
+  mat[which(as.numeric(mat[,1]) < 2017),5] <- "Early"
+  mat[which(as.numeric(mat[,1]) > 2016 & as.numeric(mat[,1]) < 2019),5] <- "Late"
+  
+  depth_list <- strsplit(samps, "_")
+  mat[,6] <- as.numeric(sapply(depth_list, "[[",4))
+  
+  surf_diss <- dissimilar[which(mat[,5] == "Early" & as.numeric(mat[,6]) < 16),
+                         which(mat[,5] == "Late" & as.numeric(mat[,6]) < 16)]
+  
+  deep_diss <- dissimilar[which(mat[,5] == "Early" & as.numeric(mat[,6]) > 15),
+                          which(mat[,5] == "Late" & as.numeric(mat[,6]) > 15)]
+  
+  surf_warm <- dissimilar[which(mat[,5] == "Early" & as.numeric(mat[,6]) < 16),
+                          which(mat[,5] == "Early" & as.numeric(mat[,6]) < 16)]
+  
+  deep_warm <- dissimilar[which(mat[,5] == "Early" & as.numeric(mat[,6]) > 15),
+                          which(mat[,5] == "Early" & as.numeric(mat[,6]) > 15)]
+  
+  surf_cool <- dissimilar[which(mat[,5] == "Late" & as.numeric(mat[,6]) < 16),
+                          which(mat[,5] == "Late" & as.numeric(mat[,6]) < 16)]
+  
+  deep_cool <- dissimilar[which(mat[,5] == "Late" & as.numeric(mat[,6]) > 15),
+                          which(mat[,5] == "Late" & as.numeric(mat[,6]) > 15)]
+  
+  diag(surf_warm) <- NA
+  diag(deep_warm) <- NA
+  diag(surf_cool) <- NA
+  diag(deep_cool) <- NA
+  
+  surf_comp <- as.data.frame(surf_diss)
+  surf_comp$early_samps <- rownames(surf_comp)
+  
+  deep_comp <- as.data.frame(deep_diss)
+  deep_comp$early_samps <- rownames(deep_comp)
+  
+  surf_warmin <- as.data.frame(surf_warm)
+  surf_warmin$early_samps <- rownames(surf_warmin)
+  
+  deep_warmin <- as.data.frame(deep_warm)
+  deep_warmin$early_samps <- rownames(deep_warmin)
+  
+  surf_coolin <- as.data.frame(surf_cool)
+  surf_coolin$early_samps <- rownames(surf_coolin)
+  
+  deep_coolin <- as.data.frame(deep_cool)
+  deep_coolin$early_samps <- rownames(deep_coolin)
+  
+  surf_long <- surf_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  deep_long <- deep_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  surf_warm_long <- surf_warmin %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  deep_warm_long <- deep_warmin %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  surf_cool_long <- surf_coolin %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  deep_cool_long <- deep_coolin %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
+  
+  surf_long <- surf_long[which(substr(surf_long$early_samps,9,19)==substr(surf_long$late_samps,9,19)),]
+  deep_long <- deep_long[which(substr(deep_long$early_samps,9,19)==substr(deep_long$late_samps,9,19)),]
+  
+  surf_warm_long <- surf_warm_long[which(substr(surf_warm_long$early_samps,9,19)==substr(surf_warm_long$late_samps,9,19)),]
+  deep_warm_long <- deep_warm_long[which(substr(deep_warm_long$early_samps,9,19)==substr(deep_warm_long$late_samps,9,19)),]
+  
+  surf_cool_long <- surf_cool_long[which(substr(surf_cool_long$early_samps,9,19)==substr(surf_cool_long$late_samps,9,19)),]
+  deep_cool_long <- deep_cool_long[which(substr(deep_cool_long$early_samps,9,19)==substr(deep_cool_long$late_samps,9,19)),]
+  
+  surf_long$Sta_ID <- paste0(substr(surf_long$early_samps,9,13)," ",substr(surf_long$early_samps,15,19))
+  deep_long$Sta_ID <- paste0(substr(deep_long$early_samps,9,13)," ",substr(deep_long$early_samps,15,19))
+  
+  surf_warm_long$Sta_ID <- paste0(substr(surf_warm_long$early_samps,9,13)," ",substr(surf_warm_long$early_samps,15,19))
+  deep_warm_long$Sta_ID <- paste0(substr(deep_warm_long$early_samps,9,13)," ",substr(deep_warm_long$early_samps,15,19))
+  
+  surf_cool_long$Sta_ID <- paste0(substr(surf_cool_long$early_samps,9,13)," ",substr(surf_cool_long$early_samps,15,19))
+  deep_cool_long$Sta_ID <- paste0(substr(deep_cool_long$early_samps,9,13)," ",substr(deep_cool_long$early_samps,15,19))
+  
+  surf_mean <- surf_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  deep_mean <- deep_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  surf_warm_mean <- surf_warm_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  deep_warm_mean <- deep_warm_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  surf_cool_mean <- surf_cool_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  deep_cool_mean <- deep_cool_long %>%
+    group_by(Sta_ID) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  som_maps$surf_bc_vals <- 1-surf_mean$mean_bc[match(som_maps$Sta_ID, surf_mean$Sta_ID)]
+  som_maps$deep_bc_vals <- 1-deep_mean$mean_bc[match(som_maps$Sta_ID, deep_mean$Sta_ID)]
+  som_maps$surf_warm_bc_vals <- 1-surf_warm_mean$mean_bc[match(som_maps$Sta_ID, surf_warm_mean$Sta_ID)]
+  som_maps$deep_warm_bc_vals <- 1-deep_warm_mean$mean_bc[match(som_maps$Sta_ID, deep_warm_mean$Sta_ID)]
+  som_maps$surf_cool_bc_vals <- 1-surf_cool_mean$mean_bc[match(som_maps$Sta_ID, surf_cool_mean$Sta_ID)]
+  som_maps$deep_cool_bc_vals <- 1-deep_cool_mean$mean_bc[match(som_maps$Sta_ID, deep_cool_mean$Sta_ID)]
+  
+  som_maps$bc_surf_bw_within <- som_maps$surf_bc_vals/som_maps$surf_warm_bc_vals
+  som_maps$bc_deep_bw_within <- som_maps$deep_bc_vals/som_maps$deep_warm_bc_vals
+  
+  val_10 <- quantile(c(som_maps$surf_bc_vals, som_maps$deep_bc_vals), na.rm = TRUE, probs = seq(0,1,0.1))[2]
+  val_90 <- quantile(c(som_maps$surf_bc_vals, som_maps$deep_bc_vals), na.rm = TRUE, probs = seq(0,1,0.1))[10]
+  
+  map <- map_data("world")
+  
+  plot_a <- ggplot() +
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    geom_point(data = som_maps[complete.cases(som_maps$surf_bc_vals),],
+               aes_string(x = "long", y = "lat", fill = "surf_bc_vals"),
+               color = "black", size =psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red",
+                        limits = c(val_10,val_90), oob = scales::squish) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          legend.justification=c(1,1),
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          axis.ticks.x = element_blank()) +
+    ggtitle(group,paste0("Surface\n(2014-2016) vs (2017-2018)"))
+  
+  plot_b <- ggplot() +
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    geom_point(data = som_maps[complete.cases(som_maps$deep_bc_vals),],
+               aes_string(x = "long", y = "lat", fill = "deep_bc_vals"),
+               color = "black", size =psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red",
+                        limits = c(val_10,val_90), oob = scales::squish) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          legend.justification=c(1,1),
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) +
+    ggtitle("DCM\n(2014-2016) vs (2017-2018)")
+  
+  example_plot <- plot_a + plot_b + plot_layout(guides = "collect")
+  
+  bc_mat <- matrix(NA,6*nrow(som_maps),7)
+  bc_mat <- as.data.frame(bc_mat)
+  colnames(bc_mat) <- c("bc_val", "Group", "Depth", "Group_Depth", "Distance", "NCDepth", "Phase")
+  
+  bc_mat$bc_val <- c(som_maps$surf_bc_vals, som_maps$deep_bc_vals,
+                     som_maps$surf_warm_bc_vals, som_maps$deep_warm_bc_vals,
+                     som_maps$surf_cool_bc_vals, som_maps$deep_cool_bc_vals)
+  bc_mat$Group <- group
+  bc_mat$Depth <- rep(c(rep("Surface", nrow(som_maps)),rep("DCM", nrow(som_maps))),3)
+  bc_mat$Group_Depth <- rep(c(paste0(group, " ",rep("Surface", nrow(som_maps))),
+                    paste0(group, " ", rep("DCM", nrow(som_maps)))),3)
+  bc_mat$Distance <- rep(som_maps$Dist_mean, 6)
+  bc_mat$NCDepth <- rep(som_maps$NC_mean, 6)
+  bc_mat$Phase <- c(rep("Between", 2*nrow(som_maps)),
+                    rep("Warm", 2*nrow(som_maps)),
+                    rep("Cool", 2*nrow(som_maps)))
+  
+  bw_warm_surf <- wilcox.test(som_maps$surf_bc_vals, som_maps$surf_warm_bc_vals, paired = TRUE)
+  bw_cool_surf <- wilcox.test(som_maps$surf_bc_vals, som_maps$surf_cool_bc_vals, paired = TRUE)
+  bw_warm_deep <- wilcox.test(som_maps$deep_bc_vals, som_maps$deep_warm_bc_vals, paired = TRUE)
+  bw_cool_deep <- wilcox.test(som_maps$deep_bc_vals, som_maps$deep_cool_bc_vals, paired = TRUE)
+  
+  p_val_mat <- as.data.frame(matrix(NA, 4, 5))
+  colnames(p_val_mat) <- c("p_val", "Group", "Depth", "Group_Depth", "Phase")
+  p_val_mat$p_val <- c(bw_warm_surf$p.value, bw_cool_surf$p.value, bw_warm_deep$p.value, bw_cool_deep$p.value)
+  p_val_mat$Group <- group
+  p_val_mat$Depth <- c("Surface", "Surface", "DCM", "DCM")
+  p_val_mat$Group_Depth <- paste0(group, " ",p_val_mat$Depth)
+  p_val_mat$Phase <- c("Warm", "Cool", "Warm", "Cool")
+  
+  pdf(file = community_diff_fig, width = 12, height = 8)
+  print(example_plot)
+  dev.off()
+  
+  ##### Second plot
+  
+  plot_surf_bw <- ggplot() +
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    geom_point(data = som_maps[complete.cases(som_maps$bc_surf_bw_within),],
+               aes_string(x = "long", y = "lat", fill = "bc_surf_bw_within"),
+               color = "black", size =psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "Bray-Curtis Similarity\nBetween / Within (cold)", low = "white", high = "red",
+                        limits = c(0.7,1.1), oob = scales::squish) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          legend.justification=c(1,1),
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          axis.ticks.x = element_blank()) +
+    ggtitle(group,paste0("Surface\n(2014-2016) vs (2017-2018)"))
+  
+  plot_deep_bw <- ggplot() +
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    geom_point(data = som_maps[complete.cases(som_maps$bc_surf_bw_within),],
+               aes_string(x = "long", y = "lat", fill = "bc_surf_bw_within"),
+               color = "black", size =psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "Bray-Curtis Similarity\nBetween / Within (cold)", low = "white", high = "red",
+                        limits = c(0.7,1.1), oob = scales::squish) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          legend.justification=c(1,1),
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) +
+    ggtitle("DCM\n(2014-2016) vs (2017-2018)")
+  
+  
+  plot_surf_bw + plot_deep_bw + plot_layout(nrow = 2, guides = "collect")
+  
+  return(list(surf = plot_a, deep = plot_b, bc_mat = bc_mat, p_val_mat = p_val_mat))
+  
+}
+
 
 ##### Community Time Plots #####
 
@@ -1390,7 +1846,6 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   som_cruise$season <- factor(som_cruise$season, levels = c("Winter", "Spring", "Summer", "Fall"))
   
   gradient_plot <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "phase", shape = "season"), data = som_cruise) +
     scale_color_manual(values = c("red", "blue","gold3")) +
     scale_shape_manual(values = c(0,1,2,3)) + 
@@ -1400,9 +1855,40 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Frequency of Nearshore Cluster") + ggtitle(title)
   
-  print(gradient_plot)
+  phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust = 0.5)) +
+    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Frequency of Nearshore Cluster") + ggtitle(title)
+  
+  season <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
+    geom_point(size = 3, aes_string(color = "season", fill = "season", shape = "season"), data = som_cruise) +
+    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
+    scale_fill_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
+    stat_ellipse(aes_string(color = "season")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust = 0.5)) +
+    labs(shape = "Season", color = "Season", fill = "Season") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Frequency of Nearshore Cluster") + ggtitle(title)
+  
+  
+  
+  som_cruise$Year <- substr(som_cruise$Cruise, 1, 4)
+  som_cruise$even_odd <- rep(c("even", "even","even","even",
+                               "odd", "odd", "odd", "odd"),3)
   
   ts_plot <- ggplot(som_cruise, aes_string(x = "Date", y = paste0("som_",nearshore_som))) +
+    geom_rect(aes(xmin = Date, xmax = dplyr::lead(Date), ymin = 0, ymax = 1, fill = even_odd), 
+              alpha = 1, show.legend = FALSE) +
+    scale_fill_manual(values = c("grey90", "white")) +
     geom_line(color = "black", size = 1) + 
     geom_point(size = 3, aes_string(color = "season"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
@@ -1411,7 +1897,8 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust=0.5)) +
     labs(shape = "Phase", color = "Season") + xlab("Date") +
-    ylab("Frequency of Nearshore Cluster")  + ggtitle(title)
+    ylab("Frequency of Nearshore Cluster")  + ggtitle(title) +
+    scale_y_continuous(expand = c(0,0)) 
   
   print(ts_plot)
   
@@ -1560,12 +2047,13 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   print(dissimilar_plot)
   
-  save(early_dist, late_dist, diversity_diff, even_diff, gradient_plot, ts_plot,
+  save(early_dist, late_dist, diversity_diff, even_diff, phase, season, ts_plot,
        cuti_plot, beuti_plot, reg_nitrate, dissimilar_plot, file = out_diff_file)
   
   
   
 }
+
 
 ##### Diversity Time Plots #####
 
@@ -1724,25 +2212,38 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   som_cruise$total_shannon <- asv_cruise$total_div[match(som_cruise$Cruise, asv_cruise$cruise)]
   
-  
-  gradient_plot <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
-    geom_point(size = 3, aes_string(color = "phase", shape = "season"), data = som_cruise) +
-    scale_color_manual(values = c("red", "blue", "gold3")) +
-    scale_shape_manual(values = c(0,1,2,3)) + 
+  phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Mean Shannon Diversity\nPer Cruise") + ggtitle(title)
   
-  print(gradient_plot)
+  season <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
+    geom_point(size = 3, aes_string(color = "season", fill = "season", shape = "season"), data = som_cruise) +
+    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
+    scale_fill_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
+    stat_ellipse(aes_string(color = "season")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust = 0.5)) +
+    labs(shape = "Season", color = "Season", fill = "Season") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Mean Shannon Diversity\nPer Cruise") + ggtitle(title)
+  
+  
   
   gradient_plot2 <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "total_shannon")) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
-    geom_point(size = 3, aes_string(color = "phase", shape = "season"), data = som_cruise) +
-    scale_color_manual(values = c("red", "blue", "gold3")) +
-    scale_shape_manual(values = c(0,1,2,3)) + 
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
@@ -1871,964 +2372,330 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   dev.off()
   
   save(early_dist, late_dist, diversity_diff, even_diff, 
-       gradient_plot, ts_plot, gradient_plot2, ts_plot2,
+       phase, season, ts_plot, gradient_plot2, ts_plot2,
        cuti_plot, beuti_plot, reg_nitrate, file = out_diff_file)
   
 }
 
-###### Outputs #####
 
-#### SOM Maps ####
+#### Extra ####
 
-# All
-
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
-                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
-                   "Eukaryotic Protists")
-
-
-plot_list <- list()
-
-for (i in 1:length(in_group_list)) {
+fig_x_func <- function(in_all = "output/total_dissimilar.Rdata",
+                       in_dat = "output/total_full_data.Rdata",
+                       in_map = "output/total_map.Rdata",
+                       community_diff_fig = "figures/figure_outline/fig_x.pdf",
+                       tsize = 12, psize = 12){
   
-  plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map.Rdata"),
-                               figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot.pdf"),
-                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore")
+  load(in_all)
+  load(in_dat)
+  load(in_map)
   
+  samps <- rownames(dissimilar)
+  mat <- matrix(NA, 985, 5)
+  mat[,1] <- as.numeric(substr(samps,2,5))
+  mat[,2] <- substr(samps,6,7)
+  mat[,4] <- match(samps,full_dat$eco_name)
   
-}
-
-#### Regression Plots #####
-
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
-                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
-                   "Eukaryotic Protists")
-
-var_list = c("temp_mean", "sal_mean", "PO4_mean", "NO3_mean", "SiO3_mean", "NC_mean",
-             "temp_coeff", "sal_coeff", "PO4_coeff", "NO3_coeff", "SiO3_coeff", "NC_coeff", "Dist_mean")
-
-var_name_list = c("Mean Temperature (°C)", "Mean Salinity", "Mean PO4ug", "Mean NO3ug",
-                  "Mean SiO3ug", "Mean Nitracline Depth (m)",
-             "Coeff. Var. Temperature", "Coeff. Var. Salinity",
-             "Coeff. Var. PO4", "Coeff. Var. NO3", "Coeff. Var. SiO3",
-             "Coeff. Var. Nitracline Depth (m)", "Distance to Coast (km)")
-
-for (i in 1:length(in_group_list)) {
-  for (j in 1:length(var_list)) {
-    regression_figure(glm_file = paste0("output/",in_group_list[i], "_glm.Rdata"),
-                      map_file = paste0("output/",in_group_list[i],"_map.Rdata"),   
-                      figure_name = paste0("figures/glm_plots/", in_group_list[i],"_"),
-                      main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore",
-                      var = var_list[j], var_name = var_name_list[j])
-  }
-}
-
-
-#### Diversity Figures ####
-
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
-                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
-                   "Eukaryotic Protists")
-
-in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
-                  "18s_diatom","18s_dino", "18s_syndin",
-                  "18s_hapto", "18s_chloro", "18s_metazoa", "16s_bacteria_m_euks",
-                  "16s_plastids", "16s_cyanos", "18s_heterotrophic_euks")
-
-
-for (i in 1:length(in_group_list)) {
+  mat[which(as.numeric(mat[,2]) < 3),3] <- "Winter" 
+  mat[which(as.numeric(mat[,2]) == 4),3] <- "Spring" 
+  mat[which(as.numeric(mat[,2]) > 5 & as.numeric(mat[,2]) < 9),3] <- "Summer"
+  mat[which(as.numeric(mat[,2]) > 8),3] <- "Fall" 
   
-  diveristy_figure(map_file = paste0("output/", in_group_list[i], "_map.Rdata"),
-                   full_dat = paste0("output/", in_group_list[i], "_full_data.Rdata"),
-                   figure_start = paste0("figures/diversity/", in_group_list[i], "_"),
-                   main = in_group_names[i])
+  mat[which(as.numeric(mat[,1]) < 2017),5] <- "Early"
+  mat[which(as.numeric(mat[,1]) > 2016 & as.numeric(mat[,1]) < 2019),5] <- "Late"
   
-  alpha_versus_gamma_figure(full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
-                            raw_data_file = paste0("data/", in_group_list_basic[i], ".Rdata"),
-                            map_file = paste0("output/", in_group_list[i], "_map.Rdata"), minimum_tp = 8,
-                            figure_name = paste0("figures/diversity/", in_group_list[i], "_alpha_gamma.pdf"),
-                            main = in_group_names[i])
+  # wint_comp <- as.data.frame(dissimilar[which(mat[,1] < 2017 & mat[,3] == "Winter" & !is.na(mat[,4])),
+  #                         which(mat[,1] > 2016 & mat[,1] < 2019 & mat[,3] == "Winter"& !is.na(mat[,4]))])
+  # wint_comp$early_samps <- rownames(wint_comp)
+  # 
+  # spr_comp <- as.data.frame(dissimilar[which(mat[,1] < 2017 & mat[,3] == "Spring" & !is.na(mat[,4])),
+  #                         which(mat[,1] > 2016 & mat[,1] < 2019 & mat[,3] == "Spring"& !is.na(mat[,4]))])
+  # spr_comp$early_samps <- rownames(spr_comp)
+  # 
+  # sum_comp <- as.data.frame(dissimilar[which(mat[,1] < 2017 & mat[,3] == "Summer" & !is.na(mat[,4])),
+  #                         which(mat[,1] > 2016 & mat[,1] < 2019 & mat[,3] == "Summer"& !is.na(mat[,4]))])
+  # sum_comp$early_samps <- rownames(sum_comp)
+  # 
+  # fall_comp <- as.data.frame(dissimilar[which(mat[,1] < 2017 & mat[,3] == "Fall" & !is.na(mat[,4])),
+  #                         which(mat[,1] > 2016 & mat[,1] < 2019 & mat[,3] == "Fall"& !is.na(mat[,4]))])
+  # fall_comp$early_samps <- rownames(fall_comp)
   
-  beta_diversity_figure(full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
-                        bc_data_file = paste0("output/", in_group_list[i], "_dissimilar.Rdata"),
-                        map_file = paste0("output/", in_group_list[i], "_map.Rdata"), minimum_tp = 8,
-                        figure_name = paste0("figures/diversity/", in_group_list[i],"_beta.pdf"),
-                        main = in_group_names[i])
+  all_comp <- as.data.frame(dissimilar)
+  all_comp$early_samps <- rownames(all_comp)
   
-}
-
-#### AIC Figures ####
-
-full_aic_table_figure(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
-                                        "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                        "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
-                                         "Diatoms",
-                                         "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                      minimum_tp = 4, width_plot = 16,
-                      figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit",".pdf"),
-                      title_name = "Variable Importance")
-
-full_aic_table_figure(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                        "euks_hetero_18sv9"),
-                      in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                         "Eukaryotic\n Protists"),
-                      minimum_tp = 4, width_plot = 10,
-                      figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit",".pdf"),
-                      title_name = "Variable Importance")
-
-
-# Diversity
-
-full_aic_table_figure_diversity(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
-                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
-                                                   "Diatoms",
-                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                                figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit_even",".pdf"),
-                                title_name = "Variable Importance Evenness", # col 2 = even, col 3 = shan col 4 = rich
-                                col = 2, color_fill = "purple")
-
-full_aic_table_figure_diversity(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
-                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
-                                                   "Diatoms",
-                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                                figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit_shannon",".pdf"),
-                                title_name = "Variable Importance Shannon Diversity", # col 2 = even, col 3 = shan col 4 = rich
-                                col = 3, color_fill = "red")
-
-full_aic_table_figure_diversity(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
-                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
-                                                   "Diatoms",
-                                                   "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                                figure_name_2 = paste0("figures/aic_figures/small_group_aic_plot_logit_rich",".pdf"),
-                                title_name = "Variable Importance Richness", # col 2 = even, col 3 = shan col 4 = rich
-                                col = 4, color_fill = "blue")
-
-# Basic Groups
-
-full_aic_table_figure_diversity(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                                   "euks_hetero_18sv9"),
-                                in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                                   "Eukaryotic\n Protists"),
-                                figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit_even",".pdf"),
-                                title_name = "Variable Importance Evenness", # col 2 = even, col 3 = shan col 4 = rich
-                                col = 2, color_fill = "purple", width_plot = 8)
-
-full_aic_table_figure_diversity(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                                   "euks_hetero_18sv9"),
-                                in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                                   "Eukaryotic\n Protists"),
-                                figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit_shannon",".pdf"),
-                                title_name = "Variable Importance\nShannon Diversity", # col 2 = even, col 3 = shan col 4 = rich
-                                col = 3, color_fill = "red", width_plot = 8)
-
-full_aic_table_figure_diversity(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                                  "euks_hetero_18sv9"),
-                                in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                                   "Eukaryotic\n Protists"),
-                                figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit_rich",".pdf"),
-                                title_name = "Variable Importance Richness", # col 2 = even, col 3 = shan col 4 = rich
-                                col = 4, color_fill = "blue", width_plot = 8)
-
-###### Community Time Plots ########
-
-# All
-
-
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
-                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
-                   "Eukaryotic Protists")
-
-for (i in 1:length(in_group_list)) {
+  wint_long <- wint_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
   
-  community_comparison(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
-                       in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
-                       similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
-                       out_diff_file = paste0("output/",in_group_list[i],"_diffs.Rdata"),
-                       title = in_group_names[i],
-                       upwelling_index = "output/upwelling_indicies.Rdata",
-                       index_plot = paste0("figures/",in_group_list[i],"_index_plot.pdf"))
+  spr_long <- spr_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
   
-}
-
-###### Diversity Time Plots #####
-
-# All
-
-in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
-                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9")
-
-in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
-                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
-                   "Eukaryotic Protists")
-
-in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
-                        "18s_diatom","18s_dino", "18s_syndin",
-                        "18s_hapto", "18s_chloro", "18s_metazoa", "16s_bacteria_m_euks",
-                        "16s_plastids", "16s_cyanos", "18s_heterotrophic_euks")
-
-for (i in 1:length(in_group_list)) {
+  sum_long <- sum_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
   
-  diversity_comparison(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
-                       in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
-                       in_raw = paste0("data/", in_group_list_basic[i],".Rdata"),
-                       out_diff_file = paste0("output/",in_group_list[i],"_diffs_div.Rdata"),
-                       title = in_group_names[i],
-                       upwelling_index = "output/upwelling_indicies.Rdata",
-                       index_plot = paste0("figures/",in_group_list[i],"_index_plot_div.pdf"))
+  fall_long <- fall_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
   
-}
-
-###### Main Text Figures #####
-
-#### Figure 1: Physical Conditions ####
-
-fig_1_func <- function(in_vel = "output/uv_velocity_table.Rdata",
-                         in_bath = "output/CALCOFI_bathymetry_table.Rdata",
-                         in_temp = "output/CALCOFI_temp_tables.Rdata",
-                         in_cyano = "output/cyano_16s_map.Rdata",
-                         fig_name = "figures/figure_outline/fig_1.pdf",
-                         tsize = 12, psize = 6){
+  all_long <- all_comp %>%
+    pivot_longer(-early_samps,
+                 names_to = "late_samps",
+                 values_to = "b_c_vals")
   
-  map <- map_data("world")    
+  # wint_long <- wint_long[which(substr(wint_long$early_samps,9,19)==substr(wint_long$late_samps,9,19)),]
+  # spr_long <- spr_long[which(substr(spr_long$early_samps,9,19)==substr(spr_long$late_samps,9,19)),]
+  # sum_long <- sum_long[which(substr(sum_long$early_samps,9,19)==substr(sum_long$late_samps,9,19)),]
+  # fall_long <- fall_long[which(substr(fall_long$early_samps,9,19)==substr(fall_long$late_samps,9,19)),]
   
-  load(in_vel)
-  load(in_bath)
-  load(in_temp)
-  load(in_cyano)
+  all_long <- all_long[which(substr(all_long$early_samps,9,19)==substr(all_long$late_samps,9,19)),]
+  
+  # wint_long$Sta_ID <- paste0(substr(wint_long$early_samps,9,13)," ",substr(wint_long$early_samps,15,19))
+  # spr_long$Sta_ID <- paste0(substr(spr_long$early_samps,9,13)," ",substr(spr_long$early_samps,15,19))
+  # sum_long$Sta_ID <- paste0(substr(sum_long$early_samps,9,13)," ",substr(sum_long$early_samps,15,19))
+  # fall_long$Sta_ID <- paste0(substr(fall_long$early_samps,9,13)," ",substr(fall_long$early_samps,15,19))
+  all_long$Year_ID <- paste0(substr(all_long$early_samps,2,5),"-",substr(all_long$late_samps,2,5))
+  all_long$Sta_ID <- paste0(substr(all_long$early_samps,9,13)," ",substr(all_long$early_samps,15,19))
+  all_long <- all_long[-which(is.na(match(all_long$Sta_ID, som_maps$Sta_ID[which(som_maps$n_samps > 30)]))),]
+  
+  all_long$Date_Diff <- full_dat$Date[match(all_long$early_samps, full_dat$eco_name)] -
+    full_dat$Date[match(all_long$late_samps, full_dat$eco_name)]
   
   
-  stations <-  ggplot() + 
-    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "n_samps"),
-               color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "# of Samples", low = "white", high = "red") +
+  all_long <- all_long[which(as.numeric(substr(all_long$early_samps,2,7))==201404 | as.numeric(substr(all_long$early_samps,2,7))==201402),]
+  
+  all_long <- all_long[-which(as.numeric(all_long$Date_Diff) > 0),]
+  
+  all_long$Time_ID <- paste0(substr(all_long$early_samps,2,7),"-",substr(all_long$late_samps,2,7))
+  
+  all_long$Time_Sta <- substr(all_long$late_samps,2,19)
+  
+  all_long$Date_Diff <- abs(as.numeric(all_long$Date_Diff))
+  all_long$Date_Diff[which(substr(all_long$early_samps,2,7) == "201404")] <- all_long$Date_Diff[which(substr(all_long$early_samps,2,7) == "201404")] + 62
+  
+  # wint_mean <- wint_long %>%
+  #   group_by(Sta_ID) %>%
+  #   summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  # 
+  # spr_mean <- spr_long %>%
+  #   group_by(Sta_ID) %>%
+  #   summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  # 
+  # sum_mean <- sum_long %>%
+  #   group_by(Sta_ID) %>%
+  #   summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  # 
+  # fall_mean <- fall_long %>%
+  #   group_by(Sta_ID) %>%
+  #   summarise(mean_bc = mean(b_c_vals, na.rm = TRUE))
+  
+  all_long <- all_long %>%
+    group_by(Time_Sta) %>%
+    summarise(mean_bc = mean(b_c_vals, na.rm = TRUE),
+              Time_ID = first(Time_ID),
+              Sta_ID = first(Sta_ID),
+              Time_Diff = first(Date_Diff))
+  
+  # som_maps$wint_bc <- 1-wint_mean$mean_bc[match(som_maps$Sta_ID, wint_mean$Sta_ID)]
+  # som_maps$spr_bc <- 1-spr_mean$mean_bc[match(som_maps$Sta_ID, spr_mean$Sta_ID)]
+  # som_maps$sum_bc <- 1-sum_mean$mean_bc[match(som_maps$Sta_ID, sum_mean$Sta_ID)]
+  # som_maps$fall_bc <- 1-fall_mean$mean_bc[match(som_maps$Sta_ID, fall_mean$Sta_ID)]
+  all_long$b_c_vals <- 1-all_long$mean_bc
+  
+  start_date <- mdy("01-29-14")
+  
+  all_long$Date <- start_date + all_long$Time_Diff
+  
+  red_pal <- colorRampPalette(c("firebrick1","firebrick4"))
+  blue_pal <- colorRampPalette(c("dodgerblue1","dodgerblue4"))
+  
+  col1 <- red_pal(4)
+  col2 <- blue_pal(5)
+  
+  all_long$Line <- substr(all_long$Sta_ID,2,3)
+  
+  all_long$Sta_ID <- as.factor(all_long$Sta_ID)
+  
+  plot_90 <- ggplot(all_long %>% filter(Line == "90"), aes(x = Date, y = b_c_vals, color = Sta_ID)) + 
+    geom_line(size = 1) + 
+    scale_color_manual(values = c(col1, "forestgreen", col2), drop = FALSE) +
     theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
-          legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
-          legend.background = element_rect(fill = "white", color = "black"),
+          panel.border = element_rect(fill = NA, color = "black"),
+          axis.text.x = element_text(angle = -90, vjust = 0.5),
+          plot.title = element_text(size = tsize),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("A.")
+          axis.title = element_text(size = tsize)) +
+    xlab("Time") + ylab("Bray-Curtis Similarity") + labs(color = "Station") + ggtitle("Line 90")
   
-  
-  reduced_uv_table <- uv_table[seq(1,1633,6),]
-  elevation_table$value <- abs(elevation_table$value)
-  
-  vel_bath <- ggplot() + 
-    geom_raster(data = elevation_table, aes(x = lon, y = lat, fill = value), interpolate = FALSE) +
-    scale_fill_gradient(low = "darkblue", high = "cyan", name = "Depth (m)", trans = 'reverse') +
-    metR::geom_vector(data = reduced_uv_table, aes(x = lon, y = lat, dx = Mean_U, dy = Mean_V), 
-                      arrow.angle = 15, arrow.type = "open", arrow.length = unit(0.5, "inches"), 
-                      pivot = 0,preserve.dir = TRUE, direction = "ccw",
-                      min.mag = 0, show.legend = NA, color = "white") +
-    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    labs(x = "Longitude", y = "Latitude", mag = "Speed (m/s)", color = "Depth (m)")  +
+  plot_80 <- ggplot(all_long %>% filter(Line == "80"), aes(x = Date, y = b_c_vals, color = Sta_ID)) + 
+    geom_line(size = 1) + 
+    scale_color_manual(values = c(col1, "forestgreen", col2), drop = FALSE) +
     theme(panel.background = element_blank(),
-          legend.key = element_rect(fill = "grey"),
-          panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
-          legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
-          legend.background = element_rect(fill = "white", color = "black"),
+          panel.border = element_rect(fill = NA, color = "black"),
+          axis.text.x = element_text(angle = -90, vjust = 0.5),
+          plot.title = element_text(size = tsize),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.box = "horizontal",
-          legend.title = element_text(size = tsize)) + 
-    guides(fill = guide_legend(order = 2),mag = guide_legend(order = 1)) +
-    ggtitle("B.")
+          axis.title = element_text(size = tsize)) +
+    xlab("Time") + ylab("Bray-Curtis Similarity") + labs(color = "Station") + ggtitle("Line 80")
   
-  
-  sst <- ggplot() + 
-    geom_tile(data = coeff_table, aes(x = lon, y = lat, fill = coeff_var), width =0.26, height = 0.26) +
-    scale_fill_gradient2(name = "Coeff. Var SST", low = "darkblue", mid = "white", high = "darkred", limits = c(0.09,0.12), oob = squish, midpoint = 0.1066851) +geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") +
-    ggtitle("Coeff. Var. SST") +
+  plot_81 <- ggplot(all_long %>% filter(Line == "81"), aes(x = Date, y = b_c_vals, color = Sta_ID)) + 
+    geom_line(size = 1) + 
+    scale_color_manual(values = c(col1, "forestgreen", col2), drop = FALSE) +
     theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
-          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
-  
-  sst_mean <- ggplot() + 
-    geom_tile(data = mean_table, aes(x = lon, y = lat, fill = Mean), width =0.26, height = 0.26) +
-    scale_fill_gradient2(name = "SST Mean (°C)", low = "darkblue", mid = "white", high = "darkred", limits = c(15,18), oob = squish, midpoint = 16.5) +geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") +
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
-          legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
-          legend.background = element_rect(fill = "white", color = "black"),
+          panel.border = element_rect(fill = NA, color = "black"),
+          axis.text.x = element_text(angle = -90, vjust = 0.5),
+          plot.title = element_text(size = tsize),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("D.")
+          axis.title = element_text(size = tsize)) +
+    xlab("Time") + ylab("Bray-Curtis Similarity") + labs(color = "Station") + ggtitle("Line 81")
   
-  nc_depth <-  ggplot() + 
-    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "NC_mean"),
-               color = "black", size = psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Nitracline\nDepth (m)", low = "darkblue", high = "cyan", trans = 'reverse') +
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
-          legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
-          legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("C.")
+  example_plot <- plot_80 + plot_81 + plot_90 + guide_area() + plot_layout(guides = "collect")
   
   
-  stations <- stations + theme(axis.title.x=element_blank(),
-                               axis.text.x=element_blank(),
-                               axis.ticks.x=element_blank())
+  # map <- map_data("world")    
+  # 
+  # wint <- ggplot() + 
+  #   geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+  #   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+  #   xlab("Longitude") + ylab("Latitude") + 
+  #   geom_point(data = som_maps[complete.cases(som_maps$wint_bc),], aes_string(x = "long", y = "lat", fill = "wint_bc"),
+  #              color = "black", size =psize, stroke = 0.1, shape = 21) +
+  #   scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red", 
+  #                       limits = c(0.2,0.4), oob = scales::squish) +
+  #   theme(panel.background = element_blank(),
+  #         panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+  #         plot.title = element_text(), axis.line = element_blank(),
+  #         legend.justification=c(1,1), 
+  #         legend.position=c(0.97, 0.97),
+  #         legend.background = element_rect(fill = "white", color = "black"),
+  #         axis.text = element_text(size = tsize),
+  #         legend.text = element_text(size = tsize),
+  #         axis.title = element_text(size = tsize),
+  #         legend.title = element_text(size = tsize)) +
+  #   ggtitle("A. Winter Bray-Curtis Similarity")
+  # 
+  # spr <- ggplot() + 
+  #   geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+  #   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+  #   xlab("Longitude") + ylab("Latitude") + 
+  #   geom_point(data = som_maps[complete.cases(som_maps$spr_bc),], aes_string(x = "long", y = "lat", fill = "spr_bc"),
+  #              color = "black", size =psize, stroke = 0.1, shape = 21) +
+  #   scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red", 
+  #                       limits = c(0.2,0.4), oob = scales::squish) +
+  #   theme(panel.background = element_blank(),
+  #         panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+  #         plot.title = element_text(), axis.line = element_blank(),
+  #         legend.justification=c(1,1), 
+  #         legend.position=c(0.97, 0.97),
+  #         legend.background = element_rect(fill = "white", color = "black"),
+  #         axis.text = element_text(size = tsize),
+  #         legend.text = element_text(size = tsize),
+  #         axis.title = element_text(size = tsize),
+  #         legend.title = element_text(size = tsize)) +
+  #   ggtitle("B. Spring Bray-Curtis Similarity")
+  # 
+  # summ <- ggplot() + 
+  #   geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+  #   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+  #   xlab("Longitude") + ylab("Latitude") + 
+  #   geom_point(data = som_maps[complete.cases(som_maps$sum_bc),], aes_string(x = "long", y = "lat", fill = "sum_bc"),
+  #              color = "black", size =psize, stroke = 0.1, shape = 21) +
+  #   scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red",
+  #                       limits = c(0.2,0.4), oob = scales::squish) +
+  #   theme(panel.background = element_blank(),
+  #         panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+  #         plot.title = element_text(), axis.line = element_blank(),
+  #         legend.justification=c(1,1), 
+  #         legend.position=c(0.97, 0.97),
+  #         legend.background = element_rect(fill = "white", color = "black"),
+  #         axis.text = element_text(size = tsize),
+  #         legend.text = element_text(size = tsize),
+  #         axis.title = element_text(size = tsize),
+  #         legend.title = element_text(size = tsize)) +
+  #   ggtitle("C. Summer Bray-Curtis Similarity")
+  # 
+  # 
+  # fall <- ggplot() + 
+  #   geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+  #   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+  #   xlab("Longitude") + ylab("Latitude") + 
+  #   geom_point(data = som_maps[complete.cases(som_maps$fall_bc),], aes_string(x = "long", y = "lat", fill = "fall_bc"),
+  #              color = "black", size =psize, stroke = 0.1, shape = 21) +
+  #   scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red",
+  #                       limits = c(0.2,0.4), oob = scales::squish) +
+  #   theme(panel.background = element_blank(),
+  #         panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+  #         plot.title = element_text(), axis.line = element_blank(),
+  #         legend.justification=c(1,1), 
+  #         legend.position=c(0.97, 0.97),
+  #         legend.background = element_rect(fill = "white", color = "black"),
+  #         axis.text = element_text(size = tsize),
+  #         legend.text = element_text(size = tsize),
+  #         axis.title = element_text(size = tsize),
+  #         legend.title = element_text(size = tsize)) +
+  #   ggtitle("D. Fall Bray-Curtis Similarity")
+  # 
+  # all <- ggplot() + 
+  #   geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+  #   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+  #   xlab("Longitude") + ylab("Latitude") + 
+  #   geom_point(data = som_maps[complete.cases(som_maps$all_bc),], aes_string(x = "long", y = "lat", fill = "all_bc"),
+  #              color = "black", size =psize, stroke = 0.1, shape = 21) +
+  #   scale_fill_gradient(name = "Bray-Curtis\nSimilarity", low = "white", high = "red",
+  #                       limits = c(0.2,0.4), oob = scales::squish) +
+  #   theme(panel.background = element_blank(),
+  #         panel.border = element_rect(fill = NA, colour = "black", linetype = "solid"),
+  #         plot.title = element_text(), axis.line = element_blank(),
+  #         legend.justification=c(1,1), 
+  #         legend.position=c(0.97, 0.97),
+  #         legend.background = element_rect(fill = "white", color = "black"),
+  #         axis.text = element_text(size = tsize),
+  #         legend.text = element_text(size = tsize),
+  #         axis.title = element_text(size = tsize),
+  #         legend.title = element_text(size = tsize)) +
+  #   ggtitle("Bray-Curtis Similarity\n(2014-2016) vs (2017-2018)")
+  # 
+  # plots <- wint + spr + summ + fall + plot_layout(guides = "collect")
   
-  vel_bath <- vel_bath + theme(axis.title.x=element_blank(),
-                               axis.text.x=element_blank(),
-                               axis.ticks.x=element_blank(),
-                               axis.title.y=element_blank(),
-                               axis.text.y=element_blank(),
-                               axis.ticks.y=element_blank())
-  
-  sst_mean <- sst_mean + theme(axis.title.y=element_blank(),
-                               axis.text.y=element_blank(),
-                               axis.ticks.y=element_blank())
-  
-  patch <- stations + vel_bath + nc_depth + sst_mean
-  
-  pdf(fig_name, width = 12, height = 12)
-  print(patch)
-  dev.off()
-  
-}
-
-#### Figure 2: SOMs ####
-
-fig_2_func <- function(in_list = plot_list, file_name = "figures/figure_outline/fig_2.pdf", tsize  = 12){
-  
-  in_list[[6]]$bp <- in_list[[6]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("A. Archaea")
-  in_list[[13]]$bp <- in_list[[13]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("B. Bacteria")
-  in_list[[15]]$bp <- in_list[[15]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("C. Cyanobacteria")
-  in_list[[14]]$bp <- in_list[[14]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("D. Eukaryotic Phytoplankton")
-  in_list[[16]]$bp <- in_list[[16]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize)) + ggtitle("E. Eukaryotic Protists")
-  
-  in_list[[6]]$rp <- in_list[[6]]$rp + theme(legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[13]]$rp <- in_list[[13]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[15]]$rp <- in_list[[15]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[14]]$rp <- in_list[[14]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[16]]$rp <- in_list[[16]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0)) + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  
-  
-  
-  pdf(file = file_name, width = 15, height = 6)
-  print(plot_list[[6]]$bp + plot_list[[13]]$bp + plot_list[[15]]$bp +
-          plot_list[[14]]$bp + plot_list[[16]]$bp +
-          plot_list[[6]]$rp + plot_list[[13]]$rp + plot_list[[15]]$rp +
-          plot_list[[14]]$rp + plot_list[[16]]$rp +
-          plot_layout(ncol = 5))
-  dev.off()
-}
-
-#### Figure 3: Reg and Var Import ####
-
-fig_3_func <- function(file_name = "figures/figure_outline/fig_3.pdf", tsize = 12){
-
-cyano <- regression_figure(glm_file = "output/cyano_16s_glm.Rdata",
-                  map_file = "output/cyano_16s_map.Rdata",   
-                  figure_name = "figures/glm_plots/cyano_16s_som_",
-                  main = "16s Cyanobacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
-                  var = "NC_mean", var_name = "Nitracline Depth (m)")
-
-cyano <- cyano + ggtitle("A.") + 
-  theme(legend.justification=c(1,0.5), 
-        legend.position=c(0.95, 0.5),
-        legend.background = element_rect(fill = "white", color = "black"),
-        axis.text = element_text(size = tsize),
-        legend.text = element_text(size = tsize),
-        axis.title = element_text(size = tsize),
-        plot.title = element_text(hjust = 0, size = tsize))
-
-aic_plot <- full_aic_table_figure(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                        "euks_hetero_18sv9"),
-                      in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                         "Eukaryotic\n Protists"),
-                      minimum_tp = 4, width_plot = 10,
-                      figure_name_2 = paste0("figures/aic_figures/big_group_aic_plot_logit",".pdf"),
-                      title_name = "Variable Importance")
-
-aic_plot <- aic_plot + ggtitle("B.") + 
-  theme(axis.text = element_text(size = tsize),
-        axis.title = element_text(size = tsize),
-        plot.title = element_text(hjust = 0, size = tsize))
-
-a <- cyano + aic_plot + plot_layout(widths = c(1,2))
-
-pdf(file = file_name, width = 15, height = 8)
-print(a)
-dev.off()
-
-}
-
-#### Figure 4: Diversity Example ####
-
-fig_4_func <- function(file_name = "figures/figure_outline/fig_4.pdf",
-                       in_group = "diatom_18sv9", basic = "18s_diatom", name = "Diatoms", tsize = 12){
-  
-  
-  map <- diveristy_figure(map_file = paste0("output/", in_group, "_map.Rdata"),
-                   full_dat = paste0("output/", in_group, "_full_data.Rdata"),
-                   figure_start = paste0("figures/diversity/", in_group, "_"),
-                   main = in_group_names[i])
-  
-  alpha_gamma <- alpha_versus_gamma_figure(full_data_file = paste0("output/", in_group, "_full_data.Rdata"),
-                            raw_data_file = paste0("data/", basic, ".Rdata"),
-                            map_file = paste0("output/", in_group, "_map.Rdata"), minimum_tp = 8,
-                            figure_name = paste0("figures/diversity/", in_group, "_alpha_gamma.pdf"),
-                            main = in_group_names[i])
-  
-  beta <- beta_diversity_figure(full_data_file = paste0("output/", in_group, "_full_data.Rdata"),
-                        bc_data_file = paste0("output/", in_group, "_dissimilar.Rdata"),
-                        map_file = paste0("output/", in_group, "_map.Rdata"), minimum_tp = 8,
-                        figure_name = paste0("figures/diversity/", in_group,"_beta.pdf"),
-                        main = in_group_names[i])
-  
-  
-  map <- map + ggtitle("A.") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
-          legend.justification=c(0,1), 
-          legend.position=c(0.03, 0.97),
-          legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    labs(fill = "Mean Alpha\nShannon Diversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  
-  alpha_gamma <- alpha_gamma + ggtitle("B.") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
-          legend.justification=c(1,0.5), 
-          legend.position=c(0.97, 0.5),
-          legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize)) + 
-    labs(fill = "Mean Alpha\nShannon Diversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=5))
-  
-  beta <- beta + ggtitle("C.") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
-          legend.position= "none",
-          axis.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize)) + 
-    geom_violin(fill = "grey90") + geom_boxplot(width = 0.05, fill = "white")
-  
-  
-  plots <- map + alpha_gamma + beta
-  
-  pdf(file = file_name, width = 18, height = 7)
-  print(plots)
-  dev.off()
-  
-}
-
-##### Figure 5: Diversity Importance #####
-
-full_aic_table_figure_diversity_sign(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                                       "euks_hetero_18sv9"),
-                                     in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                                        "Eukaryotic\n Protists"),
-                                     figure_name_2 = "figures/figure_outline/fig_5.pdf",
-                                     col = 27, width_plot = 10, tsize = 12)
-
-###### Figure 6: #####
-
-##### Figure 7: Community vs Time #####
-
-fig_7_func <- function(in_phyto = "output/plastid_16s_diffs.Rdata",
-                            in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
-                            in_cyano = "output/cyano_16s_diffs.Rdata",
-                            in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
-                            gradient_plot_file = "figures/figure_outline/fig_7.pdf",
-                       tsize = 12){
-  
-  
-  load(in_phyto)
-  phyto_gradient <- gradient_plot
-  
-  load(in_euks)
-  euk_gradient <- gradient_plot
-  
-  load(in_cyano)
-  cyano_gradient <- gradient_plot
- 
-  load(in_bact)
-  bact_gradient <- gradient_plot
-  
-  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
-    ylab("Proportion of Samples\nIdentified as Nearshore") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.title.y = element_text(size = tsize),
-          axis.text.y = element_text(size = tsize)) + ggtitle("A. Eukaryotic Phytoplankton")
-  
-  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.text.y  = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize)) + ggtitle("B. Eukaryotic Protists")
-    
-  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
-    ylab("Proportion of Samples\nIdentified as Nearshore") + 
-    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
-    theme(plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
-  
-  bact_gradient <- bact_gradient +
-    theme(axis.text.y  = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
-  
-  grad_plot <- phyto_gradient + euk_gradient + cyano_gradient + bact_gradient + plot_layout(guides = "collect")
-  
-  pdf(file = gradient_plot_file, width = 9, height = 7)
-  print(grad_plot)
+  pdf(file = community_diff_fig, width = 8, height = 8)
+  print(example_plot)
   dev.off()
   
   
 }
 
-##### Figure 8: Diversity vs Time #####
+GeomSplitViolin <- ggproto("GeomSplitViolin", GeomViolin, 
+                           draw_group = function(self, data, ..., draw_quantiles = NULL) {
+                             data <- transform(data, xminv = x - violinwidth * (x - xmin), xmaxv = x + violinwidth * (xmax - x))
+                             grp <- data[1, "group"]
+                             newdata <- plyr::arrange(transform(data, x = if (grp %% 2 == 1) xminv else xmaxv), if (grp %% 2 == 1) y else -y)
+                             newdata <- rbind(newdata[1, ], newdata, newdata[nrow(newdata), ], newdata[1, ])
+                             newdata[c(1, nrow(newdata) - 1, nrow(newdata)), "x"] <- round(newdata[1, "x"])
+                             
+                             if (length(draw_quantiles) > 0 & !scales::zero_range(range(data$y))) {
+                               stopifnot(all(draw_quantiles >= 0), all(draw_quantiles <=
+                                                                         1))
+                               quantiles <- ggplot2:::create_quantile_segment_frame(data, draw_quantiles)
+                               aesthetics <- data[rep(1, nrow(quantiles)), setdiff(names(data), c("x", "y")), drop = FALSE]
+                               aesthetics$alpha <- rep(1, nrow(quantiles))
+                               both <- cbind(quantiles, aesthetics)
+                               quantile_grob <- GeomPath$draw_panel(both, ...)
+                               ggplot2:::ggname("geom_split_violin", grid::grobTree(GeomPolygon$draw_panel(newdata, ...), quantile_grob))
+                             }
+                             else {
+                               ggplot2:::ggname("geom_split_violin", GeomPolygon$draw_panel(newdata, ...))
+                             }
+                           })
 
-fig_8_func <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
-                            in_euks = "output/euks_hetero_18sv9_diffs_div.Rdata",
-                            in_cyano = "output/cyano_16s_diffs_div.Rdata",
-                            in_bact = "output/bacteria_m_euks_16s_diffs_div.Rdata",
-                            gradient_plot_file = "figures/figure_outline/fig_8.pdf",
-                            tsize = 12){
-  
-  load(in_phyto)
-  phyto_gradient <- gradient_plot
-  
-  load(in_euks)
-  euk_gradient <- gradient_plot
-  
-  load(in_cyano)
-  cyano_gradient <- gradient_plot
-  
-  load(in_bact)
-  bact_gradient <- gradient_plot
-  
-  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
-    ylab("Mean Shannon Diversity\nPer Cruise") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.title.y = element_text(size = tsize),
-          axis.text.y = element_text(size = tsize)) + ggtitle("A. Eukaryotic Phytoplankton")
-  
-  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.text.y  = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize)) + ggtitle("B. Eukaryotic Protists")
-  
-  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
-    ylab("Mean Shannon Diversity\nPer Cruise") + 
-    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
-    theme(plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
-  
-  bact_gradient <- bact_gradient +
-    theme(axis.text.y  = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
-  
-  grad_plot <- phyto_gradient + euk_gradient + cyano_gradient + bact_gradient + plot_layout(guides = "collect")
-  
-  pdf(file = gradient_plot_file, width = 9, height = 7)
-  print(grad_plot)
-  dev.off()
-  
-  
+geom_split_violin <- function(mapping = NULL, data = NULL, stat = "ydensity", position = "identity", ..., 
+                              draw_quantiles = NULL, trim = TRUE, scale = "area", na.rm = FALSE, 
+                              show.legend = NA, inherit.aes = TRUE) {
+  layer(data = data, mapping = mapping, stat = stat, geom = GeomSplitViolin, 
+        position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
+        params = list(trim = trim, scale = scale, draw_quantiles = draw_quantiles, na.rm = na.rm, ...))
 }
-
-
-##### Supplementary Figures #####
-
-
-##### Suppl Figure 2: SOMs small groups #####
-
-suppl_fig_2_func <- function(in_list = plot_list, file_name = "figures/figure_outline/supp_fig_2.pdf", tsize  = 12){
-  
-  in_list[[1]]$bp <- in_list[[1]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("A. Prochlorococcus")
-  in_list[[2]]$bp <- in_list[[2]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("B. Synechococcus")
-  in_list[[3]]$bp <- in_list[[3]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("C. Flavobacteriales")
-  in_list[[4]]$bp <- in_list[[4]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("D. Rhodobacterales")
-  in_list[[5]]$bp <- in_list[[5]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize)) + ggtitle("E. Sar 11 Clade")
-  in_list[[7]]$bp <- in_list[[7]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("F. Diatoms")
-  in_list[[8]]$bp <- in_list[[8]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("G. Dinoflagellates")
-  in_list[[9]]$bp <- in_list[[9]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("H. Syndiniales")
-  in_list[[10]]$bp <- in_list[[10]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("I. Haptophytes")
-  in_list[[11]]$bp <- in_list[[11]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("J. Chlorophytes")
-  in_list[[12]]$bp <- in_list[[12]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("K. Metazoans")
-  
-  in_list[[1]]$rp <- in_list[[1]]$rp + theme(legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[2]]$rp <- in_list[[2]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[3]]$rp <- in_list[[3]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[4]]$rp <- in_list[[4]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[5]]$rp <- in_list[[5]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0)) + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  
-  in_list[[7]]$rp <- in_list[[7]]$rp + theme(legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[8]]$rp <- in_list[[8]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[9]]$rp <- in_list[[9]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[10]]$rp <- in_list[[9]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[11]]$rp <- in_list[[10]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-  in_list[[12]]$rp <- in_list[[11]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
-
-  
-  
-  
-  pdf(file = file_name, width = 25, height = 12)
-  print(in_list[[1]]$bp + in_list[[2]]$bp + in_list[[3]]$bp + in_list[[4]]$bp + in_list[[5]]$bp + plot_spacer() +
-  in_list[[1]]$rp + in_list[[2]]$rp + in_list[[3]]$rp + in_list[[4]]$rp + in_list[[5]]$rp + plot_spacer() +
-  in_list[[7]]$bp + in_list[[8]]$bp + in_list[[9]]$bp + in_list[[10]]$bp + in_list[[11]]$bp + in_list[[12]]$bp + 
-  in_list[[7]]$rp + in_list[[8]]$rp + in_list[[9]]$rp + in_list[[10]]$rp + in_list[[11]]$rp + in_list[[12]]$rp +
-  plot_layout(ncol = 6, guides = "collect"))
-  dev.off()
-}
-
-##### Suppl Figure 3: Variable AIC small groups #####
-
-full_aic_table_figure(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
-                                        "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                        "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
-                                         "Diatoms",
-                                         "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                      minimum_tp = 4, width_plot = 16,
-                      figure_name_2 = paste0("figures/figure_outline/supp_fig_3",".pdf"),
-                      title_name = "", tsize = 12)
-
-#### Suppl Figure 4: Diversity Maps #####
-
-suppl_fig_4_func <- function(file_name = "figures/figure_outline/supp_fig_4.pdf",
-                             in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","plastid_16s",
-                                               "euks_hetero_18sv9"),
-                             in_group_names = c("Archaea","Bacteria", "Cyanobacteria", "Eukaryotic Phytoplankton\n(Plastids)",
-                                                "Eukaryotic\n Protists"), tsize = 12){
-  
-  
-}
-
-##### Suppl Figure 5: Diversity Importance Small Groups #####
-
-full_aic_table_figure_diversity_sign(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
-                                                       "diatom_18sv9","dino_18sv9", "syndin_18sv9",
-                                                       "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                                     in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
-                                                        "Diatoms",
-                                                        "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                                     figure_name_2 = "figures/figure_outline/supp_fig_5.pdf",
-                                     col = 27, width_plot = 16, tsize = 12)
-
-##### Suppl Figure 6: Total Diversity vs Time #####
-
-suppl_fig_6_func <- function(in_phyto = "output/plastid_16s_diffs_div.Rdata",
-                       in_euks = "output/euks_hetero_18sv9_diffs_div.Rdata",
-                       in_cyano = "output/cyano_16s_diffs_div.Rdata",
-                       in_bact = "output/bacteria_m_euks_16s_diffs_div.Rdata",
-                       gradient_plot_file = "figures/figure_outline/supp_fig_6.pdf",
-                       tsize = 12){
-  
-  load(in_phyto)
-  phyto_gradient2 <- gradient_plot2
-  
-  load(in_euks)
-  euk_gradient2 <- gradient_plot2
-
-  load(in_cyano)
-  cyano_gradient2 <- gradient_plot2
-  
-  load(in_bact)
-  bact_gradient2 <- gradient_plot2
-
-  phyto_gradient2 <- phyto_gradient2 + theme(legend.position = "none") + xlab("")  + 
-    ylab("Total Shannon Diversity\nPer Cruise") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.title.y = element_text(size = tsize),
-          axis.text.y = element_text(size = tsize)) + ggtitle("A. Eukaryotic Phytoplankton")
-  
-  euk_gradient2 <- euk_gradient2 + theme(legend.position = "none") + xlab("") + ylab("") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.text.y  = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize)) + ggtitle("B. Eukaryotic Protists")
-  
-  cyano_gradient2 <- cyano_gradient2 + theme(legend.position = "none")  + 
-    ylab("Total Shannon Diversity\nPer Cruise") + 
-    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
-    theme(plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
-  
-  bact_gradient2 <- bact_gradient2 +
-    theme(axis.text.y  = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
-  
-  grad_plot <- phyto_gradient2 + euk_gradient2 + cyano_gradient2 + bact_gradient2 + plot_layout(guides = "collect")
-  
-  pdf(file = gradient_plot_file, width = 9, height = 7)
-  print(grad_plot)
-  dev.off()
-  
-  
-}
-
