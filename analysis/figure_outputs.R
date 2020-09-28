@@ -247,6 +247,40 @@ for (i in 1:length(in_group_list)) {
   
 }
 
+# Line Specific Plots 
+
+for (i in 1:length(in_group_list)) {
+  
+  community_comparison_line(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
+                       in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                       similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
+                       out_diff_file = paste0("output/",in_group_list[i],"_line_diffs.Rdata"),
+                       title = in_group_names[i])
+  
+  print(i)
+  
+}
+
+# Station Specific
+
+for (i in 1:length(in_group_list)) {
+  
+  community_comparison_station(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
+                            in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                            similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
+                            out_diff_file = paste0("output/",in_group_list[i],"_station_diffs.Rdata"),
+                            title = in_group_names[i])
+  
+  community_comparison_station_2(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
+                               in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                               similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
+                               out_diff_file = paste0("output/",in_group_list[i],"_station2_diffs.Rdata"),
+                               title = in_group_names[i])
+  
+  print(i)
+  
+}
+
 ###### Diversity Time Plots #####
 
 # All

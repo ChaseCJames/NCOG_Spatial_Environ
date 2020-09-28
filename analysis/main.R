@@ -60,7 +60,7 @@ for (i in 1:length(in_group_list)) {
                 physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
                 map_file = paste0("output/", in_group_list[i], "_map.Rdata"),
                 regression_file = paste0("output/", in_group_list[i],",_glm.Rdata"),
-                dissimmilar_matrix = paste0("output/", in_group_list[i], "_dissimilar.Rdata"), 
+                dissimmilar_matrix = paste0("output/", in_group_list[i], "_dissimilar.Rdata"),
                 full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
                 sample_regime = "both")
   

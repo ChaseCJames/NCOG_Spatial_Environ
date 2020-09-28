@@ -1928,27 +1928,28 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   som_cruise$log_Nitrate <- log(som_cruise$Nitrate)
   
   cuti_plot <- ggplot(som_cruise, aes_string(x = "CUTI", y = paste0("som_",nearshore_som))) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
-    geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
-    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17,18)) + 
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Phase", color = "Season") + xlab("Coastal Upwelling Transport Index\n(CUTI)") +
-    ylab("Frequency of Nearshore Cluster") 
+    labs(shape = "Season", color = "Phase") + xlab("Coastal Upwelling Transport Index\n(CUTI)") +
+    ylab("Frequency of Nearshore Cluster")  + ggtitle(title)
   
   beuti_plot <- ggplot(som_cruise, aes_string(x = "BEUTI", y = paste0("som_",nearshore_som))) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
-    geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
-    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17,18)) + 
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Phase", color = "Season") + 
-    xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
-    ylab("") 
+    labs(shape = "Season", color = "Phase") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
+    ylab("Frequency of Nearshore Cluster")  + ggtitle(title)
   
   log_beuti_plot <- ggplot(som_cruise, aes_string(x = "log_BEUTI", y = paste0("som_",nearshore_som))) +
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
@@ -1963,15 +1964,16 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     ylab("") 
   
   reg_nitrate <- ggplot(som_cruise, aes_string(x = "Nitrate", y = paste0("som_",nearshore_som))) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
-    geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
-    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17,18)) + 
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Phase", color = "Season") + xlab("Regionally Availible Nitrate") +
-    ylab("") 
+    labs(shape = "Season", color = "Phase") + xlab("Regionally Availible Nitrate") +
+    ylab("Frequency of Nearshore Cluster")  + ggtitle(title)
   
   log_reg_nitrate <- ggplot(som_cruise, aes_string(x = "log_Nitrate", y = paste0("som_",nearshore_som))) +
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
@@ -2049,6 +2051,408 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   save(early_dist, late_dist, diversity_diff, even_diff, phase, season, ts_plot,
        cuti_plot, beuti_plot, reg_nitrate, dissimilar_plot, file = out_diff_file)
+  
+  
+  
+}
+
+##### Line Specific Plots #####
+
+community_comparison_line <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
+                                 similar_mat = "output/euks_auto_18sv9_dissimilar.Rdata",
+                                 in_map = "output/euks_auto_18sv9_map.Rdata",
+                                 out_diff_file = "output/euks_auto_18sv9_line_diffs.Rdata",
+                                 title = "Eukaryotic Phytoplankton"){
+  
+  load(in_file)
+  load(similar_mat)
+  load(in_map)
+  
+  # find centroids
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  wt_1 <- wt.centroid(x = centroid_df, p = 2)
+  wt_2 <- wt.centroid(x = centroid_df, p = 3)
+  
+  clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
+  clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
+  
+  if(clust1 == 1){nearshore_som <- 1}
+  if(clust1 == 2){nearshore_som <- 2}
+  
+  full_dat$Line <- substr(full_dat$Sta_ID,1,3)
+  
+  line_90 <- full_dat %>%
+    filter(Line == "090")
+  
+  line_80 <- full_dat %>%
+    filter(Line == "080")
+  
+  som_cruise_90 <- line_90 %>% 
+    group_by(Cruise) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+  
+  som_cruise_80 <- line_80 %>% 
+    group_by(Cruise) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE),  Date = mean(Date, na.rm = TRUE)) 
+  
+  results_90 <-  line_90 %>% 
+    group_by(Cruise) %>%
+    do(model = lm(NCDepth ~ dist_to_coast, data = .)) %>%
+    mutate(coef=coef(model)["dist_to_coast"])
+  
+  results_80 <-  line_80 %>% 
+    group_by(Cruise) %>%
+    do(model = lm(NCDepth ~ dist_to_coast, data = .)) %>%
+    mutate(coef=coef(model)["dist_to_coast"])
+  
+  som_cruise_90$NC_slope <- results_90$coef
+  som_cruise_80$NC_slope <- results_80$coef
+  
+  som_cruise_90$phase <- c(rep("2014-2016",12),rep("2017-2018",8),rep("2019",4))
+  som_cruise_90$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),6))
+  som_cruise_90$season <- factor(som_cruise_90$season, levels = c("Winter", "Spring", "Summer", "Fall"))
+  
+  som_cruise_80$phase <- c(rep("2014-2016",11),rep("2017-2018",8),rep("2019",4))
+  som_cruise_80$season <- as.factor(c("Spring", "Summer", "Fall",rep(c("Winter", "Spring", "Summer", "Fall"),5)))
+  som_cruise_80$season <- factor(som_cruise_80$season, levels = c("Winter", "Spring", "Summer", "Fall"))
+  
+  som_cruise_90$Line <- "90"
+  som_cruise_80$Line <- "80"
+  
+  total_cruise <- bind_rows(som_cruise_80, som_cruise_90)
+  
+  
+  ggplot(total_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
+    geom_point(size = 3, aes_string(fill = "Line", color = "Line", shape = "season"), data = total_cruise) 
+
+  
+  
+  
+  phase_90 <- ggplot(som_cruise_90, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise_90) +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    stat_ellipse(data = som_cruise_90 %>% filter(phase != "2019"),aes_string(color = "phase")) + 
+    scale_shape_manual(values = c(21,22,23,24)) + 
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust = 0.5)) +
+    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Frequency of Nearshore Cluster") + ggtitle(title)
+  
+
+  
+
+  
+ 
+  save(phase_90, phase_80, file = out_diff_file)
+  
+  
+  
+}
+
+##### Line Specific Plots #####
+
+community_comparison_station <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
+                                      similar_mat = "output/euks_auto_18sv9_dissimilar.Rdata",
+                                      in_map = "output/euks_auto_18sv9_map.Rdata",
+                                      out_diff_file = "output/euks_auto_18sv9_station_diffs.Rdata",
+                                      title = "Eukaryotic Phytoplankton"){
+  
+  load(in_file)
+  load(similar_mat)
+  load(in_map)
+  
+  # find centroids
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  wt_1 <- wt.centroid(x = centroid_df, p = 2)
+  wt_2 <- wt.centroid(x = centroid_df, p = 3)
+  
+  clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
+  clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
+  
+  if(clust1 == 1){nearshore_som <- 1}
+  if(clust1 == 2){nearshore_som <- 2}
+  
+  full_dat$Year <- as.numeric(substr(full_dat$Cruise,1,4))
+  
+  som_cruise_warm <- full_dat %>% 
+    filter(Year < 2017) %>%
+    group_by(Sta_ID) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              chl_mean = mean(ChlorA, na.rm = TRUE), chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+  
+  som_cruise_cool <- full_dat %>% 
+    filter(Year > 2016, Year < 2019) %>%
+    group_by(Sta_ID) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              chl_mean = mean(ChlorA, na.rm = TRUE), chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+  
+  som_cruise_2019 <- full_dat %>% 
+    filter(Year > 2018) %>%
+    group_by(Sta_ID) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              chl_mean = mean(ChlorA, na.rm = TRUE), chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+
+  som_cruise_warm$Phase <- "2014-2016"
+  som_cruise_cool$Phase <- "2017-2018"
+  som_cruise_2019$Phase <- "2019"
+  
+  all_comb <- bind_rows(som_cruise_warm, som_cruise_cool, som_cruise_2019)
+  
+  chl_plot <- ggplot(all_comb %>% filter(n_samps > 2, Phase != "2019"), aes_string(x = "chl_mean",
+                              y = paste0("som_",nearshore_som),
+                              color = "Phase", fill = "Phase")) +
+    geom_point() + stat_smooth(method="glm", method.args = list(family = "binomial")) +
+    scale_color_manual(values = c("red", "blue")) +  scale_fill_manual(values = c("red", "blue")) + 
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black")) + xlab("Mean Chlorophyll") +
+    ylab("Proportion of Samples\nIdentified as Nearshore") + ggtitle(title)
+  
+  
+  
+  save(chl_plot, file = out_diff_file)
+  
+  
+  
+}
+
+community_comparison_station_2 <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
+                                         similar_mat = "output/euks_auto_18sv9_dissimilar.Rdata",
+                                         in_map = "output/euks_auto_18sv9_map.Rdata",
+                                         out_diff_file = "output/euks_auto_18sv9_station2_diffs.Rdata",
+                                         title = "Eukaryotic Phytoplankton"){
+  
+  load(in_file)
+  load(similar_mat)
+  load(in_map)
+  
+  # find centroids
+  centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
+  
+  wt_1 <- wt.centroid(x = centroid_df, p = 2)
+  wt_2 <- wt.centroid(x = centroid_df, p = 3)
+  
+  clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
+  clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
+  
+  if(clust1 == 1){nearshore_som <- 1}
+  if(clust1 == 2){nearshore_som <- 2}
+  
+  full_dat$Year <- as.numeric(substr(full_dat$Cruise,1,4))
+  full_dat$Line <- as.numeric(substr(full_dat$Sta_ID,1,3))
+  full_dat$Station <- substr(full_dat$Sta_ID,7,9)
+  full_dat$Cruise <- as.character(full_dat$Cruise)
+  
+  full_dat <- full_dat %>% filter(Line > 75)
+  
+  soms <- full_dat$som_id
+  
+  soms[which(soms != nearshore_som)] <- "Offshore"
+  soms[which(soms == nearshore_som)] <- "Nearshore"
+
+  
+  full_dat$som_name <- soms
+  
+  line_80_dat <- full_dat %>%
+    filter(Line == 80)
+  line_90_dat <- full_dat %>%
+    filter(Line == 90)
+  
+  line_80 <- ggplot(line_80_dat, aes(x = Station, y = Cruise, fill = NCDepth)) +
+    geom_tile(width = 1, height = 1) + 
+    scale_fill_gradient(low = "aquamarine", high = "darkblue", na.value = "white") +
+    geom_point(aes(color = som_name), size = 3) +
+    scale_color_manual(values = c("red", "blue")) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black")) +
+    ggtitle(paste(title,"Line 80")) + 
+    labs(color = "Community", fill = "Nitracline Depth (m)")
+    
+  
+  line_90 <- ggplot(line_90_dat, aes(x = Station, y = Cruise, fill = NCDepth)) +
+    geom_tile(width = 1, height = 1) + 
+    scale_fill_gradient(low = "aquamarine", high = "darkblue", na.value = "white") +
+    geom_point(aes(color = som_name), size = 3) +
+    scale_color_manual(values = c("red", "blue")) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          legend.position = "none",
+          axis.text.y = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank()) + 
+    ggtitle(paste(title,"Line 90")) + 
+    labs(color = "Community", fill = "Nitracline Depth (m)") 
+  
+  combo_plot <- line_80 + line_90 + plot_layout(guides = "collect")
+  
+  print(combo_plot)
+  
+  som_cruise_warm <- full_dat %>% 
+    filter(Year < 2017) %>%
+    group_by(Sta_ID) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              chl_mean = mean(ChlorA, na.rm = TRUE), chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+  
+  som_cruise_cool <- full_dat %>% 
+    filter(Year > 2016, Year < 2019) %>%
+    group_by(Sta_ID) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              chl_mean = mean(ChlorA, na.rm = TRUE), chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+  
+  som_cruise_2019 <- full_dat %>% 
+    filter(Year > 2018) %>%
+    group_by(Sta_ID) %>%
+    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
+              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
+              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
+              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
+              chl_mean = mean(ChlorA, na.rm = TRUE), chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
+              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
+              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
+              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
+              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
+              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
+              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
+              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
+              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
+              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
+              richness = mean(richness, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+  
+  som_cruise_warm$Phase <- "2014-2016"
+  som_cruise_cool$Phase <- "2017-2018"
+  som_cruise_2019$Phase <- "2019"
+  
+  all_comb <- bind_rows(som_cruise_warm, som_cruise_cool, som_cruise_2019)
+  
+  chl_plot <- ggplot(all_comb %>% filter(n_samps > 2),
+                             aes_string(x = "NC_mean",
+                                        y = paste0("som_",nearshore_som),
+                                        color = "Phase",
+                                        shape = "Phase",
+                                        fill = "chl_mean")) + 
+    geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +
+    geom_point(size = 5, stroke = 2) + xlab("Mean Nitracline Depth (m)") +
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    scale_fill_gradient(low = "green", high = "darkgreen") +
+    scale_shape_manual(values = c(21,22,24)) + 
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black")) +
+    ggtitle(title) + labs(fill = "Mean Chl-a")
+  
+  print(chl_plot)
+  
+  save(combo_plot, chl_plot, file = out_diff_file)
   
   
   

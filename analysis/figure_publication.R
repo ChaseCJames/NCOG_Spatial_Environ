@@ -2548,5 +2548,559 @@ fig_7_func_2 <- function(in_list = fig_list, file_name = "figures/figure_outline
   
 }
 
+cuti_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
+                       in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
+                       in_cyano = "output/cyano_16s_diffs.Rdata",
+                       in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
+                       in_arch = "output/archaea_16s_diffs.Rdata",
+                       gradient_plot_file = "figures/figure_outline/fig_x_cuti_plot.pdf",
+                       tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- cuti_plot
+  
+  load(in_euks)
+  euk_gradient <- cuti_plot
+  
+  load(in_cyano)
+  cyano_gradient <- cuti_plot
+  
+  load(in_bact)
+  bact_gradient <- cuti_plot
+  
+  load(in_arch)
+  arch_gradient <- cuti_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Heterotrophic Eukaryotic Protists")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Coastal Upwelling Transport Index\n(CUTI)") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
+  
+  bact_gradient <- bact_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
+    ylab("") + xlab("Coastal Upwelling Transport Index\n(CUTI)")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Archaea") +
+    ylab("") + xlab("Coastal Upwelling Transport Index\n(CUTI)")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+beuti_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
+                      in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
+                      in_cyano = "output/cyano_16s_diffs.Rdata",
+                      in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
+                      in_arch = "output/archaea_16s_diffs.Rdata",
+                      gradient_plot_file = "figures/figure_outline/fig_x_beuti_plot.pdf",
+                      tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- beuti_plot
+  
+  load(in_euks)
+  euk_gradient <- beuti_plot
+  
+  load(in_cyano)
+  cyano_gradient <- beuti_plot
+  
+  load(in_bact)
+  bact_gradient <- beuti_plot
+  
+  load(in_arch)
+  arch_gradient <- beuti_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Heterotrophic Eukaryotic Protists")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
+  
+  bact_gradient <- bact_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
+    ylab("") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Archaea") +
+    ylab("") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+nitrate_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
+                       in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
+                       in_cyano = "output/cyano_16s_diffs.Rdata",
+                       in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
+                       in_arch = "output/archaea_16s_diffs.Rdata",
+                       gradient_plot_file = "figures/figure_outline/fig_x_nitrate_plot.pdf",
+                       tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- reg_nitrate
+  
+  load(in_euks)
+  euk_gradient <- reg_nitrate
+  
+  load(in_cyano)
+  cyano_gradient <- reg_nitrate
+  
+  load(in_bact)
+  bact_gradient <- reg_nitrate
+  
+  load(in_arch)
+  arch_gradient <- reg_nitrate
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Heterotrophic Eukaryotic Protists")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Regionally Availible Nitrate") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
+  
+  bact_gradient <- bact_gradient + theme(legend.position = "none")  + 
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
+    ylab("") + xlab("Regionally Availible Nitrate")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Archaea") +
+    ylab("") + xlab("Regionally Availible Nitrate")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
 
 
+line_spec_func <- function(in_phyto = "output/euks_auto_18sv9_line_diffs.Rdata",
+                         in_euks = "output/euks_hetero_18sv9_line_diffs.Rdata",
+                         in_cyano = "output/cyano_16s_line_diffs.Rdata",
+                         in_bact = "output/bacteria_m_euks_16s_line_diffs.Rdata",
+                         in_arch = "output/archaea_16s_line_diffs.Rdata",
+                         gradient_plot_file = "figures/figure_outline/fig_x_line_plot.pdf",
+                         tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient1 <- phase_80
+  phyto_gradient2 <- phase_90
+  
+  load(in_euks)
+  euk_gradient1 <- phase_80
+  euk_gradient2 <- phase_90
+  
+  load(in_cyano)
+  cyano_gradient1 <- phase_80
+  cyano_gradient2 <- phase_90
+  
+  load(in_bact)
+  bact_gradient1 <- phase_80
+  bact_gradient2 <- phase_90
+  
+  load(in_arch)
+  arch_gradient1 <- phase_80
+  arch_gradient2 <- phase_90
+  
+  phyto_gradient1 <- phyto_gradient1 + theme(legend.position = "none") 
+  phyto_gradient2 <- phyto_gradient2 + theme(legend.position = "none") 
+  
+  euk_gradient1 <- euk_gradient1 + theme(legend.position = "none") 
+  euk_gradient2 <- euk_gradient2 + theme(legend.position = "none") 
+  
+  cyano_gradient1 <- cyano_gradient1 + theme(legend.position = "none")  
+  cyano_gradient2 <- cyano_gradient2 + theme(legend.position = "none")  
+  
+  bact_gradient1 <- bact_gradient1 + theme(legend.position = "none")  
+  bact_gradient2 <- bact_gradient2 + theme(legend.position = "none")
+  
+  arch_gradient1 <- arch_gradient1 + theme(legend.position = "none")
+  arch_gradient2 <- arch_gradient2 
+  
+  grad_plot <- phyto_gradient1 + euk_gradient1 +
+    cyano_gradient1 + bact_gradient1 + arch_gradient1 +
+    phyto_gradient2 + euk_gradient2 + cyano_gradient2 +
+    bact_gradient2 + arch_gradient2 + plot_layout(ncol = 5, guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 20, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+beuti_euks_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
+                       in_euks = "output/dino_18sv9_diffs.Rdata",
+                       in_cyano = "output/diatom_18sv9_diffs.Rdata",
+                       in_bact = "output/hapto_18sv9_diffs.Rdata",
+                       in_arch = "output/chloro_18sv9_diffs.Rdata",
+                       gradient_plot_file = "figures/figure_outline/fig_x_beuti_euks_plot.pdf",
+                       tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- beuti_plot
+  
+  load(in_euks)
+  euk_gradient <- beuti_plot
+  
+  load(in_cyano)
+  cyano_gradient <- beuti_plot
+  
+  load(in_bact)
+  bact_gradient <- beuti_plot
+  
+  load(in_arch)
+  arch_gradient <- beuti_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Dinoflagellates")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Diatoms")
+  
+  bact_gradient <- bact_gradient + theme(legend.position = "none")  +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Haptophytes") +
+    ylab("") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Chlorophytes") +
+    ylab("") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+station_func <- function(in_phyto = "output/euks_auto_18sv9_station_diffs.Rdata",
+                       in_euks = "output/euks_hetero_18sv9_station_diffs.Rdata",
+                       in_cyano = "output/cyano_16s_station_diffs.Rdata",
+                       in_bact = "output/bacteria_m_euks_16s_station_diffs.Rdata",
+                       in_arch = "output/archaea_16s_station_diffs.Rdata",
+                       gradient_plot_file = "figures/figure_outline/fig_x_station_plot.pdf",
+                       tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- chl_plot
+  
+  load(in_euks)
+  euk_gradient <- chl_plot
+  
+  load(in_cyano)
+  cyano_gradient <- chl_plot
+  
+  load(in_bact)
+  bact_gradient <- chl_plot
+  
+  load(in_arch)
+  arch_gradient <- chl_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Heterotrophic Eukaryotic Protists")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Mean Chlorophyll") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
+  
+  bact_gradient <- bact_gradient +
+    theme(legend.position = "none",
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
+    ylab("") + xlab("Mean Chlorophyll")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Archaea") +
+    ylab("") + xlab("Mean Chlorophyll")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+station_2_func <- function(in_phyto = "output/euks_auto_18sv9_station2_diffs.Rdata",
+                         in_euks = "output/euks_hetero_18sv9_station2_diffs.Rdata",
+                         in_cyano = "output/cyano_16s_station2_diffs.Rdata",
+                         in_bact = "output/bacteria_m_euks_16s_station2_diffs.Rdata",
+                         in_arch = "output/archaea_16s_station2_diffs.Rdata",
+                         gradient_plot_file = "figures/figure_outline/fig_x_station2_plot.pdf",
+                         tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- chl_plot
+  
+  load(in_euks)
+  euk_gradient <- chl_plot
+  
+  load(in_cyano)
+  cyano_gradient <- chl_plot
+  
+  load(in_bact)
+  bact_gradient <- chl_plot
+  
+  load(in_arch)
+  arch_gradient <- chl_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Heterotrophic Eukaryotic Protists")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Mean Nitracline Depth (m)") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Cyanobacteria")
+  
+  bact_gradient <- bact_gradient +
+    theme(legend.position = "none",
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Bacteria") +
+    ylab("") + xlab("Mean Nitracline Depth (m)")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Archaea") +
+    ylab("") + xlab("Mean Nitracline Depth (m)")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+station_2_euks_func <- function(in_phyto = "output/euks_auto_18sv9_station2_diffs.Rdata",
+                           in_euks = "output/dino_18sv9_station2_diffs.Rdata",
+                           in_cyano = "output/diatom_18sv9_station2_diffs.Rdata",
+                           in_bact = "output/hapto_18sv9_station2_diffs.Rdata",
+                           in_arch = "output/chloro_18sv9_station2_diffs.Rdata",
+                           gradient_plot_file = "figures/figure_outline/fig_x_station2_euks_plot.pdf",
+                           tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- chl_plot
+  
+  load(in_euks)
+  euk_gradient <- chl_plot
+  
+  load(in_cyano)
+  cyano_gradient <- chl_plot
+  
+  load(in_bact)
+  bact_gradient <- chl_plot
+  
+  load(in_arch)
+  arch_gradient <- chl_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("A. Photosynthetic Eukaryotic Protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("B. Dinoflagellates")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Mean Nitracline Depth (m)") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("C. Diatoms")
+  
+  bact_gradient <- bact_gradient +
+    theme(legend.position = "none",
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("D. Haptophytes") +
+    ylab("") + xlab("Mean Nitracline Depth (m)")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("E. Chlorophytes") +
+    ylab("") + xlab("Mean Nitracline Depth (m)")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect")
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
