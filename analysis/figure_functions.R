@@ -25,6 +25,8 @@ library(metR)
 library(ncdf4)
 library(patchwork)
 library(MASS)
+library(standardize)
+library(mgcv)
 
 
 #### SOM Figure ####
@@ -54,7 +56,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust1)), color = "black", size =6, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1)) +
+    scale_fill_gradient(low = "white", high = "darkblue", limits = c(0,1)) +
     ggtitle(paste0(cluster1)) +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
@@ -64,15 +66,15 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize))
   
-  if(clust1 == 1){p1 <- p1 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "blue", size = 5, pch = 10)}
-  if(clust1 == 2){p1 <- p1 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "blue", size = 5, pch = 10)}
+  if(clust1 == 1){p1 <- p1 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "red", size = 5, pch = 10)}
+  if(clust1 == 2){p1 <- p1 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "red", size = 5, pch = 10)}
   
   p2 <-  ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust2)), color = "black", size =6, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(low = "white", high = "darkblue", limits = c(0,1)) +
+    scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1)) +
     ggtitle(paste0(cluster2)) +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
@@ -82,8 +84,8 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize))
   
-  if(clust2 == 1){p2 <- p2 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "red", size = 5, pch = 10)}
-  if(clust2 == 2){p2 <- p2 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "red", size = 5, pch = 10)}
+  if(clust2 == 1){p2 <- p2 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "blue", size = 5, pch = 10)}
+  if(clust2 == 2){p2 <- p2 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "blue", size = 5, pch = 10)}
   
   title <- ggdraw() + draw_label(main, fontface='bold')
   a <- plot_grid(title,plot_grid(p2,p1), nrow = 2,
@@ -124,11 +126,11 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm.Rdata",
   clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
   clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
   
-  if(clust1 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Nearshore"}
-  if(clust1 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Nearshore"}
+  if(clust1 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Offshore"}
+  if(clust1 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Offshore"}
   
-  if(clust2 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Offshore"}
-  if(clust2 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Offshore"}
+  if(clust2 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Nearshore"}
+  if(clust2 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Nearshore"}
   
   
   reg_plot <- ggplot(som_plots, aes_string(x = var, y = "freq", color = "cluster")) + geom_point() +
@@ -136,7 +138,7 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm.Rdata",
     theme(legend.title = element_blank(), 
           panel.background = element_blank(), panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    xlab(var_name) + ylab("Frequency") + scale_color_manual(values = c("red", "blue")) + ggtitle(main)
+    xlab(var_name) + ylab("Frequency") + scale_color_manual(values = c("blue", "red")) + ggtitle(main)
   
   
   
@@ -292,7 +294,7 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
   
   station_sums <- asv_sums %>% 
     group_by(station) %>% 
-    summarise_all(sum, na.rm = TRUE)
+    summarise(across(.cols = everything(), .fns = ~sum(.x,na.rm = TRUE)))
   
   station_sums <- as.data.frame(station_sums)
   
@@ -346,18 +348,17 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
   #   scale_color_manual(values = c("royalblue2", "seagreen3")) 
   
   div_plot <- ggplot(som_maps, aes(x = Dist_mean)) + 
-    geom_point(aes(y = shannon, color = "Alpha Diversity")) +
+    geom_point(aes(y = shannon, color = "Mean Alpha Diversity")) +
     stat_smooth(aes(y = shannon), method = "loess", level = 0.95, color = "royalblue2") +
     geom_point(aes(y = Gamma_Diversity, color = "Gamma Diversity")) +
     stat_smooth(aes(y = Gamma_Diversity), method = "loess", level = 0.95, color = "seagreen3") +
-    scale_y_continuous(sec.axis = sec_axis(~., name = "Gamma Diversity")) +
-    ylab("Alpha Diversity") + xlab("Distance to Coast (km)") +
+    ylab("Shannon Index") + xlab("Distance to Coast (km)") +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           legend.position = "bottom", plot.title = element_text(hjust =0.5)) +
     ggtitle(paste0(main,"\nAlpha Diversity vs\nGamma Diversity per Station")) +
-    scale_color_manual(values = c("royalblue2", "seagreen3")) 
+    scale_color_manual(values = c("seagreen3","royalblue2")) 
   
   pdf(file = figure_name, width = 8, height = 6)
   print(div_plot)
@@ -536,7 +537,7 @@ aic_table_func <- function(som_maps = cyano_plots){
   
   som_glm <- som_maps
   
-  model_AIC <- matrix(NA,19,2)
+  model_AIC <- matrix(NA,19,3)
   
   # temperature
   
@@ -544,11 +545,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   mt_sum <- summary(glm_mean_temp)
   model_AIC[1,2] <- mt_sum$aic
   model_AIC[1,1] <- "Mean Temp"
+  model_AIC[1,3] <- coef(mt_sum)[2,4]
   
   glm_coeff_temp <- glm(som_1 ~  temp_coeff, data = som_glm, family = binomial)
   ct_sum <- summary(glm_coeff_temp)
   model_AIC[10,2] <- ct_sum$aic
   model_AIC[10,1] <- "Coeff. Var. Temp"
+  model_AIC[10,3] <- coef(ct_sum)[2,4]
   
   # sea surface temperature
   
@@ -556,11 +559,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   mt_sum <- summary(glm_mean_sst)
   model_AIC[2,2] <- mt_sum$aic
   model_AIC[2,1] <- "Mean SST"
+  model_AIC[2,3] <- coef(mt_sum)[2,4]
   
   glm_coeff_sst <- glm(som_1 ~  sst_coeff, data = som_glm, family = binomial)
   ct_sum <- summary(glm_coeff_sst)
   model_AIC[11,2] <- ct_sum$aic
   model_AIC[11,1] <- "Coeff. Var. SST"
+  model_AIC[11,3] <- coef(ct_sum)[2,4]
   
   # salinity
   
@@ -568,11 +573,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   mt_sum <- summary(glm_mean_sal)
   model_AIC[3,2] <- mt_sum$aic
   model_AIC[3,1] <- "Mean Salinity"
+  model_AIC[3,3] <- coef(mt_sum)[2,4]
   
   glm_coeff_sal <- glm(som_1 ~  sal_coeff, data = som_glm, family = binomial)
   ct_sum <- summary(glm_coeff_sal)
   model_AIC[12,2] <- ct_sum$aic
   model_AIC[12,1] <- "Coeff. Var. Salinity"
+  model_AIC[12,3] <- coef(ct_sum)[2,4]
   
   # NO3
   
@@ -580,11 +587,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   mn_sum <- summary(glm_mean_no3)
   model_AIC[4,2] <- mn_sum$aic
   model_AIC[4,1] <- "Mean NO3"
+  model_AIC[4,3] <- coef(mn_sum)[2,4]
   
   glm_coeff_no3 <- glm(som_1 ~  NO3_coeff, data = som_glm, family = binomial)
   cn_sum <- summary(glm_coeff_no3)
   model_AIC[13,2] <- cn_sum$aic
   model_AIC[13,1] <- "Coeff. Var. NO3"
+  model_AIC[13,3] <- coef(cn_sum)[2,4]
   
   # PO4
   
@@ -592,11 +601,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   mp_sum <- summary(glm_mean_po4)
   model_AIC[5,2] <- mp_sum$aic
   model_AIC[5,1] <- "Mean PO4"
+  model_AIC[5,3] <- coef(mp_sum)[2,4]
   
   glm_coeff_po4 <- glm(som_1 ~  PO4_coeff, data = som_glm, family = binomial)
   cp_sum <- summary(glm_coeff_po4)
   model_AIC[14,2] <- cp_sum$aic
   model_AIC[14,1] <- "Coeff. Var. PO4"
+  model_AIC[14,3] <- coef(cp_sum)[2,4]
   
   # SiO3
   
@@ -604,11 +615,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   ms_sum <- summary(glm_mean_sio3)
   model_AIC[6,2] <- ms_sum$aic
   model_AIC[6,1] <- "Mean SiO4"
+  model_AIC[6,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_sio3 <- glm(som_1 ~  SiO3_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_sio3)
   model_AIC[15,2] <- cs_sum$aic
   model_AIC[15,1] <- "Coeff. Var. SiO4"
+  model_AIC[15,3] <- coef(cs_sum)[2,4]
   
   # C14
   
@@ -640,11 +653,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   ms_sum <- summary(glm_mean_mld)
   model_AIC[7,2] <- ms_sum$aic
   model_AIC[7,1] <- "Mean MLD"
+  model_AIC[7,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_mld <- glm(som_1 ~  MLD_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_mld)
   model_AIC[16,2] <- cs_sum$aic
   model_AIC[16,1] <- "Coeff. Var. MLD"
+  model_AIC[16,3] <- coef(cs_sum)[2,4]
   
   # NC Depth
   
@@ -652,11 +667,13 @@ aic_table_func <- function(som_maps = cyano_plots){
   ms_sum <- summary(glm_mean_nc)
   model_AIC[8,2] <- ms_sum$aic
   model_AIC[8,1] <- "Mean NCD"
+  model_AIC[8,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_nc <- glm(som_1 ~  NC_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_nc)
   model_AIC[17,2] <- cs_sum$aic
   model_AIC[17,1] <- "Coeff. Var. NCD"
+  model_AIC[17,3] <- coef(cs_sum)[2,4]
   
   # Distance to Coast
   
@@ -664,6 +681,7 @@ aic_table_func <- function(som_maps = cyano_plots){
   ms_sum <- summary(glm_mean_dc)
   model_AIC[18,2] <- ms_sum$aic
   model_AIC[18,1] <- "Distance to Coast"
+  model_AIC[18,3] <- coef(ms_sum)[2,4]
   
   # Chlorophyll
   
@@ -671,25 +689,27 @@ aic_table_func <- function(som_maps = cyano_plots){
   ms_sum <- summary(glm_mean_chl)
   model_AIC[9,2] <- ms_sum$aic
   model_AIC[9,1] <- "Mean Chl-a"
+  model_AIC[9,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_chl <- glm(som_1 ~  Chl_coeff, data = som_glm, family = binomial)
   cs_sum <- summary(glm_coeff_chl)
   model_AIC[19,2] <- cs_sum$aic
   model_AIC[19,1] <- "Coeff. Var. Chl-a"
+  model_AIC[19,3] <- coef(cs_sum)[2,4]
   
   
   return(model_AIC)
   
 }
 
-aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){  
+aic_table_func_diveristy <- function(som_maps = cyano_plots, col_num = 2){  
   
   som_glm <- som_maps
   
-  colnames(som_glm)[i] <- "response"
+  colnames(som_glm)[col_num] <- "response"
   
-  model_AIC <- matrix(NA,19,2)
-  model_p_val <- matrix(NA,19,2)
+  model_AIC <- matrix(NA,19,3)
+ 
   
   
   # temperature
@@ -698,11 +718,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   mt_sum <- summary(glm_mean_temp)
   model_AIC[1,2] <- mt_sum$aic
   model_AIC[1,1] <- "Mean Temp"
+  model_AIC[1,3] <- coef(mt_sum)[2,4]
   
   glm_coeff_temp <- glm(response ~  temp_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_temp)
   model_AIC[10,2] <- ct_sum$aic
   model_AIC[10,1] <- "Coeff. Var. Temp"
+  model_AIC[10,3] <- coef(ct_sum)[2,4]
   
   # sea surface temperature
   
@@ -710,11 +732,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   mt_sum <- summary(glm_mean_sst)
   model_AIC[2,2] <- mt_sum$aic
   model_AIC[2,1] <- "Mean SST"
+  model_AIC[2,3] <- coef(mt_sum)[2,4]
   
   glm_coeff_sst <- glm(response ~  sst_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_sst)
   model_AIC[11,2] <- ct_sum$aic
   model_AIC[11,1] <- "Coeff. Var. SST"
+  model_AIC[11,3] <- coef(ct_sum)[2,4]
   
   # salinity
   
@@ -722,11 +746,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   mt_sum <- summary(glm_mean_sal)
   model_AIC[3,2] <- mt_sum$aic
   model_AIC[3,1] <- "Mean Salinity"
+  model_AIC[3,3] <- coef(mt_sum)[2,4]
   
   glm_coeff_sal <- glm(response ~  sal_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_sal)
   model_AIC[12,2] <- ct_sum$aic
   model_AIC[12,1] <- "Coeff. Var. Salinity"
+  model_AIC[12,3] <- coef(ct_sum)[2,4]
   
   # NO3
   
@@ -734,11 +760,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   mn_sum <- summary(glm_mean_no3)
   model_AIC[4,2] <- mn_sum$aic
   model_AIC[4,1] <- "Mean NO3"
+  model_AIC[4,3] <- coef(mn_sum)[2,4]
   
   glm_coeff_no3 <- glm(response ~  NO3_coeff, data = som_glm)
   cn_sum <- summary(glm_coeff_no3)
   model_AIC[13,2] <- cn_sum$aic
   model_AIC[13,1] <- "Coeff. Var. NO3"
+  model_AIC[13,3] <- coef(cn_sum)[2,4]
   
   # PO4
   
@@ -746,11 +774,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   mp_sum <- summary(glm_mean_po4)
   model_AIC[5,2] <- mp_sum$aic
   model_AIC[5,1] <- "Mean PO4"
+  model_AIC[5,3] <- coef(mp_sum)[2,4]
   
   glm_coeff_po4 <- glm(response ~  PO4_coeff, data = som_glm)
   cp_sum <- summary(glm_coeff_po4)
   model_AIC[14,2] <- cp_sum$aic
   model_AIC[14,1] <- "Coeff. Var. PO4"
+  model_AIC[14,3] <- coef(cp_sum)[2,4]
   
   # SiO3
   
@@ -758,11 +788,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   ms_sum <- summary(glm_mean_sio3)
   model_AIC[6,2] <- ms_sum$aic
   model_AIC[6,1] <- "Mean SiO4"
+  model_AIC[6,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_sio3 <- glm(response ~  SiO3_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_sio3)
   model_AIC[15,2] <- cs_sum$aic
   model_AIC[15,1] <- "Coeff. Var. SiO4"
+  model_AIC[15,3] <- coef(cs_sum)[2,4]
   
   # C14
   
@@ -794,11 +826,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   ms_sum <- summary(glm_mean_mld)
   model_AIC[7,2] <- ms_sum$aic
   model_AIC[7,1] <- "Mean MLD"
+  model_AIC[7,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_mld <- glm(response ~  MLD_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_mld)
   model_AIC[16,2] <- cs_sum$aic
   model_AIC[16,1] <- "Coeff. Var. MLD"
+  model_AIC[16,3] <- coef(cs_sum)[2,4]
   
   # NC Depth
   
@@ -806,11 +840,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   ms_sum <- summary(glm_mean_nc)
   model_AIC[8,2] <- ms_sum$aic
   model_AIC[8,1] <- "Mean NCD"
+  model_AIC[8,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_nc <- glm(response ~  NC_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_nc)
   model_AIC[17,2] <- cs_sum$aic
   model_AIC[17,1] <- "Coeff. Var. NCD"
+  model_AIC[17,3] <- coef(cs_sum)[2,4]
   
   # Distance to Coast
   
@@ -818,6 +854,7 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   ms_sum <- summary(glm_mean_dc)
   model_AIC[18,2] <- ms_sum$aic
   model_AIC[18,1] <- "Distance to Coast"
+  model_AIC[18,3] <- coef(ms_sum)[2,4]
   
   # Chlorophyll
   
@@ -825,11 +862,13 @@ aic_table_func_diveristy <- function(som_maps = cyano_plots, i = 2){
   ms_sum <- summary(glm_mean_chl)
   model_AIC[9,2] <- ms_sum$aic
   model_AIC[9,1] <- "Mean Chl-a"
+  model_AIC[9,3] <- coef(ms_sum)[2,4]
   
   glm_coeff_chl <- glm(response ~  Chl_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_chl)
   model_AIC[19,2] <- cs_sum$aic
   model_AIC[19,1] <- "Coeff. Var. Chl-a"
+  model_AIC[19,3] <- coef(cs_sum)[2,4]
   
   return(model_AIC)
   
@@ -851,6 +890,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   # load data
   
   map_list <- list()
+  p_val_list <- list()
   
   for (i in 1:length(in_group_list)) {
     
@@ -858,24 +898,33 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
     som_maps2 <- som_maps[which(som_maps$n_samps > (minimum_tp-1)),]
     AIC_table <- aic_table_func(som_maps = som_maps2)
     AIC_table <- as.data.frame(AIC_table)
-    colnames(AIC_table) <- c("Variables","AIC")
+    colnames(AIC_table) <- c("Variables","AIC","P_val")
     AIC_table <- AIC_table[c(1,3,4,5,6,9,8,10,12,13,14,15,19,17,18),]
     AIC_table[,2] <- as.numeric(as.character(AIC_table[,2]))
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     
-    map_list[[i]] <- AIC_table
+    AIC_table$sig <- "significant"
+    AIC_table$sig[which(as.numeric(AIC_table$P_val) > 0.05)] <- "not significant"
+    
+    AIC_table$P_val <- NULL
+    
+    map_list[[i]] <- AIC_table[,1:2]
+    p_val_list[[i]] <- AIC_table[,c(1,3)]
     
   }
   
   AIC_full <- full_join(map_list[[1]], map_list[[2]], by = "Variables")
+  p_full <- full_join(p_val_list[[1]], p_val_list[[2]], by = "Variables")
   
   for (i in 3:length(map_list)) {
     
     AIC_full <- full_join(AIC_full, map_list[[i]], by = "Variables")
+    p_full <- full_join(p_full, p_val_list[[i]], by = "Variables")
     
   }
   
   colnames(AIC_full) <- c("Variables", in_group_names)
+  colnames(p_full) <- c("Variables", in_group_names)
   
   colfunc <- colorRampPalette(c("white", "red"))
   
@@ -913,11 +962,14 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
     
   }
   
+  p_df <- melt(p_full, id.vars = "Variables")
+  colnames(p_df)[3] <- "p_val"
+  
   plot_df <- melt(AIC_scaled)
   
-  
-  
-  colnames(plot_df) <- c("Variables", "Group", "AIC")
+  plot_df <- right_join(plot_df,p_df)
+
+  colnames(plot_df) <- c("Variables", "Group", "AIC","P_Val")
   
   # # removing plastids from plot
   # plot_df <- plot_df[-which(plot_df$Group == "Eukaryotic\nPlastid\n AIC"),]
@@ -935,8 +987,9 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   
   pdf(figure_name_2, width = width_plot, height = 8)
   
-  print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC)) + 
-          geom_point(fill = "red", color = "black", alpha = 0.6, shape = 21) +
+  print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = P_Val)) + 
+          geom_point(color = "black", alpha = 0.6, shape = 21, show.legend = FALSE) +
+          scale_fill_manual(values = c("grey90", "red")) +
           labs(size = "Variable\n Importance") + ylab("Variable") +
           theme(panel.background = element_blank(),
                 panel.border = element_rect(color = "black", fill = NA),
@@ -949,8 +1002,9 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   
   dev.off()
   
-  a <- ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC)) + 
-    geom_point(fill = "red", color = "black", alpha = 0.6, shape = 21) +
+  a <- ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = P_Val)) + 
+    geom_point(color = "black", alpha = 0.6, shape = 21) +
+    scale_fill_manual(values = c("grey90", "red")) +
     labs(size = "Variable\n Importance") + ylab("Variable") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(color = "black", fill = NA),
@@ -977,30 +1031,40 @@ full_aic_table_figure_diversity <- function(in_group_list = c("cyano_16s","flavo
   # load data
   
   map_list <- list()
+  p_val_list <- list()
   
   for (i in 1:length(in_group_list)) {
     
     load(paste0("output/",in_group_list[i], "_map.Rdata"))
-    AIC_table <- aic_table_func_diveristy(som_maps = som_maps, i = col)
+    AIC_table <- aic_table_func_diveristy(som_maps = som_maps, col_num = col)
     AIC_table <- as.data.frame(AIC_table, stringsAsFactors = FALSE)
-    colnames(AIC_table) <- c("Variables","AIC")
+    colnames(AIC_table) <- c("Variables","AIC","P_val")
     AIC_table <- AIC_table[c(1,3,4,5,6,9,8,10,12,13,14,15,19,17,18),]
     AIC_table[,2] <- as.numeric(AIC_table[,2])
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     
-    map_list[[i]] <- AIC_table
+    AIC_table$sig <- "significant"
+    AIC_table$sig[which(AIC_table$P_val > 0.05)] <- "not significant"
+    
+    AIC_table$P_val <- NULL
+    
+    map_list[[i]] <- AIC_table[,1:2]
+    p_val_list[[i]] <- AIC_table[,c(1,3)]
     
   }
   
   AIC_full <- full_join(map_list[[1]], map_list[[2]], by = "Variables")
+  p_full <- full_join(p_val_list[[1]], p_val_list[[2]], by = "Variables")
   
   for (i in 3:length(map_list)) {
     
     AIC_full <- full_join(AIC_full, map_list[[i]], by = "Variables")
+    p_full <- full_join(p_full, p_val_list[[i]], by = "Variables")
     
   }
   
   colnames(AIC_full) <- c("Variables", in_group_names)
+  colnames(p_full) <- c("Variables", in_group_names)
   
   
   
@@ -1046,7 +1110,14 @@ full_aic_table_figure_diversity <- function(in_group_list = c("cyano_16s","flavo
   
   plot_df <- melt(AIC_scaled)
   
-  colnames(plot_df) <- c("Variables", "Group", "AIC")
+  p_df <- melt(p_full, id.vars = "Variables")
+  colnames(p_df)[3] <- "p_val"
+  
+  plot_df <- right_join(plot_df,p_df)
+  
+  colnames(plot_df) <- c("Variables", "Group", "AIC","P_Val")
+ 
+  
   
   # # removing plastids from plot
   # plot_df <- plot_df[-which(plot_df$Group == "Eukaryotic\nPlastid\n AIC"),]
@@ -1081,13 +1152,13 @@ full_aic_table_figure_diversity <- function(in_group_list = c("cyano_16s","flavo
 
 #### AIC Tables Sign ####
 
-aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){  
+aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, col_num = 2){  
   
   som_glm <- som_maps
   
-  colnames(som_glm)[i] <- "response"
+  colnames(som_glm)[col_num] <- "response"
   
-  model_AIC <- matrix(NA,19,3)
+  model_AIC <- matrix(NA,19,4)
   # temperature
   
   glm_mean_temp <- glm(response ~  temp_mean, data = som_glm)
@@ -1095,12 +1166,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[1,2] <- mt_sum$aic
   model_AIC[1,1] <- "Mean Temp"
   model_AIC[1,3] <- cor(som_glm$temp_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[1,4] <- coef(mt_sum)[2,4]
   
   glm_coeff_temp <- glm(response ~  temp_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_temp)
   model_AIC[10,2] <- ct_sum$aic
   model_AIC[10,1] <- "Coeff. Var. Temp"
   model_AIC[10,3] <- cor(som_glm$temp_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[10,4] <- coef(ct_sum)[2,4]
   
   # sea surface temperature
   
@@ -1109,12 +1182,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[2,2] <- mt_sum$aic
   model_AIC[2,1] <- "Mean SST"
   model_AIC[2,3] <- cor(som_glm$sst_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[2,4] <- coef(mt_sum)[2,4]
   
   glm_coeff_sst <- glm(response ~  sst_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_sst)
   model_AIC[11,2] <- ct_sum$aic
   model_AIC[11,1] <- "Coeff. Var. SST"
   model_AIC[11,3] <- cor(som_glm$sst_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[11,4] <- coef(ct_sum)[2,4]
   
   # salinity
   
@@ -1123,12 +1198,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[3,2] <- mt_sum$aic
   model_AIC[3,1] <- "Mean Salinity"
   model_AIC[3,3] <- cor(som_glm$sal_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[3,4] <- coef(mt_sum)[2,4]
   
   glm_coeff_sal <- glm(response ~  sal_coeff, data = som_glm)
   ct_sum <- summary(glm_coeff_sal)
   model_AIC[12,2] <- ct_sum$aic
   model_AIC[12,1] <- "Coeff. Var. Salinity"
   model_AIC[12,3] <- cor(som_glm$sal_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[12,4] <- coef(ct_sum)[2,4]
   
   # NO3
   
@@ -1137,12 +1214,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[4,2] <- mn_sum$aic
   model_AIC[4,1] <- "Mean NO3"
   model_AIC[4,3] <- cor(som_glm$NO3_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[4,4] <- coef(mn_sum)[2,4]
   
   glm_coeff_no3 <- glm(response ~  NO3_coeff, data = som_glm)
   cn_sum <- summary(glm_coeff_no3)
   model_AIC[13,2] <- cn_sum$aic
   model_AIC[13,1] <- "Coeff. Var. NO3"
   model_AIC[13,3] <- cor(som_glm$NO3_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[13,4] <- coef(cn_sum)[2,4]
   
   # PO4
   
@@ -1151,12 +1230,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[5,2] <- mp_sum$aic
   model_AIC[5,1] <- "Mean PO4"
   model_AIC[5,3] <- cor(som_glm$PO4_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[5,4] <- coef(mp_sum)[2,4]
   
   glm_coeff_po4 <- glm(response ~  PO4_coeff, data = som_glm)
   cp_sum <- summary(glm_coeff_po4)
   model_AIC[14,2] <- cp_sum$aic
   model_AIC[14,1] <- "Coeff. Var. PO4"
   model_AIC[14,3] <- cor(som_glm$PO4_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[14,4] <- coef(cp_sum)[2,4]
   
   # SiO3
   
@@ -1165,12 +1246,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[6,2] <- ms_sum$aic
   model_AIC[6,1] <- "Mean SiO4"
   model_AIC[6,3] <- cor(som_glm$SiO3_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[6,4] <- coef(ms_sum)[2,4]
   
   glm_coeff_sio3 <- glm(response ~  SiO3_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_sio3)
   model_AIC[15,2] <- cs_sum$aic
   model_AIC[15,1] <- "Coeff. Var. SiO4"
   model_AIC[15,3] <- cor(som_glm$SiO3_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[15,4] <- coef(cs_sum)[2,4]
   
   # MLD
   
@@ -1179,12 +1262,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[7,2] <- ms_sum$aic
   model_AIC[7,1] <- "Mean MLD"
   model_AIC[7,3] <- cor(som_glm$MLD_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[7,4] <- coef(ms_sum)[2,4]
   
   glm_coeff_mld <- glm(response ~  MLD_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_mld)
   model_AIC[16,2] <- cs_sum$aic
   model_AIC[16,1] <- "Coeff. Var. MLD"
   model_AIC[16,3] <- cor(som_glm$MLD_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[16,4] <- coef(cs_sum)[2,4]
   
   # NC Depth
   
@@ -1193,12 +1278,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[8,2] <- ms_sum$aic
   model_AIC[8,1] <- "Mean NCD"
   model_AIC[8,3] <- cor(som_glm$NC_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[8,4] <- coef(ms_sum)[2,4]
   
   glm_coeff_nc <- glm(response ~  NC_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_nc)
   model_AIC[17,2] <- cs_sum$aic
   model_AIC[17,1] <- "Coeff. Var. NCD"
   model_AIC[17,3] <- cor(som_glm$NC_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[17,4] <- coef(cs_sum)[2,4]
   
   # Distance to Coast
   
@@ -1207,6 +1294,7 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[18,2] <- ms_sum$aic
   model_AIC[18,1] <- "Distance to Coast"
   model_AIC[18,3] <- cor(som_glm$Dist_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[18,4] <- coef(ms_sum)[2,4]
   
   # Chlorophyll
   
@@ -1215,12 +1303,14 @@ aic_table_func_diveristy_sign <- function(som_maps = cyano_plots, i = 2){
   model_AIC[9,2] <- ms_sum$aic
   model_AIC[9,1] <- "Mean Chl-a"
   model_AIC[9,3] <- cor(som_glm$Chl_mean, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[9,4] <- coef(ms_sum)[2,4]
   
   glm_coeff_chl <- glm(response ~  Chl_coeff, data = som_glm)
   cs_sum <- summary(glm_coeff_chl)
   model_AIC[19,2] <- cs_sum$aic
   model_AIC[19,1] <- "Coeff. Var. Chl-a"
   model_AIC[19,3] <- cor(som_glm$Chl_coeff, som_glm$response, use = "pairwise.complete.obs")
+  model_AIC[19,4] <- coef(cs_sum)[2,4]
   
   return(model_AIC)
   
@@ -1238,30 +1328,41 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
   # load data
   
   map_list <- list()
+  p_val_list <- list()
   
   for (i in 1:length(in_group_list)) {
     
     load(paste0("output/",in_group_list[i], "_map.Rdata"))
-    AIC_table <- aic_table_func_diveristy_sign(som_maps = som_maps, i = col)
+    AIC_table <- aic_table_func_diveristy_sign(som_maps = som_maps, col_num = col)
     AIC_table <- as.data.frame(AIC_table, stringsAsFactors = FALSE)
-    colnames(AIC_table) <- c("Variables","AIC", "Slope")
+    colnames(AIC_table) <- c("Variables","AIC", "Slope", "P_val")
     AIC_table <- AIC_table[c(1,3,4,5,6,9,8,10,12,13,14,15,19,17,18),]
     AIC_table[,2] <- as.numeric(AIC_table[,2])
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     AIC_table[,3] <- as.numeric(AIC_table[,3])
     AIC_table[,3] <- round(AIC_table[,3], digits = 3)
     
-    map_list[[i]] <- AIC_table
+    AIC_table$sig <- "significant"
+    AIC_table$sig[which(as.numeric(AIC_table$P_val) > 0.05)] <- "not significant"
+    
+    AIC_table$P_val <- NULL
+    
+    map_list[[i]] <- AIC_table[,1:3]
+    p_val_list[[i]] <- AIC_table[,c(1,4)]
     
   }
   
   AIC_full <- full_join(map_list[[1]], map_list[[2]], by = "Variables")
+  p_full <- full_join(p_val_list[[1]], p_val_list[[2]], by = "Variables")
   
   for (i in 3:length(map_list)) {
     
     AIC_full <- full_join(AIC_full, map_list[[i]], by = "Variables")
-    
+    p_full <- full_join(p_full, p_val_list[[i]], by = "Variables")
   }
+  
+  
+  colnames(p_full) <- c("Variables", in_group_names)
   
   AIC_full <- AIC_full[,c(1,seq(2,ncol(AIC_full),by = 2),seq(3,ncol(AIC_full),by = 2))]
   
@@ -1270,18 +1371,30 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
   AIC_scaled <- AIC_full
   
   for (i in 2:(length(in_group_names)+1)) {
+    
     zero_one_scale <- 1-(AIC_scaled[,i]-min(AIC_scaled[,i], na.rm = TRUE))/
       abs(min(AIC_scaled[,i], na.rm = TRUE) - max(AIC_scaled[,i], na.rm = TRUE))
+   
+    
     AIC_scaled[,i] <- 50^zero_one_scale
     
   }
   
   plot_df <- melt(AIC_scaled[,1:(length(in_group_names)+1)])
+  
   plot_slope <- melt(AIC_scaled[,c(1,(length(in_group_names)+2):ncol(AIC_scaled))])
   
-  plot_df$slope <- plot_slope$value
+  colnames(plot_slope)[3] <- "slope"
+  plot_slope$variable <- sub("_.*","",plot_slope$variable)
+  plot_df <- right_join(plot_df,plot_slope)
   
-  colnames(plot_df) <- c("Variables", "Group", "AIC","slope")
+  p_df <- melt(p_full, id.vars = "Variables")
+  colnames(p_df)[3] <- "p_val"
+  plot_df <- right_join(plot_df,p_df)
+  
+  colnames(plot_df) <- c("Variables", "Group", "AIC","slope","p_val")
+  
+  plot_df$slope[which(plot_df$p_val == "not significant")] <- NA
   
   # # removing plastids from plot
   # plot_df <- plot_df[-which(plot_df$Group == "Eukaryotic\nPlastid\n AIC"),]
@@ -1301,16 +1414,37 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
   print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = slope)) + 
           geom_point(color = "black", alpha = 0.6, shape = 21) +
           scale_fill_gradient2(low = "darkblue", high = "darkred", mid = "white",
-                               midpoint = 0, limits = c(-1,1)) +
+                               midpoint = 0, limits = c(-1,1), na.value = "grey90") +
           labs(fill = "Correlation") + ylab("Variable") +
           theme(panel.background = element_blank(),
                 panel.border = element_rect(color = "black", fill = NA),
                 legend.position = "right",
                 panel.grid.major.y = element_line(color = "grey", linetype = 2),
                 plot.title = element_text(hjust = 0, size = tsize),
-                axis.text.x = element_text(angle = 0)) +
+                axis.text.y = element_text(size = tsize),
+                legend.title = element_text(size = tsize),
+                legend.text = element_text(size = tsize),
+                axis.text.x = element_text(size = tsize, angle = 0)) +
           scale_size_continuous(range = c(1,18), guide = FALSE) + xlab("") + ylab(""))
   dev.off()
+  
+  p <- ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = slope)) + 
+    geom_point(color = "black", alpha = 0.6, shape = 21) +
+    scale_fill_gradient2(low = "darkblue", high = "darkred", mid = "white",
+                         midpoint = 0, limits = c(-1,1), na.value = "grey90") +
+    labs(fill = "Correlation") + ylab("Variable") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA),
+          legend.position = "right",
+          panel.grid.major.y = element_line(color = "grey", linetype = 2),
+          plot.title = element_text(hjust = 0, size = tsize),
+          axis.text.y = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.text.x = element_text(size = tsize, angle = 0)) +
+    scale_size_continuous(range = c(1,18), guide = FALSE) + xlab("") + ylab("")
+  
+  return(p)
   
 }
 
@@ -1855,17 +1989,49 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Frequency of Nearshore Cluster") + ggtitle(title)
   
+  
+  which(!is.na(match(colnames(som_cruise), paste0("som_",nearshore_som))))
+  
+  formula1 <- as.formula(paste0("som_",nearshore_som, "~",
+                   "NC_slope"))
+  
+  warm_lm <- summary(lm(formula = formula1,
+                         data = som_cruise %>% filter(phase == "2014-2016")))
+ 
+  warm_p <- warm_lm$coefficients[2,4]
+  warm_rsq <- warm_lm$r.squared
+  
+  cool_lm <- summary(lm(formula = formula1,
+                         data = som_cruise %>% filter(phase == "2017-2018")))
+  
+  cool_p <- cool_lm$coefficients[2,4]
+  cool_rsq <- cool_lm$r.squared
+  
   phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+                aes_string(x = "NC_slope", y = paste0("som_",nearshore_som), fill = "phase", color = "phase"),
+                method="lm") +
     scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
     scale_color_manual(values = c("red", "blue","gold3")) +
-    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
     scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
-    ylab("Frequency of Nearshore Cluster") + ggtitle(title)
+    ylab("Frequency of Nearshore Cluster") + ggtitle(title) +
+    annotate(geom = "text", y = (max(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.15, 
+             label = paste0("2014-2016\nR-Squared = ",
+                            round(warm_rsq,3),
+                            "\np-value = ",
+                            round(warm_p, 3)),
+             color = "red", size = 3) +
+    annotate(geom = "text", y = (min(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.2, 
+             label = paste0("2017-2018\nR-Squared = ",
+                            round(cool_rsq,3),
+                            "\np-value = ",
+                            round(cool_p, 3)),
+             color = "blue", size = 3)
   
   season <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
     geom_point(size = 3, aes_string(color = "season", fill = "season", shape = "season"), data = som_cruise) +
@@ -2610,49 +2776,94 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   asv_table$cruise <- substr(rownames(asv_table),2,7)
   
-  asv_cruise <- asv_table %>% group_by(cruise) %>% summarise_all(list(~ sum(.,na.rm = TRUE)))
+  asv_cruise <- asv_table %>%
+    group_by(cruise) %>% summarise(across(.cols = everything(), .fns = ~sum(.x,na.rm = TRUE)))
   
   asv_cruise$total_div <- diversity(asv_cruise[,-1], MARGIN = 1, index = "shannon")
   
   som_cruise$total_shannon <- asv_cruise$total_div[match(som_cruise$Cruise, asv_cruise$cruise)]
   
+  formula1 <- as.formula(paste0("shannon", "~",
+                                "NC_slope"))
+  
+  warm_lm <- summary(lm(formula = formula1,
+                        data = som_cruise %>% filter(phase == "2014-2016")))
+  
+  warm_p <- warm_lm$coefficients[2,4]
+  warm_rsq <- warm_lm$r.squared
+  
+  cool_lm <- summary(lm(formula = formula1,
+                        data = som_cruise %>% filter(phase == "2017-2018")))
+  
+  cool_p <- cool_lm$coefficients[2,4]
+  cool_rsq <- cool_lm$r.squared
+  
   phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+                aes_string(x = "NC_slope", y = "shannon", fill = "phase", color = "phase"),
+                method="lm") +
     scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
     scale_color_manual(values = c("red", "blue","gold3")) +
-    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
     scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
-    ylab("Mean Shannon Diversity\nPer Cruise") + ggtitle(title)
+    ylab("Mean Alpha Diversity\nPer Cruise") + ggtitle(title) +
+    annotate(geom = "text", y = (max(som_cruise[,"shannon"]) + 0.05), x = 0.16, 
+             label = paste0("2014-2016\nR-Squared = ",
+                            round(warm_rsq,3),
+                            "\np-value = ",
+                            round(warm_p, 3)),
+             color = "red", size = 3) +
+    annotate(geom = "text", y = (min(som_cruise[,"shannon"]) + 0.05), x = 0.15, 
+             label = paste0("2017-2018\nR-Squared = ",
+                            round(cool_rsq,3),
+                            "\np-value = ",
+                            round(cool_p, 3)),
+             color = "blue", size = 3)
   
-  season <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
-    geom_point(size = 3, aes_string(color = "season", fill = "season", shape = "season"), data = som_cruise) +
-    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_fill_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    stat_ellipse(aes_string(color = "season")) + 
-    scale_shape_manual(values = c(21,22,23,24)) + 
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA, color = "black"),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Season", color = "Season", fill = "Season") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
-    ylab("Mean Shannon Diversity\nPer Cruise") + ggtitle(title)
+  formula2 <- as.formula(paste0("total_shannon", "~",
+                                "NC_slope"))
   
+  warm_lm <- summary(lm(formula = formula2,
+                        data = som_cruise %>% filter(phase == "2014-2016")))
   
+  warm_p <- warm_lm$coefficients[2,4]
+  warm_rsq <- warm_lm$r.squared
+  
+  cool_lm <- summary(lm(formula = formula2,
+                        data = som_cruise %>% filter(phase == "2017-2018")))
+  
+  cool_p <- cool_lm$coefficients[2,4]
+  cool_rsq <- cool_lm$r.squared
   
   gradient_plot2 <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "total_shannon")) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+                aes_string(x = "NC_slope", y = "total_shannon", fill = "phase", color = "phase"),
+                method="lm") +
     scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
     scale_color_manual(values = c("red", "blue","gold3")) +
-    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
     scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
-    ylab("Total Shannon Diversity\nPer Cruise") + ggtitle(title)
+    ylab("Gamma Diversity\nPer Cruise") + ggtitle(title) +
+    annotate(geom = "text", y = (max(som_cruise[,"total_shannon"]) + 0.05), x = 0.16, 
+             label = paste0("2014-2016\nR-Squared = ",
+                            round(warm_rsq,3),
+                            "\np-value = ",
+                            round(warm_p, 3)),
+             color = "red", size = 3) +
+    annotate(geom = "text", y = (min(som_cruise[,"total_shannon"]) + 0.05), x = 0.15, 
+             label = paste0("2017-2018\nR-Squared = ",
+                            round(cool_rsq,3),
+                            "\np-value = ",
+                            round(cool_p, 3)),
+             color = "blue", size = 3)
   
   print(gradient_plot2)
   

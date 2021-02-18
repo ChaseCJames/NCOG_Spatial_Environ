@@ -15,9 +15,10 @@ library(vegan)
 library(spatialEco)
 library(geosphere)
 library(viridis)
+library(GUniFrac)
 
 result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/bacteria_16s_som.Rdata",
-                          SST_data = "output/CALCOFI_temp_tables.Rdata", # SLA_data = "output/CALCOFI_sla_tables.Rdata",
+                          SST_data = "output/CALCOFI_temp_tables.Rdata", 
                           physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
                           map_file = "output/bacteria_16s_map.Rdata", regression_file = "output/bacteria_16s_glm.Rdata",
                           dissimmilar_matrix = "output/bacteria_16s_dissimilar.Rdata", 
@@ -152,6 +153,26 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   asv_copy$richness <- richness
   full_dat$richness <- asv_copy$richness[match(full_dat$eco_name, rownames(asv_copy))]
   
+  
+  # rarefy diversity metrics 
+  asv_rare <- asv_table[which(rowSums(asv_table) > 1001),]
+  
+  rare_out <- Rarefy(asv_rare, 1000)
+  rare_tab <- rare_out$otu.tab.rff
+  
+  #rare shan
+  
+  rare_shannon <- diversity(rare_tab, MARGIN = 1, index = "shannon")
+  full_dat$rare_shannon <- rare_shannon[match(full_dat$eco_name, names(rare_shannon))]
+  
+  S <- apply(rare_tab>0,1,sum)
+  rare_evenness <- diversity(rare_tab, index="shannon")/log(S)
+  full_dat$rare_evenness <- rare_evenness[match(full_dat$eco_name, names(rare_evenness))]
+  
+  rare_richness <- apply(rare_tab, 1, function(x) length(which(x != 0)))
+
+  full_dat$rare_richness <- rare_richness[match(full_dat$eco_name, names(rare_richness))]
+  
   # Dissimilarity
   
   dissimilar <- vegdist(asv_table, method = "bray", binary = FALSE)
@@ -180,7 +201,8 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               Chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
               evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
-              richness = mean(richness, na.rm = TRUE)
+              richness = mean(richness, na.rm = TRUE), rare_evenness = mean(rare_evenness, na.rm = TRUE),
+              rare_shannon = mean(rare_shannon, na.rm = TRUE), rare_richness = mean(rare_richness, na.rm = TRUE)
     )
   
   # FOR NOW REMOVE NORTHERN TRANSECTS

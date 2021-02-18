@@ -23,8 +23,8 @@ plot_list <- list()
 for (i in 1:length(in_group_list)) {
   print(i)
   
-  plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map.Rdata"),
-                               figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot.pdf"),
+  plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_surface_map.Rdata"),
+                               figure_name = paste0("figures/som_maps/", in_group_list[i],"_surface_map_plot.pdf"),
                                main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore")
   
   
@@ -54,9 +54,9 @@ var_name_list = c("Mean Temperature (°C)", "Mean Salinity", "Mean PO4ug", "Mean
 
 for (i in 1:length(in_group_list)) {
   for (j in 1:length(var_list)) {
-    regression_figure(glm_file = paste0("output/",in_group_list[i], "_glm.Rdata"),
-                      map_file = paste0("output/",in_group_list[i],"_map.Rdata"),   
-                      figure_name = paste0("figures/glm_plots/", in_group_list[i],"_"),
+    regression_figure(glm_file = paste0("output/",in_group_list[i], "_surface_glm.Rdata"),
+                      map_file = paste0("output/",in_group_list[i],"_surface_map.Rdata"),   
+                      figure_name = paste0("figures/glm_plots/", in_group_list[i],"_surface_"),
                       main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore",
                       var = var_list[j], var_name = var_name_list[j])
   }
@@ -209,11 +209,11 @@ for (i in 1:length(in_group_list)) {
   #                   tsize = 12, psize = 12, group = in_group_names[i])
   
   fig_list[[i]] <- fig_commun_map_surf_deep_func(in_all = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
-                                in_dat = paste0("output/",in_group_list[i],"_full_data.Rdata"),
-                                in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
-                                community_diff_fig = paste0("figures/community_diff/",
-                                                            in_group_list[i],"_both_diff.pdf"),
-                                tsize = 12, psize = 6, group = in_group_names[i])
+                                                 in_dat = paste0("output/",in_group_list[i],"_full_data.Rdata"),
+                                                 in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                                                 community_diff_fig = paste0("figures/community_diff/",
+                                                                             in_group_list[i],"_both_diff.pdf"),
+                                                 tsize = 12, psize = 6, group = in_group_names[i])
   print(i)
   
 }
@@ -253,10 +253,10 @@ for (i in 1:length(in_group_list)) {
 for (i in 1:length(in_group_list)) {
   
   community_comparison_line(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
-                       in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
-                       similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
-                       out_diff_file = paste0("output/",in_group_list[i],"_line_diffs.Rdata"),
-                       title = in_group_names[i])
+                            in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                            similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
+                            out_diff_file = paste0("output/",in_group_list[i],"_line_diffs.Rdata"),
+                            title = in_group_names[i])
   
   print(i)
   
@@ -267,16 +267,16 @@ for (i in 1:length(in_group_list)) {
 for (i in 1:length(in_group_list)) {
   
   community_comparison_station(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
-                            in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
-                            similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
-                            out_diff_file = paste0("output/",in_group_list[i],"_station_diffs.Rdata"),
-                            title = in_group_names[i])
-  
-  community_comparison_station_2(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
                                in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
                                similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
-                               out_diff_file = paste0("output/",in_group_list[i],"_station2_diffs.Rdata"),
+                               out_diff_file = paste0("output/",in_group_list[i],"_station_diffs.Rdata"),
                                title = in_group_names[i])
+  
+  community_comparison_station_2(in_file = paste0("output/",in_group_list[i],"_full_data.Rdata"),
+                                 in_map = paste0("output/",in_group_list[i],"_map.Rdata"),
+                                 similar_mat = paste0("output/",in_group_list[i],"_dissimilar.Rdata"),
+                                 out_diff_file = paste0("output/",in_group_list[i],"_station2_diffs.Rdata"),
+                                 title = in_group_names[i])
   
   print(i)
   

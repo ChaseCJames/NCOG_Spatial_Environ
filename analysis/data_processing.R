@@ -45,6 +45,8 @@ colnames(sixteen_s) <- six_id_names
 # remove bad samples
 sixteen_s <- sixteen_s[-which(!is.na(match(rownames(sixteen_s), paste0("X",excludes$V1)))),]
 
+save(sixteen_s, file = "data/16s_all.Rdata")
+
 # split platids and rest of 16s
 
 id_vector <- vector()
@@ -255,6 +257,8 @@ eighteen_s <- eighteen_s[-c(479:489,667:678,871:880),]
 # remove bad samples
 eighteen_s <- eighteen_s[-which(!is.na(match(rownames(eighteen_s), paste0("X",excludes$V1)))),]
 
+save(eighteen_s, eight_tax_id, file = "data/18sv9_all.Rdata")
+
 # sort
 
 id_vector <- vector()
@@ -274,7 +278,7 @@ euks <- which(split_silva$A == "D_0__Eukaryota" | split_silva$A == "Unassigned")
 
 chlorophytes <- which(split_taxa$C == "Chlorophyta")
 dinos_minus_syn <- which(split_taxa$C == "Dinoflagellata" &
-                           split_taxa$D != "Syndiniales")
+                           split_taxa$D != "Syndiniales" | is.na(split_taxa$D))
 cryptophytes <- which(split_taxa$C == "Cryptophyta")
 haptophytes <- which(split_taxa$C == "Haptophyta")
 ochrophytes <- which(split_taxa$C == "Ochrophyta")
@@ -297,9 +301,9 @@ non_auto <- non_auto[-autotrophs]
 
 non_meta <- which(split_taxa$C != "Metazoa")
 
-eight_hetero <- eighteen_s[,unique(non_auto,non_meta)]
+eights <- 1:ncol(eighteen_s)
 
-
+eight_hetero <- eighteen_s[,which(eights %in% non_auto & eights %in% non_meta)]
 
 diatom_eighteen <- eighteen_s[,which(split_taxa$D == "Bacillariophyta")]
 
@@ -328,6 +332,7 @@ hapto_sums <- rowSums(hapto_eighteen, na.rm = TRUE)
 metazoa_sums <- rowSums(metazoa_eighteen, na.rm = TRUE)
 chloro_sums <- rowSums(chloro_eighteen, na.rm = TRUE)
 totals_sums <- rowSums(totals, na.rm = TRUE)
+
 
 
 diatom_sums[which(diatom_sums == 0)] <- 1
@@ -360,6 +365,8 @@ chloro_eighteen <- as.matrix(chloro_eighteen)
 totals <- as.matrix(totals)
 
 for (i in 1:nrow(eight_auto)){
+  
+  if(i/25 == round(i/25)){print(i)}
   
   eight_auto[i,] <- eight_auto[i,]/auto_sums[i]
   eight_hetero[i,] <- eight_hetero[i,]/hetero_sums[i]
@@ -459,3 +466,38 @@ rownames(total_copy) <- rownames(sixteen_s)
 asv_table <- total_copy
 
 save(scaled_inputs, totals, asv_table, file = "data/totals.Rdata")
+
+
+###### Tara Oceans Data #####
+
+tara_dat <- read.csv("data/Tara_Oceans_asv_count_tax_final_update.csv")
+
+tara_tax <- tara_dat[,c(1,1160:1161)]
+
+tara_dat <- tara_dat[,-c(1160:1161)]
+tara_ids <- tara_dat$Feature.ID
+
+tara_dat$Feature.ID <- NULL
+
+tara_dat <- as.data.frame(t(tara_dat))
+colnames(tara_dat) <- tara_ids
+
+save(tara_dat, tara_tax, file = "data/18sv9_tara_oceans.Rdata")
+
+# polar data
+
+polar_dat <- read.csv("data/Tara_Polar_asv_count_tax_final_fix.csv")
+
+polar_tax <- polar_dat[,c(1,171:172)]
+
+polar_dat <- polar_dat[,-c(171:172)]
+polar_ids <- polar_dat$Feature.ID
+
+polar_dat$Feature.ID <- NULL
+
+polar_dat <- as.data.frame(t(polar_dat))
+colnames(polar_dat) <- polar_ids
+
+save(polar_dat, polar_tax, file = "data/18sv9_tara_polar.Rdata")
+
+
