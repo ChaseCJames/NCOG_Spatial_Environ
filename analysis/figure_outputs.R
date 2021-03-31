@@ -95,12 +95,12 @@ for (i in 1:length(in_group_list)) {
                             figure_name = paste0("figures/diversity/", in_group_list[i], "_alpha_gamma.pdf"),
                             main = in_group_names[i])
   
-  beta_diversity_figure(full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
-                        bc_data_file = paste0("output/", in_group_list[i], "_dissimilar.Rdata"),
-                        raw_data_file = paste0("data/", in_group_list_basic[i], ".Rdata"),
-                        map_file = paste0("output/", in_group_list[i], "_map.Rdata"), minimum_tp = 8,
-                        figure_name = paste0("figures/diversity/", in_group_list[i],"_beta.pdf"),
-                        main = in_group_names[i])
+  # beta_diversity_figure(full_data_file = paste0("output/", in_group_list[i], "_full_data.Rdata"),
+                        # bc_data_file = paste0("output/", in_group_list[i], "_dissimilar.Rdata"),
+                        # raw_data_file = paste0("data/", in_group_list_basic[i], ".Rdata"),
+                        # map_file = paste0("output/", in_group_list[i], "_map.Rdata"), minimum_tp = 8,
+                        # figure_name = paste0("figures/diversity/", in_group_list[i],"_beta.pdf"),
+                        # main = in_group_names[i])
   
   print(i)
   

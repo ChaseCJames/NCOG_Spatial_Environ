@@ -305,7 +305,8 @@ fig_4_func <- function(file_name = "figures/figure_outline/fig_4.pdf",
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) + 
     labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) +
+    scale_fill_viridis()
   
   all_alpha_gamma <- all_alpha_gamma + ggtitle("All ASVs") +
     theme(plot.title = element_text(hjust = 0, size = tsize),
@@ -329,7 +330,8 @@ fig_4_func <- function(file_name = "figures/figure_outline/fig_4.pdf",
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) + 
     labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) +
+    scale_fill_viridis()
   
   alpha_gamma <- alpha_gamma + ggtitle("Diatoms") +
     theme(plot.title = element_text(hjust = 0, size = tsize),
@@ -999,18 +1001,25 @@ suppl_fig_2_func <- function(in_ncog = "data/18sv9_all.Rdata",
   split_taxa$endemic[which(split_taxa$CalCOFI == 0 & split_taxa$Tara == 1 & split_taxa$Polar == 0)] <- "TARA"
   split_taxa$endemic[which(split_taxa$CalCOFI == 0 & split_taxa$Tara == 0 & split_taxa$Polar == 1)] <- "TARA Polar"
   
+  split_taxa$C[which(is.na(split_taxa$C))] <- "Other"
+  
   mean_groups <- split_taxa %>%
     filter(!is.na(endemic), !is.na(C)) %>%
     group_by(endemic,C) %>% summarise(count = n()) %>% mutate(prop = count/sum(count))
   
+  uniquec <- unique(mean_groups$C)
+  
+  mean_groups$C <- as.factor(mean_groups$C)
+  mean_groups$C <- factor(mean_groups$C, levels = uniquec[c(1:24,26:36,25)])
+  
   proportion_plot <- ggplot(mean_groups, aes(x = endemic, y = prop, fill = C)) + 
     geom_bar(stat = "identity") + theme_classic() +
-    labs(x = "", y = "Proportion", fill = "Taxonomy") +
+    labs(x = "", y = "Proportion", fill = "Division") +
     scale_fill_manual(values = c("#dc7e83","#41c65d","#9f5dd2","#53a024","#c74eaf","#81c954","#5b6ed9",
                                  "#aebe32","#8358a0","#3d933f","#da4e8d","#51c586","#cf3e5e","#54c1ae",
                                  "#d34239","#4ab4dd","#df7032","#6584c7","#db9835","#cf8fd0","#809f39",
                                  "#9c4969","#6ea66a","#ac5030","#30866c","#dc996b","#34753e","#986039",
-                                 "#52701e","#c3ab43","#576426","#abb871","#906d24","#7d8028","#807a45")) +
+                                 "#52701e","#c3ab43","#576426","#abb871","#906d24","#7d8028","#807a45", "grey70")) +
     theme(panel.border = element_rect(fill = NA, color = "black"))
   
   pdf(output, width = 10, height = 8)
@@ -1026,12 +1035,15 @@ suppl_fig_2_func <- function(in_ncog = "data/18sv9_all.Rdata",
     filter(!is.na(endemic), !is.na(C)) %>%
     group_by(endemic,C) %>% summarise(count = n()) %>% mutate(prop = count/sum(count))
   
+ 
   
   table <- pivot_wider(mean_groups[,1:3], names_from = "endemic", values_from = "count")  
   
-  colnames(table)[1] <- "Taxonomic Group"
+  colnames(table)[1] <- "Division"
   
-  table <- table[,c(1,3,6,8,4,5,7,2)]
+  table <- table[c(1:23,25:36,24),c(1,3,6,8,4,5,7,2)]
+  
+  table[is.na(table)] <- 0
   
   tot <- data.frame(matrix(c("Total",colSums(table[,2:8], na.rm = TRUE)),1,8))
   colnames(tot) <- colnames(table)
@@ -1433,12 +1445,13 @@ suppl_fig_6_func <- function(file_name = "figures/figure_outline/supp_fig_6.pdf"
   
 }
 
+
 ##### Suppl Figure 7: Diversity Importance Small Groups #####
 
 full_aic_table_figure_diversity_sign(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                        "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                        "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                                     in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
+                                     in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar 11 Clade", 
                                                         "Diatoms",
                                                         "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
                                      figure_name_2 = "figures/figure_outline/supp_fig_7.pdf",
@@ -1450,10 +1463,10 @@ full_aic_table_figure_diversity_sign(in_group_list = c("pro_16s", "syne_16s","fl
 suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                             in_group_names = c("a Prochlorococcus", "b Synecococcus", "c Flavobacteriales",
-                                                "d Rhodobacterales", "e SAR 11 Clade", "f Diatoms",
-                                                "g Dinoflagellates", "h Syndiniales", "i Haptophytes",
-                                                "j Chlorophytes","k Metazoans"), tsize = 12,
+                             in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
+                                                "Rhodobacterales", "SAR 11 Clade", "Diatoms",
+                                                "Dinoflagellates", "Syndiniales", "Haptophytes",
+                                                "Chlorophytes","Metazoans"), tsize = 12,
                              out_fig_name = "figures/figure_outline/supp_fig_8.pdf"){
   
   
@@ -1498,25 +1511,18 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
   }
   
   
-  out_plot <- (out_plot_list[[1]] + theme(axis.text.x = element_blank(), axis.title.x = element_blank(),
-                                          axis.ticks.x = element_blank())) +
-    (out_plot_list[[2]] + theme(axis.text.x = element_blank(), axis.title = element_blank(),
-                                axis.ticks.x = element_blank())) + 
-    (out_plot_list[[3]] + theme(axis.text.x = element_blank(), axis.title = element_blank(),
-                                axis.ticks.x = element_blank())) +
-    (out_plot_list[[4]] + theme(axis.text.x = element_blank(), axis.title = element_blank(),
-                                axis.ticks.x = element_blank())) +
-    (out_plot_list[[5]] + theme(axis.text.x = element_blank(), axis.title.x = element_blank(),
-                                axis.ticks.x = element_blank())) +
-    (out_plot_list[[6]] + theme(axis.text.x = element_blank(), axis.title = element_blank(),
-                                axis.ticks.x = element_blank())) +
-    (out_plot_list[[7]] + theme(axis.text.x = element_blank(), axis.title = element_blank(),
-                                axis.ticks.x = element_blank())) +
+  out_plot <- (out_plot_list[[1]] + theme(axis.text.x = element_blank(), axis.title.x = element_blank())) +
+    (out_plot_list[[2]] + theme(axis.text.x = element_blank(), axis.title = element_blank())) + 
+    (out_plot_list[[3]] + theme(axis.text.x = element_blank(), axis.title = element_blank())) +
+    (out_plot_list[[4]] + theme(axis.text.x = element_blank(), axis.title = element_blank())) +
+    (out_plot_list[[5]] + theme(axis.text.x = element_blank(), axis.title.x = element_blank())) +
+    (out_plot_list[[6]] + theme(axis.text.x = element_blank(), axis.title = element_blank())) +
+    (out_plot_list[[7]] + theme(axis.text.x = element_blank(), axis.title = element_blank())) +
     (out_plot_list[[8]] + theme(axis.title.y = element_blank())) +
     (out_plot_list[[9]] + theme()) +
     (out_plot_list[[10]] + theme(axis.title.y = element_blank())) +
     (out_plot_list[[11]] + theme(axis.title.y = element_blank())) +
-    guide_area()  + plot_layout(ncol = 4, guides = "collect")
+    guide_area()  + plot_layout(ncol = 4, guides = "collect") + plot_annotation(tag_levels = "a")
   
   pdf(out_fig_name, width = 12, height = 9)
   print(out_plot)
@@ -2157,7 +2163,7 @@ suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures/figure_ou
 
 ##### Suppl Figure 11: Violin Plots ######
 
-suppl_fig_11_func <- function(in_list = fig_list, file_name = "figures/figure_outline/supp_fig_11.pdf"){
+suppl_fig_11_func <- function(in_list = fig_list, file_name = "figures/figure_outline/supp_fig_11.pdf", tsize = 12){
 
 groups <- c(1:5,7:12)
 
@@ -2770,6 +2776,14 @@ suppl_fig_14_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div.Rdata
   
   
 }
+
+###### Suppl Figure 15: Filter QC ########
+
+source("analysis/suppl_fig_15.R")
+
+###### Suppl Figure 15: Mock Communities ########
+
+source("analysis/suppl_fig_16.R")
 
 ##### Suppl Figure XX: Community vs Time Season #####
 

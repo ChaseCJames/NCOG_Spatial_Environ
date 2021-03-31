@@ -192,7 +192,7 @@ diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes(x = long, y = lat, fill = shannon), color = "black", size =6, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = mean(som_maps$shannon)) +
+    scale_fill_viridis() +
     ggtitle(paste0(main,"\nMean Shannon Diversity")) +
     theme(legend.title = element_blank(),
           panel.background = element_blank(),
@@ -1409,6 +1409,10 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
                                                             "Mean SiO4", "Mean PO4",
                                                             "Mean NO3","Mean Salinity",
                                                             "Mean Temp" ))
+  
+  
+  plot_df$Group <- as.factor(plot_df$Group)
+  plot_df$Group <- factor(plot_df$Group, levels = in_group_names)
   
   pdf(figure_name_2, width = width_plot, height = 8)
   print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = slope)) + 

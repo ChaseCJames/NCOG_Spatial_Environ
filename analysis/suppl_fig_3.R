@@ -359,7 +359,7 @@ i = 1
   
   taxa_sha[which(taxa_deep == "Mamiellophyceae")] <- "Mamiellophyceae"
   taxa_sha[which(taxa_deep == "Bacillariophyta")] <- "Bacillariophyta"
-
+  
   unique_tax <- unique(taxa_sha)
   
   others <- unique_tax[c(8)]
@@ -367,6 +367,9 @@ i = 1
   taxa_sha[which(taxa_sha %in% others)] <- "Other Eukaryotic Phytoplankton"
   
   asv_long$Group <- taxa_sha
+  
+  # remove unclassified ASVs
+  asv_long <- asv_long[-which(is.na(asv_long$Group)),]
   
   asv_mean_group <- asv_long %>%
     group_by(sample, Group, som_id) %>%

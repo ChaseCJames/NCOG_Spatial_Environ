@@ -49,7 +49,7 @@ in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar
                         "18s_diatom","18s_dino", "18s_syndin",
                         "18s_hapto", "18s_chloro", "18s_metazoa", "18s_heterotrophic_euks", "18s_autotrophic_euks")
 
-seedlist <- c(202,5,345,98,133,47,987,13,654,11,283,57,100,133,47,143,916)
+seedlist <- c(202,5,345,98,133,47,987,13,654,11,134,57,100,133,47,143,916)
 
 for (i in 10:length(in_group_list)) {
   set.seed(seedlist[i])
