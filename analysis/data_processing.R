@@ -24,13 +24,13 @@ excludes <- read.delim("data/exclude_samples.txt", header = FALSE)
 ####### Splitting 16s plastids and everything else #####
 
 # read in 16s (2014-2019)
-sixteen_s <- read.csv("data/16_asv_count_tax_final_19.csv", stringsAsFactors = FALSE)
+sixteen_s <- read.csv("data/NCOG_16S_2020.csv", stringsAsFactors = FALSE)
 
 six_id_names <- sixteen_s$Feature.ID
 
 six_tax_id <- sixteen_s[,c(1,(ncol(sixteen_s)-3):ncol(sixteen_s))]
 
-sixteen_s <- sixteen_s[,-c(1,656:670,863:884,1033:1036)]
+sixteen_s <- sixteen_s[,-c(1,656:670,863:884,1033:1046,(ncol(sixteen_s)-3):ncol(sixteen_s))]
 
 sixteen_s <- apply(sixteen_s, 2, as.numeric)
 
@@ -45,14 +45,12 @@ colnames(sixteen_s) <- six_id_names
 # remove bad samples
 sixteen_s <- sixteen_s[-which(!is.na(match(rownames(sixteen_s), paste0("X",excludes$V1)))),]
 
-save(sixteen_s, file = "data/16s_all.Rdata")
-
 # split platids and rest of 16s
 
 id_vector <- vector()
 
 for (i in 1:nrow(six_tax_id)) {
-val <- which.max(c(six_tax_id$Silva_Confidence[[i]], six_tax_id$Phytoref_Confidence[[i]]))
+val <- which.max(c(six_tax_id$silva_Confidence[[i]], six_tax_id$phytoref_Confidence[[i]]))
 if(val == 1){id_vector[i] = "bacteria"}else{id_vector[i] = "plastid"}
 }
 
@@ -64,25 +62,29 @@ taxas <- six_tax_id[which(!is.na(match(six_tax_id$Feature.ID, colnames(sixteen_s
 
 colnames(taxas) <- c("Feature.ID", "Taxon", "Confidence")
 
+taxas$Taxon <- gsub(" ","", taxas$Taxon)
+
 split_taxa <- separate(taxas, Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
+
+sixteen_ex_euks <- which(split_taxa$A != "d__Eukaryota" & split_taxa$D != "o__Chloroplast")
 
 # get cyanos and everything but euks
 
-cyanos <- which(split_taxa$B == "D_1__Cyanobacteria" & split_taxa$D != "D_3__Chloroplast")
+cyanos <- which(split_taxa$B == "p__Cyanobacteria" & split_taxa$D != "o__Chloroplast")
 
 bacteria_sixteen <- sixteen_s[,which(six_tax_id$type == "bacteria")]
 bacteria_copy <- bacteria_sixteen
 
-cyano_sixteen <- sixteen_s[,which(split_taxa$B == "D_1__Cyanobacteria" & split_taxa$D != "D_3__Chloroplast")]
+cyano_sixteen <- sixteen_s[,which(split_taxa$B == "p__Cyanobacteria" & split_taxa$D != "o__Chloroplast")]
 cyano_copy <- cyano_sixteen
 
-pro_sixteen <- sixteen_s[,which(split_taxa$B == "D_1__Cyanobacteria" & substr(split_taxa$F,1,14) == "D_5__Prochloro")]
+pro_sixteen <- sixteen_s[,which(split_taxa$B == "p__Cyanobacteria" & substr(split_taxa$F,1,12) == "g__Prochloro")]
 pro_copy <- pro_sixteen
 
-syne_sixteen <- sixteen_s[,which(split_taxa$B == "D_1__Cyanobacteria" & substr(split_taxa$F,1,12) == "D_5__Synecho")]
+syne_sixteen <- sixteen_s[,which(split_taxa$B == "p__Cyanobacteria" & substr(split_taxa$F,1,10) == "g__Synecho")]
 syne_copy <- syne_sixteen
 
-bacteria_m_euks_sixteen <- sixteen_s[,which(six_tax_id$type == "bacteria" & split_taxa$A != "D_0__Eukaryota" & split_taxa$B != "D_1__Cyanobacteria" & split_taxa$A == "D_0__Bacteria")]
+bacteria_m_euks_sixteen <- sixteen_s[,which(six_tax_id$type == "bacteria" & split_taxa$A != "d__Eukaryota" & split_taxa$B != "p__Cyanobacteria" & split_taxa$A == "d__Bacteria")]
 bacteria_m_euks_copy <- bacteria_m_euks_sixteen
 
 plastid_sixteen <- sixteen_s[,which(six_tax_id$type == "plastid")]
@@ -90,16 +92,16 @@ plastid_copy <- plastid_sixteen
 
 # other groups for 16s
 
-archaea_sixteen <- sixteen_s[,which(split_taxa$A == "D_0__Archaea")]
+archaea_sixteen <- sixteen_s[,which(split_taxa$A == "d__Archaea")]
 archaea_copy <- archaea_sixteen
 
-flavo_sixteen <- sixteen_s[,which(split_taxa$D == "D_3__Flavobacteriales")]
+flavo_sixteen <- sixteen_s[,which(split_taxa$D == "o__Flavobacteriales")]
 flavo_copy <- flavo_sixteen
 
-rhodo_sixteen <- sixteen_s[,which(split_taxa$D == "D_3__Rhodobacterales")]
+rhodo_sixteen <- sixteen_s[,which(split_taxa$D == "o__Rhodobacterales")]
 rhodo_copy <- rhodo_sixteen
 
-sar_sixteen <- sixteen_s[,which(split_taxa$D == "D_3__SAR11 clade")]
+sar_sixteen <- sixteen_s[,which(split_taxa$D == "o__SAR11_clade")]
 sar_copy <- sar_sixteen
 
 bact_sums <- rowSums(bacteria_sixteen, na.rm = TRUE)
@@ -231,15 +233,20 @@ asv_table <- syne_copy
 
 save(scaled_inputs, syne_sixteen, six_tax_id, asv_table, file = "data/16s_syne.Rdata")
 
+sixteen_s <- sixteen_s[,sixteen_ex_euks]
+save(sixteen_s, file = "data/16s_all.Rdata")
+
 ###### Splitting 18sv9 between autotrophs and everything else #####
 
-eighteen_s <- read.csv("data/18Sv9_asv_count_tax_final_19.csv", stringsAsFactors = FALSE)
+eighteen_s <- read.csv("data/NCOG_18sV9_2020.csv", stringsAsFactors = FALSE)
 
 eight_id_names <- eighteen_s$Feature.ID
 
-eight_tax_id <- eighteen_s[,c(1,(ncol(eighteen_s)-3):ncol(eighteen_s))]
+eight_tax_id <- eighteen_s[,c(1,(ncol(eighteen_s)-7):ncol(eighteen_s))]
 
 eighteen_s <- eighteen_s[,-c(1,(ncol(eighteen_s)-3):ncol(eighteen_s))]
+
+eighteen_s <- eighteen_s[,-c(479:489,667:678,871:880,1029:1042,1193:1196)]
 
 eighteen_s <- apply(eighteen_s, 2, as.numeric)
 
@@ -252,29 +259,27 @@ eight_tp <- rownames(eighteen_s)
 colnames(eighteen_s) <- eight_id_names
 
 # remove mocks from data and rows with no reads
-eighteen_s <- eighteen_s[-c(479:489,667:678,871:880),]
+
 
 # remove bad samples
 eighteen_s <- eighteen_s[-which(!is.na(match(rownames(eighteen_s), paste0("X",excludes$V1)))),]
-
-save(eighteen_s, eight_tax_id, file = "data/18sv9_all.Rdata")
 
 # sort
 
 id_vector <- vector()
 
 for (i in 1:nrow(eight_tax_id)) {
-  val <- which.max(c(eight_tax_id$Silva_Confidence[[i]], eight_tax_id$PR2_Confidence[[i]]))
+  val <- which.max(c(eight_tax_id$silva_Confidence[[i]], eight_tax_id$pr2_Confidence[[i]]))
   if(val == 1){a = 4}else{a = 2}
   id_vector[i] <- eight_tax_id[i,a]
 }
 
 eight_tax_id$Taxon <- id_vector
 
-split_taxa <- separate(eight_tax_id, PR2_Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
-split_silva <- separate(eight_tax_id, Silva_Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
+split_taxa <- separate(eight_tax_id, pr2_Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
+split_silva <- separate(eight_tax_id, silva_Taxon, sep = ";", into = c("A","B","C", "D", "E", "F", "G", "H", "I"))
 
-euks <- which(split_silva$A == "D_0__Eukaryota" | split_silva$A == "Unassigned")
+euks <- which(split_silva$A == "d__Eukaryota" | split_silva$A == "Unassigned")
 
 chlorophytes <- which(split_taxa$C == "Chlorophyta")
 dinos_minus_syn <- which(split_taxa$C == "Dinoflagellata" &
@@ -286,10 +291,6 @@ cercozoa <- which(split_taxa$C == "Cercozoa" &
                     split_taxa$D != "Filosa-Sarcomonadea")
 
 sindins <- which(split_taxa$D == "Syndiniales")
-
-
-
-
 
 autotrophs <- c(chlorophytes, dinos_minus_syn, cryptophytes,
                 haptophytes, ochrophytes, cercozoa)
@@ -318,8 +319,12 @@ metazoa_eighteen <- eighteen_s[, which(split_taxa$C == "Metazoa")]
 chloro_eighteen <- eighteen_s[,which(split_taxa$C == "Chlorophyta")]
 
 # combine all
+eighteen_s <- eighteen_s[,euks]
+
+save(eighteen_s, eight_tax_id, file = "data/18sv9_all.Rdata")
 
 eighteen_s <- eighteen_s[-which(is.na(match(rownames(eighteen_s),rownames(sixteen_s)))),]
+sixteen_s <- sixteen_s[-which(is.na(match(rownames(sixteen_s),rownames(eighteen_s)))),]
 
 totals <- bind_cols(eighteen_s, sixteen_s)
 
