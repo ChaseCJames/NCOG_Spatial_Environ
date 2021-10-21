@@ -9,12 +9,11 @@ source("analysis/figure_functions.R")
 in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
                   "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                   "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9", "euks_auto_18sv9")
+                  "cyano_16s", "euks_hetero_18sv9", "euks_auto_18sv9")
 
 in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
                    "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
-                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
+                   "Haptophytes", "Chlorophytes","Metazoans", "Bacteria", "Cyanobacteria",
                    "Eukaryotic Protists", "Photosynthetic Eukaryotic Protists")
 
 
@@ -23,10 +22,10 @@ plot_list <- list()
 for (i in 1:length(in_group_list)) {
   print(i)
   
-  plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map.Rdata"),
-                               figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot.pdf"),
-                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore")
-  
+  plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map_S.Rdata"),
+                               figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot_S.pdf"),
+                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 3)
+
   
 }
 

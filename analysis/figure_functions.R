@@ -34,13 +34,15 @@ library(mgcv)
 som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
                        figure_name = paste0("figures/som_maps/bacteria_16s_som_",Sys.Date(),".pdf"),
                        main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
-                       tsize = 12, psize = 6){
+                       tsize = 12, psize = 4){
   
   
   
   map <- map_data("world")   
   
   load(map_file)
+  
+  som_maps <- som_maps %>% filter(substr(Sta_ID,2,3) > 75)
   
   # find centroids
   centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
@@ -55,7 +57,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust1)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust1)), color = "black", size =psize, stroke = 0.1, shape = 21) +
     scale_fill_gradient(low = "white", high = "darkblue", limits = c(0,1)) +
     ggtitle(paste0(cluster1)) +
     theme(legend.title = element_blank(),
@@ -73,7 +75,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust2)), color = "black", size =6, stroke = 0.1, shape = 21) +
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust2)), color = "black", size =psize, stroke = 0.1, shape = 21) +
     scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1)) +
     ggtitle(paste0(cluster2)) +
     theme(legend.title = element_blank(),
@@ -2109,18 +2111,52 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     labs(shape = "Season", color = "Phase") + xlab("Coastal Upwelling Transport Index\n(CUTI)") +
     ylab("Frequency of Nearshore Cluster")  + ggtitle(title)
   
+  
+  formula1 <- as.formula(paste0("som_",nearshore_som, "~",
+                                "BEUTI"))
+  
+  warm_lm <- summary(lm(formula = formula1,
+                        data = som_cruise %>% filter(phase == "2014-2016")))
+  
+  warm_p <- warm_lm$coefficients[2,4]
+  warm_rsq <- warm_lm$r.squared
+  
+  cool_lm <- summary(lm(formula = formula1,
+                        data = som_cruise %>% filter(phase == "2017-2018")))
+  
+  cool_p <- cool_lm$coefficients[2,4]
+  cool_rsq <- cool_lm$r.squared
+  
+
+  
   beuti_plot <- ggplot(som_cruise, aes_string(x = "BEUTI", y = paste0("som_",nearshore_som))) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
-    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+                aes_string(x = "BEUTI", y = paste0("som_",nearshore_som), fill = "phase", color = "phase"),
+                method="lm") +
+    scale_fill_manual(values = c("red", "blue","gold3"),  guide = "none") +
     scale_color_manual(values = c("red", "blue","gold3")) +
-    stat_ellipse(data = som_cruise %>% filter(phase != "2019"),aes_string(color = "phase")) + 
     scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
-    ylab("Frequency of Nearshore Cluster")  + ggtitle(title)
+    ylab("Frequency of Nearshore Cluster") + ggtitle(title) +
+    annotate(geom = "text", y = (max(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.15, 
+             label = paste0("2014-2016\nR-Squared = ",
+                            round(warm_rsq,3),
+                            "\np-value = ",
+                            round(warm_p, 3)),
+             color = "red", size = 3) +
+    annotate(geom = "text", y = (min(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.2, 
+             label = paste0("2017-2018\nR-Squared = ",
+                            round(cool_rsq,3),
+                            "\np-value = ",
+                            round(cool_p, 3)),
+             color = "blue", size = 3)
   
+  
+
   log_beuti_plot <- ggplot(som_cruise, aes_string(x = "log_BEUTI", y = paste0("som_",nearshore_som))) +
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") + 
     geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +

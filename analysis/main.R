@@ -49,15 +49,16 @@ in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar
                         "18s_diatom","18s_dino", "18s_syndin",
                         "18s_hapto", "18s_chloro", "18s_metazoa", "18s_heterotrophic_euks", "18s_autotrophic_euks")
 
-seedlist <- c(202,5,345,98,133,47,987,13,654,11,134,57,100,133,47,143,916)
+seedlist <- c(202,5,345,98,133,47,987,13,654,11,134,57,100,133,47,133,451)
 
-for (i in 10:length(in_group_list)) {
+
+for (i in 17:length(in_group_list)) {
   set.seed(seedlist[i])
   
   result_tables(input = paste0("data/", in_group_list_basic[i], ".Rdata"),
                 som_file = paste0("output/", in_group_list[i], "_som.Rdata"),
                 SST_data = "output/CALCOFI_temp_tables.Rdata",
-                physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
+                physical_data = "data/NCOG_sample_log_DNA_stvx_meta_2014-2020.csv",
                 map_file = paste0("output/", in_group_list[i], "_map.Rdata"),
                 regression_file = paste0("output/", in_group_list[i],"_glm.Rdata"),
                 dissimmilar_matrix = paste0("output/", in_group_list[i], "_dissimilar.Rdata"),
@@ -68,7 +69,7 @@ for (i in 10:length(in_group_list)) {
   
 }
 
-set.seed(214)
+ set.seed(214)
 
 result_tables(input = paste0("data/totals.Rdata"),
               som_file = paste0("output/", "total", "_som.Rdata"),

@@ -144,6 +144,129 @@ fig_1_func <- function(in_vel = "output/uv_velocity_table.Rdata",
   
 }
 
+#### Figure 1 Revised: Physical Conditions and ASV compare ####
+
+fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
+                       in_cyano = "output/cyano_16s_map.Rdata",
+                       in_full = "output/cyano_16s_full_data.Rdata",
+                       in_venn = "output/venn_diagram.Rdata",
+                       fig_name = "figure_outline/fig_1_alt.pdf",
+                       tsize = 12, psize = 6){
+  
+  map <- map_data("world")    
+  
+  load(in_temp)
+  load(in_cyano)
+  load(in_full)
+  load(in_venn)
+  
+  som_maps <- som_maps %>% filter(substr(Sta_ID,2,3) > 75)
+  full_dat <- full_dat %>% filter(substr(Sta_ID,2,3) > 75)
+  
+  stations <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "n_samps"),
+               color = "black", size =psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "# of Samples", low = "white", high = "red") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
+          plot.title = element_text(), axis.line = element_blank(),
+          legend.justification=c(1,1), 
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize))
+  
+  depths <- ggplot() +
+    geom_point(data = full_dat, aes(x = dist_to_coast, y = Depthm), size = psize/3, pch = 21, alpha = 0.5, fill = "grey60") +
+    scale_y_reverse() +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
+          plot.title = element_text(), axis.line = element_blank(),
+          legend.justification=c(1,1), 
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) +
+    labs(x = "Distance to Coast (km)", y = "Depth (m)")
+  
+  sst <- ggplot() + 
+    geom_tile(data = coeff_table, aes(x = lon, y = lat, fill = coeff_var), width =0.26, height = 0.26) +
+    scale_fill_gradient2(name = "Coeff. Var SST", low = "darkblue", mid = "white", high = "darkred", limits = c(0.09,0.12), oob = squish, midpoint = 0.1066851) + geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
+          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
+  
+  sst_mean <- ggplot() + 
+    geom_tile(data = mean_table, aes(x = lon, y = lat, fill = Mean), width =0.26, height = 0.26) +
+    scale_fill_gradient2(name = "SST Mean (°C)", low = "darkblue", mid = "white", high = "darkred", limits = c(15,18), oob = squish, midpoint = 16.5) +geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
+          plot.title = element_text(), axis.line = element_blank(),
+          legend.justification=c(1,1), 
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) 
+  
+  nc_depth <-  ggplot() + 
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    xlab("Longitude") + ylab("Latitude") + 
+    geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "NC_mean"),
+               color = "black", size = psize, stroke = 0.1, shape = 21) +
+    scale_fill_gradient(name = "Mean Nitracline\nDepth (m)", low = "darkblue", high = "cyan", trans = 'reverse') +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
+          plot.title = element_text(), axis.line = element_blank(),
+          legend.justification=c(1,1), 
+          legend.position=c(0.97, 0.97),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) 
+  
+  
+  stations <- stations + theme(axis.title.x=element_blank(),
+                               axis.text.x=element_blank(),
+                               axis.ticks.x=element_blank())
+
+  
+  sst_mean <- sst_mean + theme(axis.title.y=element_blank(),
+                               axis.text.y=element_blank(),
+                               axis.ticks.y=element_blank())
+  
+  
+  
+  layout <- "ABEE
+             CDEE"
+  
+  patch <- stations + depths +
+    nc_depth + sst_mean +
+    wrap_elements(grobTree(venn_plot)) +
+    plot_layout(design = layout) 
+  
+  patch <- patch + plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 16))
+  
+  pdf(fig_name, width = 22, height = 12)
+  print(patch)
+  dev.off()
+  
+}
+
 #### Figure 2: SOMs ####
 
 fig_2_func <- function(in_list = plot_list, file_name = "figures/figure_outline/fig_2.pdf", tsize  = 12){
@@ -607,6 +730,78 @@ fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
           axis.title = element_text(size = tsize),
           axis.text = element_text(size = tsize)) + ggtitle("Archaea") +
     ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+  
+  grad_plot <- phyto_gradient + euk_gradient + guide_area() +
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect") +
+    plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 16))
+  
+  pdf(file = gradient_plot_file, width = 12, height = 7)
+  print(grad_plot)
+  dev.off()
+  
+  
+}
+
+alt_fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
+                       in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
+                       in_cyano = "output/cyano_16s_diffs.Rdata",
+                       in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
+                       in_arch = "output/archaea_16s_diffs.Rdata",
+                       gradient_plot_file = "figures/fig_6_alt.pdf",
+                       tsize = 12){
+  
+  
+  load(in_phyto)
+  phyto_gradient <- beuti_plot
+  
+  load(in_euks)
+  euk_gradient <- beuti_plot
+  
+  load(in_cyano)
+  cyano_gradient <- beuti_plot
+  
+  load(in_bact)
+  bact_gradient <- beuti_plot
+  
+  load(in_arch)
+  arch_gradient <- beuti_plot
+  
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.title.y = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize)) + ggtitle("Photosynthetic eukaryotic protists")
+  
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize)) + ggtitle("Heterotrophic eukaryotic protists")
+  
+  cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
+    theme(plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("Cyanobacteria")
+  
+  bact_gradient <- bact_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("Bacteria") +
+    ylab("") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)")
+  
+  arch_gradient <- arch_gradient +
+    theme(axis.text.y  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize),
+          axis.title = element_text(size = tsize),
+          axis.text = element_text(size = tsize)) + ggtitle("Archaea") +
+    ylab("") + xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)")
   
   grad_plot <- phyto_gradient + euk_gradient + guide_area() +
     cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect") +

@@ -23,7 +23,7 @@ excludes <- read.delim("data/exclude_samples.txt", header = FALSE)
 
 ####### Splitting 16s plastids and everything else #####
 
-# read in 16s (2014-2019)
+# read in 16s (2014-2020)
 sixteen_s <- read.csv("data/NCOG_16S_2020.csv", stringsAsFactors = FALSE)
 
 six_id_names <- sixteen_s$Feature.ID
@@ -50,8 +50,8 @@ sixteen_s <- sixteen_s[-which(!is.na(match(rownames(sixteen_s), paste0("X",exclu
 id_vector <- vector()
 
 for (i in 1:nrow(six_tax_id)) {
-val <- which.max(c(six_tax_id$silva_Confidence[[i]], six_tax_id$phytoref_Confidence[[i]]))
-if(val == 1){id_vector[i] = "bacteria"}else{id_vector[i] = "plastid"}
+  val <- which.max(c(six_tax_id$silva_Confidence[[i]], six_tax_id$phytoref_Confidence[[i]]))
+  if(val == 1){id_vector[i] = "bacteria"}else{id_vector[i] = "plastid"}
 }
 
 six_tax_id$type <- id_vector
@@ -234,21 +234,26 @@ asv_table <- syne_copy
 save(scaled_inputs, syne_sixteen, six_tax_id, asv_table, file = "data/16s_syne.Rdata")
 
 sixteen_s <- sixteen_s[,sixteen_ex_euks]
-save(sixteen_s, file = "data/16s_all.Rdata")
+save(sixteen_s, six_tax_id, file = "data/16s_all.Rdata")
 
 ###### Splitting 18sv9 between autotrophs and everything else #####
 
-eighteen_s <- read.csv("data/NCOG_18sV9_2020.csv", stringsAsFactors = FALSE)
+meta <- read.csv("data/NCOG_sample_log_DNA_stvx_meta_2014-2020.csv")
+
+eighteen_s <- read.csv("data/NCOG_18sV9_asv_count_tax_S.csv", stringsAsFactors = FALSE)
+
+# remove bad samples
+eighteen_s <- eighteen_s[,-which(!is.na(match(colnames(eighteen_s), paste0("X",excludes$V1))))]
 
 eight_id_names <- eighteen_s$Feature.ID
 
-eight_tax_id <- eighteen_s[,c(1,(ncol(eighteen_s)-7):ncol(eighteen_s))]
+eight_tax_id <- eighteen_s[,c(1,(ncol(eighteen_s)-5):ncol(eighteen_s))]
 
-eighteen_s <- eighteen_s[,-c(1,(ncol(eighteen_s)-3):ncol(eighteen_s))]
-
-eighteen_s <- eighteen_s[,-c(479:489,667:678,871:880,1029:1042,1193:1196)]
+eighteen_s <- eighteen_s[,-c(1,(ncol(eighteen_s)-5):ncol(eighteen_s))]
 
 eighteen_s <- apply(eighteen_s, 2, as.numeric)
+
+eighteen_s <- eighteen_s[,which(!is.na(match(colnames(eighteen_s), paste0("X",meta$Sample.Name))))]
 
 eighteen_s <- t(eighteen_s)
 
@@ -258,11 +263,9 @@ eight_tp <- rownames(eighteen_s)
 
 colnames(eighteen_s) <- eight_id_names
 
-# remove mocks from data and rows with no reads
+# exclude samples with no reads
 
-
-# remove bad samples
-eighteen_s <- eighteen_s[-which(!is.na(match(rownames(eighteen_s), paste0("X",excludes$V1)))),]
+eighteen_s <- eighteen_s[which(rowSums(eighteen_s) > 10000),]
 
 # sort
 
@@ -324,7 +327,6 @@ eighteen_s <- eighteen_s[,euks]
 save(eighteen_s, eight_tax_id, file = "data/18sv9_all.Rdata")
 
 eighteen_s <- eighteen_s[-which(is.na(match(rownames(eighteen_s),rownames(sixteen_s)))),]
-sixteen_s <- sixteen_s[-which(is.na(match(rownames(sixteen_s),rownames(eighteen_s)))),]
 
 totals <- bind_cols(eighteen_s, sixteen_s)
 
@@ -384,7 +386,7 @@ for (i in 1:nrow(eight_auto)){
 }
 
 for (i in 1:nrow(totals)){
-totals[i,] <- totals[i,]/totals_sums[i]
+  totals[i,] <- totals[i,]/totals_sums[i]
 }
 
 
@@ -470,39 +472,4 @@ scaled_inputs <- as.matrix(scaled_inputs)
 rownames(total_copy) <- rownames(sixteen_s)
 asv_table <- total_copy
 
-save(scaled_inputs, totals, asv_table, file = "data/totals.Rdata")
-
-
-###### Tara Oceans Data #####
-
-tara_dat <- read.csv("data/Tara_Oceans_asv_count_tax_final_update.csv")
-
-tara_tax <- tara_dat[,c(1,1160:1161)]
-
-tara_dat <- tara_dat[,-c(1160:1161)]
-tara_ids <- tara_dat$Feature.ID
-
-tara_dat$Feature.ID <- NULL
-
-tara_dat <- as.data.frame(t(tara_dat))
-colnames(tara_dat) <- tara_ids
-
-save(tara_dat, tara_tax, file = "data/18sv9_tara_oceans.Rdata")
-
-# polar data
-
-polar_dat <- read.csv("data/Tara_Polar_asv_count_tax_final_fix.csv")
-
-polar_tax <- polar_dat[,c(1,171:172)]
-
-polar_dat <- polar_dat[,-c(171:172)]
-polar_ids <- polar_dat$Feature.ID
-
-polar_dat$Feature.ID <- NULL
-
-polar_dat <- as.data.frame(t(polar_dat))
-colnames(polar_dat) <- polar_ids
-
-save(polar_dat, polar_tax, file = "data/18sv9_tara_polar.Rdata")
-
-
+save(scaled_inputs, totals, asv_table, six_tax_id, eight_tax_id, file = "data/totals.Rdata")

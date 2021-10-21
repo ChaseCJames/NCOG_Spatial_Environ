@@ -17,12 +17,12 @@ library(geosphere)
 library(viridis)
 library(GUniFrac)
 
-result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/bacteria_16s_som.Rdata",
+result_tables <- function(input = "data/18s_diatom.Rdata", som_file = "output/diatom_18sv9_som.Rdata",
                           SST_data = "output/CALCOFI_temp_tables.Rdata", 
-                          physical_data = "data/NCOG_sample_log_DNA_meta_2014-2019.csv",
-                          map_file = "output/bacteria_16s_map.Rdata", regression_file = "output/bacteria_16s_glm.Rdata",
-                          dissimmilar_matrix = "output/bacteria_16s_dissimilar.Rdata", 
-                          full_data_file = "output/bacteria_16s_full_data.Rdata",
+                          physical_data = "data/NCOG_sample_log_DNA_stvx_meta_2014-2020.csv",
+                          map_file = "output/diatom_18sv9_map.Rdata", regression_file = "output/diatom_18sv9_glm.Rdata",
+                          dissimmilar_matrix = "output/diatom_18sv9_dissimilar.Rdata", 
+                          full_data_file = "output/diatom_18sv9_full_data.Rdata",
                           sample_regime = "both"){
   
   load(SST_data)
@@ -37,29 +37,26 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   
   asv_copy <- asv_table
   
-  physical_dat <- read.csv(physical_data, header = TRUE, stringsAsFactors = FALSE)
+  physical_dat <- read.csv(physical_data, header = TRUE, stringsAsFactors = FALSE) 
+  
+  # just run sterivex samples
+  
+  physical_dat <- physical_dat %>% filter(Del_Depth < 20, as.numeric(substr(sample_num,3,6)) > 478)
+  
+  scaled_inputs <- scaled_inputs[which(!is.na(match(rownames(scaled_inputs), paste0("X",physical_dat$Sample.Name)))),]
+  
+  physical_dat <- physical_dat %>% filter(paste0("X",Sample.Name) %in% rownames(scaled_inputs))
+  
   
   # check variables
   
-  data <- physical_dat[colnames(physical_dat)[c(1,33:41,46:47)]]
-  
-  # data <- data[which(complete.cases(data)==TRUE),]
-  
-  # data$spice <- swSpice(data$Salnty, data$T_degC)
+  data <- physical_dat[colnames(physical_dat)[c(1,34:35,38:42,45:46)]]
   
   data$eco_name <- paste0("X20",substr(data$Sample.Name,start = 3,stop = 100))
   
   full_dat <- physical_dat[!is.na(match(physical_dat$Sample.Name, data$Sample.Name)),]
   
   full_dat$eco_name <- paste0("X20",substr(full_dat$Sample.Name,start = 3,stop = 100))
-  
-  # full_dat$spice <- swSpice(full_dat$Salnty, full_dat$T_degC)
-  
-  # physical data match to biological data
-  
-  full_dat <- full_dat[which(!is.na(match(full_dat$eco_name, rownames(scaled_inputs)))),]
-
-  data <- data[which(!is.na(match(data$eco_name, rownames(scaled_inputs)))),]
   
   # distance to coast
   
@@ -131,6 +128,9 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   
   som_ids <- clusters[ids]
   
+  asv_copy <- asv_copy[which(!is.na(match(rownames(asv_copy), rownames(scaled_inputs)))),]
+  asv_table <- asv_table[which(!is.na(match(rownames(asv_table), rownames(scaled_inputs)))),]
+  
   asv_copy$som_id <- som_ids
   
   full_dat$som_id <- asv_copy$som_id[match(full_dat$eco_name, rownames(asv_copy))]
@@ -188,7 +188,7 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
               temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
               PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), 
               MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
               Dist_mean = mean(dist_to_coast, na.rm = TRUE), Chl_mean = mean(ChlorA, na.rm = TRUE),
               temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
@@ -196,7 +196,6 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
               PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
               NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
               SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
               MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               Chl_coeff = sd(ChlorA, na.rm = TRUE)/mean(ChlorA, na.rm = TRUE),
@@ -207,7 +206,7 @@ result_tables <- function(input = "data/16s_bacteria.Rdata", som_file = "output/
   
   # FOR NOW REMOVE NORTHERN TRANSECTS
   
-  som_maps <- som_maps[-c(1:12),]
+  som_maps <- som_maps %>% filter(as.numeric(substr(Sta_ID,2,3)) > 75)
   
   full_dat$Date <- as.Date(full_dat$Date, format = "%m/%d/%Y")
   

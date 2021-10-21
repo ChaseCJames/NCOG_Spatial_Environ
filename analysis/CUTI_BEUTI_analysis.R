@@ -67,15 +67,15 @@ ts <- date
 CUTI_array[CUTI_array==fillvalue_CUTI$value] <- NA
 BEUTI_array[BEUTI_array==fillvalue_BEUTI$value] <- NA
 
-socal_upwell <- which(lat < 36)
-time_period <- which(year > 2013 & year < 2020)
+socal_upwell <- which(lat < 36  & lat > 31)
+time_period <- which(year > 2013 & year < 2021)
 
 CUTI_trim <- CUTI_array[socal_upwell,time_period]
 BEUTI_trim <- BEUTI_array[socal_upwell,time_period]
 
 # set negative BEUTI to 0 <- only interested in upwelling
 
-BEUTI_trim[which(BEUTI_trim < 0)] <- 0
+# BEUTI_trim[which(BEUTI_trim < 0)] <- 0
 
 regional_CUTI <- colMeans(CUTI_trim)
 regional_BEUTI <- colMeans(BEUTI_trim)
@@ -107,7 +107,7 @@ cuti_plot <- ggplot(cuti_df, aes(x = Date, y = Value, color = Index)) + geom_lin
   ylab("Coastal Upwelling Transport Index\n(CUTI)")
 
 yearly_cuti <- ggplot(cuti_df, aes(x = Year_Day, y = month2_MA, group = interaction(Year, Phase), color = Year)) +
-  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2","gold2")) +
+  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2","gold2", "gold3")) +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black")) +
   ylab("Coastal Upwelling\nTransport Index\n(CUTI)") + xlab("Year Day") +
