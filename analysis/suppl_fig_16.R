@@ -3,26 +3,22 @@ library(patchwork)
 library(stringdist)
 library(data.table)
 
-
-# read in expected distributions found in (https://doi.org/10.1101/866731)
-# tab_16 <- read_tsv("data/210223_BGT_example_mocks_all-16S-seqs.with-tax.tsv")
-# tab_16 <- tab_16[,c(1:3,9)]
-# colnames(tab_16) <- c("Hash", "Even", "Staggered", "Taxonomy")
-# tab_16 <- tab_16[-which(rowSums(tab_16[,2:3]) == 0),]
-# 
-# tab_18 <- read_tsv("data/210223_BGT_example_mocks_all-18S-seqs.with-SILVA132-tax.tsv")
-# tab_18 <- tab_18[,c(1:3,9)]
-# colnames(tab_18) <- c("Hash", "Even", "Staggered", "Taxonomy")
-# tab_18 <- tab_18[-which(rowSums(tab_18[,2:3]) == 0),]
-
 # read in 16s (2014-2019)
-sixteen_s <- read.csv("data/16_asv_count_tax_final_19.csv", stringsAsFactors = FALSE)
+
+sixteen_s <- read.csv("data/NCOG_16S_asv_count_tax_S.csv", header = TRUE)
+
+# pull out mock samples
+
+mock_vals <- colnames(sixteen_s) %>% tolower() %>%
+  grepl("mock",.) %>% which(. == TRUE)
+
+colnames(sixteen_s)[mock_vals]
 
 six_id_names <- sixteen_s$Feature.ID
 
-six_tax_id <- sixteen_s[,c(1,(ncol(sixteen_s)-3):ncol(sixteen_s))]
+six_tax_id <- sixteen_s[,c(1,(ncol(sixteen_s)-1):ncol(sixteen_s))]
 
-sixteen_s <- apply(sixteen_s, 2, as.numeric)
+sixteen_s <- sixteen_s[,-c(1,(ncol(sixteen_s)-1):ncol(sixteen_s))]
 
 sixteen_s <- t(sixteen_s)
 
@@ -32,19 +28,24 @@ six_tp <- rownames(sixteen_s)
 
 colnames(sixteen_s) <- six_id_names
 
-six_mock <- sixteen_s[c(656:661,665:670,863:868,875:878),]
+six_mock <- sixteen_s[c(823:824,1001:1006,1010:1015,1208:1213,1220:1223,1378:1381),]
 
 # eighteen s
 
-eighteen_s <- read.csv("data/18Sv9_asv_count_tax_final_19.csv", stringsAsFactors = FALSE)
+eighteen_s <- read.csv("data/NCOG_18sV9_asv_count_tax_S.csv", header = TRUE)
+
+# pull out mock samples
+
+mock_vals <- colnames(eighteen_s) %>% tolower() %>%
+  grepl("mock",.) %>% which(. == TRUE)
+
+colnames(eighteen_s)[mock_vals]
 
 eight_id_names <- eighteen_s$Feature.ID
 
-eight_tax_id <- eighteen_s[,c(1,(ncol(eighteen_s)-3):ncol(eighteen_s))]
+eight_tax_id <- eighteen_s[,c(1,(ncol(eighteen_s)-5):ncol(eighteen_s))]
 
-eighteen_s <- eighteen_s[,-c(1,(ncol(eighteen_s)-3):ncol(eighteen_s))]
-
-eighteen_s <- apply(eighteen_s, 2, as.numeric)
+eighteen_s <- eighteen_s[,-c(1,(ncol(eighteen_s)-5):ncol(eighteen_s))]
 
 eighteen_s <- t(eighteen_s)
 
@@ -54,7 +55,7 @@ eight_tp <- rownames(eighteen_s)
 
 colnames(eighteen_s) <- eight_id_names
 
-eight_mock <- eighteen_s[c(479:484,667:672,871:874),]
+eight_mock <- eighteen_s[c(479:484,667:672,871:874,1029:1032),]
 
 #### sort mock communities
 
@@ -63,7 +64,7 @@ eight_mock <- eight_mock[,-which(colSums(eight_mock) == 0)]
 
 # taxonomy for ASVs
 
-colnames(six_mock) <- six_tax_id$Silva_Taxon[match(colnames(six_mock), six_tax_id$Feature.ID)]
+colnames(six_mock) <- six_tax_id$silva_Taxon[match(colnames(six_mock), six_tax_id$Feature.ID)]
 
 colnames(eight_mock) <- eight_tax_id$Silva_Taxon[match(colnames(eight_mock), eight_tax_id$Feature.ID)]
 
@@ -96,7 +97,7 @@ adj_eight_long <- eight_long %>% filter(rel_abun > 0.0005) %>%
   group_by(sample) %>% mutate(rel_abun_adj = read/sum(read, na.rm = TRUE))
 
 #expected samples
-adj_six_long$ASV <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__", "", adj_six_long$ASV)
+adj_six_long$ASV <- gsub("d__|p__|c__|o__|f__|g__|s__", "", adj_six_long$ASV)
 adj_eight_long$ASV <- gsub("D_0__|D_1__|D_2__|D_3__|D_4__|D_5__|D_6__|D_7__|D_8__", "", adj_eight_long$ASV)
 
 adj_six_long <- adj_six_long %>% group_by(sample,Hash) %>% summarise(rel_abun_adj = sum(rel_abun_adj, na.rm = TRUE), ASV = ASV)

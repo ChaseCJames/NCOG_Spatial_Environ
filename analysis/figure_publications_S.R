@@ -9,7 +9,7 @@ source("analysis/figure_functions_S.R")
 fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
                        in_cyano = "output/cyano_16s_map.Rdata",
                        in_full = "output/cyano_16s_full_data.Rdata",
-                       in_venn = "output/venn_diagram.Rdata",
+                       in_venn = "output/venn_diagram_S.Rdata",
                        fig_name = "figures_S/fig_1_S.pdf",
                        tsize = 12, psize = 6){
   
@@ -39,7 +39,8 @@ fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize))
+          legend.title = element_text(size = tsize),
+          title = element_text(size = tsize))
   
   depths <- ggplot() +
     geom_point(data = full_dat, aes(x = dist_to_coast, y = Depthm), size = psize/3, pch = 21, alpha = 0.5, fill = "grey60") +
@@ -217,7 +218,7 @@ fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 12){
   
   cyano <- cyano + ggtitle("") + 
     theme(legend.justification=c(1,0.5), 
-          legend.position=c(0.95, 0.5),
+          legend.position=c(0.20, 0.5),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -248,33 +249,33 @@ fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 12){
 
 #### Figure 4: Diversity Example ####
 
-fig_4_func <- function(file_name = "figures/figure_outline/fig_4.pdf",
+fig_4_func <- function(file_name = "figures_S/fig_4_S.pdf",
                        in_group = c("total","diatom_18sv9"), basic = c("totals","18s_diatom"),
                        name = c("All ASVs", "Diatoms"), tsize = 12){
   
   
   
-  all_map <- diveristy_figure(map_file = paste0("output/", in_group[1], "_map.Rdata"),
-                          full_dat = paste0("output/", in_group[1], "_full_data.Rdata"),
+  all_map <- diveristy_figure(map_file = paste0("output/", in_group[1], "_map_S.Rdata"),
+                          full_dat = paste0("output/", in_group[1], "_full_data_S.Rdata"),
                           figure_start = paste0("figures/diversity/", in_group[1], "_"),
                           main = name[1])
   
-  all_alpha_gamma <- alpha_versus_gamma_figure(full_data_file = paste0("output/", in_group[1], "_full_data.Rdata"),
-                                           raw_data_file = paste0("data/", basic[1], ".Rdata"),
-                                           map_file = paste0("output/", in_group[1], "_map.Rdata"), minimum_tp = 8,
-                                           figure_name = paste0("figures/diversity/", in_group[1], "_alpha_gamma.pdf"),
+  all_alpha_gamma <- alpha_versus_gamma_figure(full_data_file = paste0("output/", in_group[1], "_full_data_S.Rdata"),
+                                           raw_data_file = paste0("data/", basic[1], "_S.Rdata"),
+                                           map_file = paste0("output/", in_group[1], "_map_S.Rdata"), minimum_tp = 8,
+                                           figure_name = paste0("figures/diversity/", in_group[1], "_alpha_gamma_S.pdf"),
                                            main = name[1])
 
   
-  map <- diveristy_figure(map_file = paste0("output/", in_group[2], "_map.Rdata"),
-                          full_dat = paste0("output/", in_group[2], "_full_data.Rdata"),
+  map <- diveristy_figure(map_file = paste0("output/", in_group[2], "_map_S.Rdata"),
+                          full_dat = paste0("output/", in_group[2], "_full_data_S.Rdata"),
                           figure_start = paste0("figures/diversity/", in_group[2], "_"),
                           main = name[2])
   
-  alpha_gamma <- alpha_versus_gamma_figure(full_data_file = paste0("output/", in_group[2], "_full_data.Rdata"),
-                                           raw_data_file = paste0("data/", basic[2], ".Rdata"),
-                                           map_file = paste0("output/", in_group[2], "_map.Rdata"), minimum_tp = 8,
-                                           figure_name = paste0("figures/diversity/", in_group[2], "_alpha_gamma.pdf"),
+  alpha_gamma <- alpha_versus_gamma_figure(full_data_file = paste0("output/", in_group[2], "_full_data_S.Rdata"),
+                                           raw_data_file = paste0("data/", basic[2], "_S.Rdata"),
+                                           map_file = paste0("output/", in_group[2], "_map_S.Rdata"), minimum_tp = 8,
+                                           figure_name = paste0("figures/diversity/", in_group[2], "_alpha_gamma_S.pdf"),
                                            main = name[2])
   
   
@@ -294,7 +295,7 @@ fig_4_func <- function(file_name = "figures/figure_outline/fig_4.pdf",
   all_alpha_gamma <- all_alpha_gamma + ggtitle("All ASVs") +
     theme(plot.title = element_text(hjust = 0, size = tsize),
           legend.justification=c(1,0.5), 
-          legend.position=c(0.97, 0.5),
+          legend.position=c(0.97, 0.18),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -359,8 +360,8 @@ fig_4_func <- function(file_name = "figures/figure_outline/fig_4.pdf",
 ###### Figure 5: Time Nutrients ect. #####
 
 fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
-                       nutrient_dat = "output/mld_mean_profiles.Rdata",
-                       time_plot = "figures/figure_outline/fig_5.pdf",
+                       nutrient_dat = "output/mld_mean_profiles_S.Rdata",
+                       time_plot = "figures_S/fig_5_S.pdf",
                        tsize = 12, psize = 6,
                        in_list = fig_list){
   
@@ -395,8 +396,11 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
     ggtitle("Regionally available\n nitrate (BEUTI/CUTI)") +
     ylab("BEUTI/CUTI")
   
+  early_phase <- early_phase %>% filter(Sta_ID %in% late_phase$Sta_ID)
+  
   early_phase$n_diff <- early_phase$mean_no3 - late_phase$mean_no3
   early_phase$p_diff <- early_phase$mean_po4 - late_phase$mean_po4
+  
   
   early_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -404,7 +408,7 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_no3),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean NO3 mM", low = "white", high = "red",
+    scale_fill_gradient(name = expression(paste("Mean ",NO[3]," ",mu,M)), low = "white", high = "red",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -416,7 +420,7 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean nitrate mM (2014-2016)")
+    ggtitle("Mean nitrate μM (2014-2016)")
   
   late_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -424,7 +428,7 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_no3),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean NO3 mM", low = "white", high = "red",
+    scale_fill_gradient(name = expression(paste("Mean ",NO[3]," ",mu,M)), low = "white", high = "red",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -439,7 +443,7 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank()) +
-    ggtitle("Mean nitrate mM (2017-2018)")
+    ggtitle("Mean nitrate μM (2017-2018)")
   
   diff_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -447,7 +451,7 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = n_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = expression(Delta~"NO3 mM"),
+    scale_fill_gradient(name = expression(paste(Delta~NO[3]," ", mu,M)),
                         low = "blue", high = "white",
                         limits = c(-6,0), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -465,14 +469,14 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
           axis.title.y = element_blank()) + 
     ggtitle("Changes in mean nitrate\n(2014-2016) - (2017-2018)")
   
-  low <- 0.125
-  high <- 0.6
+  low <- 0.2
+  high <- 0.5
   
   arch <- (in_list[[6]]$surf + ggtitle("Archaea") +
-      scale_fill_gradient(limits = c(low,high),
+      scale_fill_gradient(limits = c(low, high),
                           low = "white", high = "red", oob = scales::squish) +
-      labs(fill = "Bray-Curtis\nSimilarity") +
-      theme(legend.position = "none")) 
+      labs(fill = "Bray-Curtis\nSimilarity")+
+        theme(legend.position = "none")) 
     
     bact <- (in_list[[13]]$surf + ggtitle("Bacteria") +
        scale_fill_gradient(limits = c(low,high),
@@ -481,16 +485,16 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
              axis.ticks.y = element_blank())+
-       theme(legend.position = "none")) 
+         theme(legend.position = "none")) 
     
-    cyano <- (in_list[[15]]$surf + ggtitle("Cyanobacteria") +
+    cyano <- (in_list[[14]]$surf + ggtitle("Cyanobacteria") +
        scale_fill_gradient(limits = c(low,high),
                            low = "white", high = "red", oob = scales::squish) +
        labs(fill = "Bray-Curtis\nSimilarity") +
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
              axis.ticks.y = element_blank())+
-       theme(legend.position = "none")) 
+         theme(legend.position = "none")) 
     
     photo <- (in_list[[16]]$surf + ggtitle("Photosynthetic Eukaryotic\nProtists") +
        scale_fill_gradient(limits = c(low,high),
@@ -499,9 +503,9 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
              axis.ticks.y = element_blank())+
-       theme(legend.position = "none")) 
+         theme(legend.position = "none")) 
     
-    hetero <- (in_list[[17]]$surf + ggtitle("Heterotrophic Eukaryotic\nProtists") +
+    hetero <- (in_list[[15]]$surf + ggtitle("Heterotrophic Eukaryotic\nProtists") +
        scale_fill_gradient(limits = c(low,high),
                            low = "white", high = "red", oob = scales::squish) +
        labs(fill = "Bray-Curtis\nSimilarity") +
@@ -530,12 +534,12 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
 
 ##### Figure 6: Community vs Time #####
 
-fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
-                       in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
-                       in_cyano = "output/cyano_16s_diffs.Rdata",
-                       in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
-                       in_arch = "output/archaea_16s_diffs.Rdata",
-                       gradient_plot_file = "figures/figure_outline/fig_6.pdf",
+fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_S.Rdata",
+                       in_euks = "output/euks_hetero_18sv9_diffs_S.Rdata",
+                       in_cyano = "output/cyano_16s_diffs_S.Rdata",
+                       in_bact = "output/bacteria_m_euks_16s_diffs_S.Rdata",
+                       in_arch = "output/archaea_16s_diffs_S.Rdata",
+                       gradient_plot_file = "figures_S/fig_6_S.pdf",
                        tsize = 12){
   
   
@@ -602,12 +606,12 @@ fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
   
 }
 
-alt_fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
-                       in_euks = "output/euks_hetero_18sv9_diffs.Rdata",
-                       in_cyano = "output/cyano_16s_diffs.Rdata",
-                       in_bact = "output/bacteria_m_euks_16s_diffs.Rdata",
-                       in_arch = "output/archaea_16s_diffs.Rdata",
-                       gradient_plot_file = "figures/fig_6_alt.pdf",
+alt_fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_S.Rdata",
+                       in_euks = "output/euks_hetero_18sv9_diffs_S.Rdata",
+                       in_cyano = "output/cyano_16s_diffs_S.Rdata",
+                       in_bact = "output/bacteria_m_euks_16s_diffs_S.Rdata",
+                       in_arch = "output/archaea_16s_diffs_S.Rdata",
+                       gradient_plot_file = "figures_S/fig_6_S_alt.pdf",
                        tsize = 12){
   
   
@@ -678,8 +682,8 @@ alt_fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs.Rdata",
 
 ##### Suppl Figure 1: Physical Maps #####
 
-suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
-                             out_plot = "figures/figure_outline/supp_fig_1.pdf",
+suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
+                             out_plot = "figures_S/supp_fig_1_S.pdf",
                              tsize = 12, psize = 6){
   
   load(in_dat)
@@ -705,7 +709,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean Temperature (°C)")
+    ggtitle("Mean temperature (°C)")
   
   t_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -724,7 +728,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. Temperature")
+    ggtitle("Coeff. var. temperature")
   
   sal_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -743,7 +747,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean Salinity")
+    ggtitle("Mean salinity")
   
   sal_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -762,7 +766,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. Salinity")
+    ggtitle("Coeff. var. salinity")
   
   # Nutrients
   
@@ -772,7 +776,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = all_dat, aes(x = lon, y = lat, fill = mean_no3),
                color = "black", size = psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "NO3 mM", low = "white", high = "purple") +
+    scale_fill_gradient(name = expression(paste(NO[3]," ",mu,M)), low = "white", high = "purple") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(), axis.line = element_blank(),
@@ -783,7 +787,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean NO3")
+    ggtitle(expression(paste("Mean ", NO[3])))
   
   no3_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -802,7 +806,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. NO3")
+    ggtitle(expression(paste("Coeff. var. ", NO[3])))
   
   po4_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -810,7 +814,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = all_dat, aes(x = lon, y = lat, fill = mean_po4),
                color = "black", size = psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "PO4 mM", low = "white", high = "purple") +
+    scale_fill_gradient(name = expression(paste(PO[4]," ",mu,M)), low = "white", high = "purple") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(), axis.line = element_blank(),
@@ -821,7 +825,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean PO4")
+    ggtitle(expression(paste("Mean ", PO[4])))
   
   po4_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -840,7 +844,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. PO4")
+    ggtitle(expression(paste("Coeff. var. ", PO[4])))
   
   sio4_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -848,7 +852,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = all_dat, aes(x = lon, y = lat, fill = mean_sio4),
                color = "black", size = psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "SiO4 mM", low = "white", high = "purple") +
+    scale_fill_gradient(name =  expression(paste(SiO[4]," ",mu,M)), low = "white", high = "purple") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(), axis.line = element_blank(),
@@ -859,7 +863,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean SiO4")
+    ggtitle(expression(paste("Mean ", SiO[4])))
   
   sio4_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -878,7 +882,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. SiO4")
+    ggtitle(expression(paste("Coeff. var. ", SiO[4])))
   
   # Chlorophyll
   
@@ -899,7 +903,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean Chl-a")
+    ggtitle("Mean chl-a")
   
   chl_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -918,7 +922,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. Chl-a")
+    ggtitle("Coeff. var. chl-a")
   
   # MLD and NCD
   
@@ -939,7 +943,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean Mixed Layer Depth")
+    ggtitle("Mean mixed layer depth")
   
   mld_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -958,7 +962,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. Mixed Layer Depth")
+    ggtitle("Coeff. var. mixed layer depth")
   
   ncd_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -977,7 +981,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean Nitracline Depth")
+    ggtitle("Mean nitracline depth")
   
   ncd_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -996,7 +1000,7 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. Var. Nitracline Depth")
+    ggtitle("Coeff. var. nitracline depth")
   
   
   plot1 <- t_m + sal_m + mld_m + ncd_m + 
@@ -1013,18 +1017,20 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles.Rdata",
 
 ##### Suppl Figure 2: NCOG, TARA, Polar Endemics #######
 
-suppl_fig_2_func <- function(in_ncog = "data/18sv9_all.Rdata",
+suppl_fig_2_func <- function(in_ncog = "data/all_18Sv9_rare.Rdata",
                              in_tara = "data/18sv9_tara_oceans.Rdata",
                              in_polar = "data/18sv9_tara_polar.Rdata",
-                             output = "figures/figure_outline/supp_fig_2.pdf",
-                             output_table = "figures/figure_outline/supp_table_2.pdf"){
+                             output = "figures_S/supp_fig_2_S.pdf",
+                             output_table = "figures_S/supp_table_2_S.pdf"){
   
   # load data
   load(in_ncog)
   load(in_tara)
   load(in_polar)
   
-  calcofi <- names(which(colSums(eighteen_s) != 0))
+  eight_rare <- eight_rare[-which(as.numeric(substr(rownames(eight_rare),10,11)) < 76),]
+  
+  calcofi <- names(which(colSums(eight_rare) != 0))
   tara <- names(which(colSums(tara_dat) != 0))
   polar <- names(which(colSums(polar_dat) != 0))
   
@@ -1058,23 +1064,33 @@ suppl_fig_2_func <- function(in_ncog = "data/18sv9_all.Rdata",
   
   split_taxa$C[which(is.na(split_taxa$C))] <- "Other"
   
+  split_taxa$C[which(split_taxa$C == "Alveolata_X")] <- "Alveolata"
+  split_taxa$C[which(split_taxa$C == "Eukaryota_XX")] <- "Eukaryota"
+  split_taxa$C[which(split_taxa$C == "Opisthokonta_X")] <- "Opisthokonta"
+  split_taxa$C[which(split_taxa$C == "Stramenopiles_X")] <- "Stramenopiles"
+  
   mean_groups <- split_taxa %>%
     filter(!is.na(endemic), !is.na(C)) %>%
     group_by(endemic,C) %>% summarise(count = n()) %>% mutate(prop = count/sum(count))
   
-  uniquec <- unique(mean_groups$C)
+  order <- split_taxa %>%
+    filter(!is.na(endemic), !is.na(C)) %>%
+    group_by(C) %>% summarise(count = n()) %>% mutate(prop = count/sum(count)) %>% arrange(prop)
   
-  mean_groups$C <- as.factor(mean_groups$C)
-  mean_groups$C <- factor(mean_groups$C, levels = uniquec[c(1:24,26:36,25)])
+  mean_groups$C <- factor(mean_groups$C, levels = order$C)
   
   proportion_plot <- ggplot(mean_groups, aes(x = endemic, y = prop, fill = C)) + 
     geom_bar(stat = "identity") + theme_classic() +
     labs(x = "", y = "Proportion", fill = "Division") +
-    scale_fill_manual(values = c("#dc7e83","#41c65d","#9f5dd2","#53a024","#c74eaf","#81c954","#5b6ed9",
-                                 "#aebe32","#8358a0","#3d933f","#da4e8d","#51c586","#cf3e5e","#54c1ae",
-                                 "#d34239","#4ab4dd","#df7032","#6584c7","#db9835","#cf8fd0","#809f39",
-                                 "#9c4969","#6ea66a","#ac5030","#30866c","#dc996b","#34753e","#986039",
-                                 "#52701e","#c3ab43","#576426","#abb871","#906d24","#7d8028","#807a45", "grey70")) +
+    scale_fill_manual(values = c("#87bb37","#5362da","#4ec253","#aa60d9",
+                                 "#4e8d2b","#d74ebb","#4dc484","#d73d84",
+                                 "#4f985a","#a73e99","#c0b63a","#7655b2",
+                                 "#dd9031","#6b83e5","#858c2f","#e473bf",
+                                 "#92bb6f","#dc385a","#4cc8c6","#d04f2a",
+                                 "#5fa2da","#a27f2c","#bc93e1","#2f7040",
+                                 "#8c5396","#439f84","#d7685f","#5a6bac",
+                                 "#cbad6b","#9c426a","#696d2e","#de95c6",
+                                 "#9a5b2c","#b06b9c","#e6936d","#a5444b", "grey70")) +
     theme(panel.border = element_rect(fill = NA, color = "black"))
   
   pdf(output, width = 10, height = 8)
@@ -1110,18 +1126,16 @@ suppl_fig_2_func <- function(in_ncog = "data/18sv9_all.Rdata",
   print(grid.table(table, rows = NULL))
   dev.off()
   
-  
 }
-
 
 
 ######## Suppl Figure 3: Relative Mean Abundance Nearshore-Offshore  #######
 
-source("analysis/suppl_fig_3.R")
+source("analysis/suppl_fig_3_S.R")
 
 ##### Suppl Figure 4: SOMs small groups #####
 
-suppl_fig_4_func <- function(in_list = plot_list, file_name = "figures/figure_outline/supp_fig_4.pdf", tsize  = 12){
+suppl_fig_4_func <- function(in_list = plot_list, file_name = "figures_S/supp_fig_4_S.pdf", tsize  = 12){
   
   in_list[[1]]$bp <- in_list[[1]]$bp + theme(axis.title.x = element_blank(),
                                              axis.ticks.x = element_blank(),
@@ -1284,16 +1298,16 @@ suppl_fig_4_func <- function(in_list = plot_list, file_name = "figures/figure_ou
 full_aic_table_figure(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                         "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                         "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
+                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar 11 Clade", 
                                          "Diatoms",
                                          "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
                       minimum_tp = 4, width_plot = 16,
-                      figure_name_2 = paste0("figures/figure_outline/supp_fig_5",".pdf"),
+                      figure_name_2 = paste0("figures_S/supp_fig_5_S",".pdf"),
                       title_name = "", tsize = 12)
 
 #### Suppl Figure 6: Diversity Maps #####
 
-suppl_fig_6_func <- function(file_name = "figures/figure_outline/supp_fig_6.pdf",
+suppl_fig_6_func <- function(file_name = "figures_S/supp_fig_6_S.pdf",
                                in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
@@ -1305,8 +1319,8 @@ suppl_fig_6_func <- function(file_name = "figures/figure_outline/supp_fig_6.pdf"
   
   for (i in 1:length(in_group_list)) {
     
-    div_map[[i]] <- diveristy_figure(map_file = paste0("output/", in_group_list[i], "_map.Rdata"),
-                                     full_dat = paste0("output/", in_group_list[i], "_full_data.Rdata"),
+    div_map[[i]] <- diveristy_figure(map_file = paste0("output/", in_group_list[i], "_map_S.Rdata"),
+                                     full_dat = paste0("output/", in_group_list[i], "_full_data_S.Rdata"),
                                      figure_start = paste0("figures/diversity/", in_group_list[i], "_"),
                                      main = in_group_names[i])
     
@@ -1509,7 +1523,7 @@ full_aic_table_figure_diversity_sign(in_group_list = c("pro_16s", "syne_16s","fl
                                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar 11 Clade", 
                                                         "Diatoms",
                                                         "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                                     figure_name_2 = "figures/figure_outline/supp_fig_7.pdf",
+                                     figure_name_2 = "figures_S/supp_fig_7_S.pdf",
                                      col = 27, width_plot = 16, tsize = 12)
 
 ####### Suppl Figure 8: Diversity - Productivity ########
@@ -1522,14 +1536,22 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
                                                 "Rhodobacterales", "SAR 11 Clade", "Diatoms",
                                                 "Dinoflagellates", "Syndiniales", "Haptophytes",
                                                 "Chlorophytes","Metazoans"), tsize = 12,
-                             out_fig_name = "figures/figure_outline/supp_fig_8.pdf"){
+                             out_fig_name = "figures_S/supp_fig_8_S.pdf"){
   
   
   out_plot_list <- list()
   
+  #pull IntC14 Data
+  metadata <- read.csv("data/NCOG_sample_log_DNA_meta_2014-2020.csv")
+
+  
   for (i in 1:length(in_group_list)) {
     
-    load(paste0("output/", in_group_list[i],"_full_data.RData"))
+    load(paste0("output/", in_group_list[i],"_full_data_S.RData"))
+    
+    full_dat$samp <- gsub("_S", "", full_dat$Sample.Name)
+    
+    full_dat$IntC14 <- metadata$IntC14[match(full_dat$samp, metadata$Sample.Name)]
     
     prodo_dat <- full_dat %>%
       filter(!is.na(IntC14))
@@ -1538,13 +1560,12 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
     
     prodo_dat$phase[which(prodo_dat$phase == "2014" | prodo_dat$phase == "2015" | prodo_dat$phase == "2016")] <- "Warm"
     prodo_dat$phase[which(prodo_dat$phase == "2017" | prodo_dat$phase == "2018")] <- "Cool"
-    prodo_dat$phase[which(prodo_dat$phase == "2019")] <- "2019"
+    prodo_dat$phase[which(prodo_dat$phase == "2019" | prodo_dat$phase == "2020")] <- "2019-2020"
     
     prodo_dat$phase <- as.factor(prodo_dat$phase)
-    prodo_dat$phase <- factor(prodo_dat$phase, levels = c("Warm", "Cool", "2019"))
+    prodo_dat$phase <- factor(prodo_dat$phase, levels = c("Warm", "Cool", "2019-2020"))
     
-    gam_dat <- prodo_dat %>%
-      filter(phase != "2019")
+    gam_dat <- prodo_dat 
     
     out_plot_list[[i]] <- ggplot() +
       geom_point(data = prodo_dat, aes(x = IntC14*2, y = richness, color = phase)) + scale_x_log10() + 
@@ -1593,13 +1614,15 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
 
 ##### Suppl Figure 9: Environmental Differences #####
 
-suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
-                             suppl_plot = "figures/figure_outline/supp_fig_9.pdf",
+suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
+                             suppl_plot = "figures_S/supp_fig_9_S.pdf",
                              tsize = 12, psize = 6){
   
   map <- map_data("world")
   
   load(nutrient_dat)
+  
+  early_phase <- early_phase %>% filter(Sta_ID %in% late_phase$Sta_ID)
   
   early_phase$n_diff <- early_phase$mean_no3 - late_phase$mean_no3
   early_phase$p_diff <- early_phase$mean_po4 - late_phase$mean_po4
@@ -1619,7 +1642,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_temp),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Temperature (°C)", low = "white", high = colors[1],
+    scale_fill_gradient(name = "°C", low = "white", high = colors[1],
                         limits = c(13,20), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1639,7 +1662,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_temp),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Temperature (°C)", low = "white", high = colors[1],
+    scale_fill_gradient(name = "°C", low = "white", high = colors[1],
                         limits = c(13,20), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1662,7 +1685,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = t_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(Delta~"Temperature (°C)"), low = "blue", high = "red",
+    scale_fill_gradient2(name = expression(Delta~" °C"), low = "blue", high = "red",
                          mid = "white", midpoint = 0,
                          limits = c(-0.5,2), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -1686,7 +1709,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_sal),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Salinity (PSU)", low = "white", high = colors[2],
+    scale_fill_gradient(name = "PSU", low = "white", high = colors[2],
                         limits = c(33,34), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1706,7 +1729,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_sal),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Salinity (PSU)", low = "white", high = colors[2],
+    scale_fill_gradient(name = "PSU", low = "white", high = colors[2],
                         limits = c(33,34), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1729,7 +1752,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = sa_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(Delta~"Salinity (PSU)"), low = "blue", high = "red",
+    scale_fill_gradient2(name = expression(Delta~" PSU"), low = "blue", high = "red",
                          mid = "white", midpoint = 0,
                          limits = c(-0.5,0), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -1753,7 +1776,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_mld),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Mixed Layer\nDepth(m)", low = "white", high = colors[3],
+    scale_fill_gradient(name = "Depth (m)", low = "white", high = colors[3],
                         limits = c(10,50), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1773,7 +1796,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_mld),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Mixed Layer\nDepth(m)", low = "white", high = colors[3],
+    scale_fill_gradient(name = "Depth (m)", low = "white", high = colors[3],
                         limits = c(10,50), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1820,7 +1843,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_ncd),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Nitracline\nDepth(m)", low = "white", high = colors[4],
+    scale_fill_gradient(name = "Depth (m)", low = "white", high = colors[4],
                         limits = c(0,120), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1840,7 +1863,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_ncd),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Nitracline\nDepth(m)", low = "white", high = colors[4],
+    scale_fill_gradient(name = "Depth (m)", low = "white", high = colors[4],
                         limits = c(0,120), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1888,7 +1911,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_chl),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Chl-a ug/L", low = "white", high = colors[5],
+    scale_fill_gradient(name = "μg/L", low = "white", high = colors[5],
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1900,7 +1923,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean chl-a ug/L (2014-2016)")
+    ggtitle("Mean chl-a μg/L (2014-2016)")
   
   late_chl <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1908,7 +1931,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_chl),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Chl-a ug/L", low = "white", high = colors[5],
+    scale_fill_gradient(name = "μg/L", low = "white", high = colors[5],
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1923,7 +1946,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank()) +
-    ggtitle("Mean chl-a ug/L (2017-2018)")
+    ggtitle("Mean chl-a μg/L (2017-2018)")
   
   diff_chl <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1931,7 +1954,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = chl_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(Delta~"Chl-a ug/L"), low = "blue", high = "red",
+    scale_fill_gradient2(name = expression(Delta~"μg/L"), low = "blue", high = "red",
                          mid = "white", midpoint = 0,
                          limits = c(-2,1), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -1955,7 +1978,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_no3),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean NO3 uM/L", low = "white", high = colors[6],
+    scale_fill_gradient(name = expression(paste(NO[3]," ", mu,M)), low = "white", high = colors[6],
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1967,7 +1990,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean nitrate uM/L (2014-2016)")
+    ggtitle("Mean nitrate μM (2014-2016)")
   
   late_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1975,7 +1998,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_no3),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean NO3 uM/L", low = "white", high = colors[6],
+    scale_fill_gradient(name = expression(paste(NO[3]," ", mu,M)), low = "white", high = colors[6],
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -1990,7 +2013,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank()) +
-    ggtitle("Mean nitrate uM/L (2017-2018)")
+    ggtitle("Mean nitrate μM (2017-2018)")
   
   diff_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1998,7 +2021,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = n_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = expression(Delta~"NO3 uM/L"),
+    scale_fill_gradient(name = expression(Delta~"NO3 μM"),
                         low = "blue", high = "white",
                         limits = c(-6,0), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -2022,7 +2045,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_po4),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean PO4 uM/L", low = "white", high = colors[7],
+    scale_fill_gradient(name = expression(paste(PO[4]," ", mu,M)), low = "white", high = colors[7],
                         limits = c(0,1), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -2034,7 +2057,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean phosphate uM/L (2014-2016)")
+    ggtitle("Mean phosphate μM (2014-2016)")
   
   late_p <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2042,7 +2065,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_po4),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean PO4 uM/L", low = "white", high = colors[7],
+    scale_fill_gradient(name = expression(paste(PO[4]," ", mu,M)), low = "white", high = colors[7],
                         limits = c(0,1), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -2057,7 +2080,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank()) +
-    ggtitle("Mean Phosphate uM/L (2017-2018)")
+    ggtitle("Mean Phosphate μM (2017-2018)")
   
   diff_p <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2065,7 +2088,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = p_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(Delta~"PO4 uM/L"), low = "blue", high = "red",
+    scale_fill_gradient2(name = expression(Delta~"PO4 μM"), low = "blue", high = "red",
                          mid = "white", midpoint = 0,
                         limits = c(-0.25,0.25), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -2088,7 +2111,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = mean_sio4),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean SiO4 uM/L", low = "white", high = colors[8],
+    scale_fill_gradient(name = expression(paste(SiO[4]," ", mu,M)), low = "white", high = colors[8],
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -2100,7 +2123,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("Mean silicate uM/L (2014-2016)")
+    ggtitle("Mean silicate μM (2014-2016)")
   
   late_si <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2108,7 +2131,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = late_phase, aes(x = lon, y = lat, fill = mean_sio4),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean SiO4 uM/L", low = "white", high = colors[8],
+    scale_fill_gradient(name = expression(paste(SiO[4]," ", mu,M)), low = "white", high = colors[8],
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
@@ -2123,7 +2146,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank()) +
-    ggtitle("Mean silicate uM/L (2017-2018)")
+    ggtitle("Mean silicate μM (2017-2018)")
   
   diff_si <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2131,7 +2154,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = early_phase, aes(x = lon, y = lat, fill = si_diff),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(Delta~"SiO4 uM/L"), low = "blue", high = "red",
+    scale_fill_gradient2(name = expression(Delta~"SiO4 μM"), low = "blue", high = "red",
                          mid = "white", midpoint = 0,
                          limits = c(-1.5,1.5), oob = scales::squish) +
     theme(panel.background = element_blank(),
@@ -2166,7 +2189,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles.Rdata",
 
 ##### Suppl Figure 10: Community Differences ######
 
-suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures/figure_outline/supp_fig_10.pdf", tsize  = 12){
+suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_10_S.pdf", tsize  = 12){
   
     low <- 0.125
     high <- 0.6
@@ -2184,7 +2207,7 @@ suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures/figure_ou
                axis.text.y = element_blank(),
                axis.ticks.y = element_blank())+
          theme(legend.position = "none")) +
-      (in_list[[15]]$deep + ggtitle("Cyanobacteria\nDCM (2014-2016) vs (2017-2018)") +
+      (in_list[[14]]$deep + ggtitle("Cyanobacteria\nDCM (2014-2016) vs (2017-2018)") +
          scale_fill_gradient(limits = c(low,high),
                              low = "white", high = "red", oob = scales::squish) +
          labs(fill = "Bray-Curtis\nSimilarity") +
@@ -2192,7 +2215,7 @@ suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures/figure_ou
                axis.text.y = element_blank(),
                axis.ticks.y = element_blank())+
          theme(legend.position = "none")) +
-      (in_list[[16]]$deep + ggtitle("Photosynthetic eukaryotic\nprotists\nDCM (2014-2016) vs (2017-2018)") +
+      (in_list[[15]]$deep + ggtitle("Photosynthetic eukaryotic\nprotists\nDCM (2014-2016) vs (2017-2018)") +
          scale_fill_gradient(limits = c(low,high),
                              low = "white", high = "red", oob = scales::squish) +
          labs(fill = "Bray-Curtis\nSimilarity") +
@@ -2200,7 +2223,7 @@ suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures/figure_ou
                axis.text.y = element_blank(),
                axis.ticks.y = element_blank())+
          theme(legend.position = "none")) +
-      (in_list[[17]]$deep + ggtitle("Heterotrophic eukaryotic\nprotists\nDCM (2014-2016) vs (2017-2018)") +
+      (in_list[[16]]$deep + ggtitle("Heterotrophic eukaryotic\nprotists\nDCM (2014-2016) vs (2017-2018)") +
          scale_fill_gradient(limits = c(low,high),
                              low = "white", high = "red", oob = scales::squish) +
          labs(fill = "Bray-Curtis\nSimilarity") +
@@ -2218,7 +2241,7 @@ suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures/figure_ou
 
 ##### Suppl Figure 11: Violin Plots ######
 
-suppl_fig_11_func <- function(in_list = fig_list, file_name = "figures/figure_outline/supp_fig_11.pdf", tsize = 12){
+suppl_fig_11_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_11_S.pdf", tsize = 12){
 
 groups <- c(1:5,7:12)
 
@@ -2395,7 +2418,7 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
                                                   "d Rhodobacterales", "e SAR 11 Clade", "f Diatoms",
                                                   "g Dinoflagellates", "h Syndiniales", "i Haptophytes",
                                                   "j Chlorophytes","k Metazoans"),
-                               gradient_plot_file = "figures/figure_outline/supp_fig_12.pdf",
+                               gradient_plot_file = "figures_S/supp_fig_12_S.pdf",
                                tsize = 12){
   
   
@@ -2403,7 +2426,7 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
   
   for (i in  1:length(in_group_list)) {
     
-    load(paste0("output/",in_group_list[i],"_diffs_div.Rdata"))
+    load(paste0("output/",in_group_list[i],"_diffs_div_S.Rdata"))
     
     plot_list[[i]] <- ts_plot
     
@@ -2421,7 +2444,7 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           axis.text.x = element_blank(),
           axis.ticks.x = element_blank()) +
     ggtitle("A. Prochlorococcus") + 
-    ylab("Proportion of Samples\nIdentified as Nearshore")
+    ylab("Mean Shannon Diversity\nPer Cruise")
   
   syn <- plot_list[[2]] +
     theme(plot.title = element_text(hjust = 0, size = tsize),
@@ -2479,7 +2502,7 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           axis.text.x = element_blank(),
           axis.ticks.x = element_blank()) +
     ggtitle("E. Sar Clade") + 
-    ylab("Proportion of Samples\nIdentified as Nearshore")
+    ylab("Mean Shannon Diversity\nPer Cruise")
   
   diatom <- plot_list[[6]] +
     theme(plot.title = element_text(hjust = 0, size = tsize),
@@ -2533,7 +2556,7 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           legend.title = element_text(size = tsize)) +
     ggtitle("I. Haptophytes") + 
     xlab("Date") + 
-    ylab("Proportion of Samples\nIdentified as Nearshore")
+    ylab("Mean Shannon Diversity\nPer Cruise")
   
   chloro <- plot_list[[10]] +
     theme(plot.title = element_text(hjust = 0, size = tsize),
@@ -2581,7 +2604,7 @@ suppl_fig_13_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
                                                   "d Rhodobacterales", "e Sar Clade", "f Diatoms",
                                                   "g Dinoflagellates", "h Syndiniales", "i Haptophytes",
                                                   "j Chlorophytes","k Metazoans"),
-                             gradient_plot_file = "figures/figure_outline/supp_fig_13.pdf",
+                             gradient_plot_file = "figures_S/supp_fig_13_S.pdf",
                              tsize = 12){
   
   
@@ -2589,7 +2612,7 @@ suppl_fig_13_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
   
   for (i in  1:length(in_group_list)) {
     
-    load(paste0("output/",in_group_list[i],"_diffs_div.Rdata"))
+    load(paste0("output/",in_group_list[i],"_diffs_div_S.Rdata"))
     
     plot_list[[i]] <- phase
     
@@ -2761,12 +2784,12 @@ suppl_fig_13_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
 
 ##### Suppl Figure 14: Total Diversity vs Slope #####
 
-suppl_fig_14_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div.Rdata",
-                             in_euks = "output/euks_hetero_18sv9_diffs_div.Rdata",
-                             in_cyano = "output/cyano_16s_diffs_div.Rdata",
-                             in_bact = "output/bacteria_m_euks_16s_diffs_div.Rdata",
-                             in_arch = "output/archaea_16s_diffs_div.Rdata",
-                             gradient_plot_file = "figures/figure_outline/supp_fig_14.pdf",
+suppl_fig_14_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div_S.Rdata",
+                             in_euks = "output/euks_hetero_18sv9_diffs_div_S.Rdata",
+                             in_cyano = "output/cyano_16s_diffs_div_S.Rdata",
+                             in_bact = "output/bacteria_m_euks_16s_diffs_div_S.Rdata",
+                             in_arch = "output/archaea_16s_diffs_div_S.Rdata",
+                             gradient_plot_file = "figures_S/supp_fig_14_S.pdf",
                              tsize = 12){
   
   load(in_phyto)

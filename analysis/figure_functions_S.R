@@ -27,6 +27,7 @@ library(patchwork)
 library(MASS)
 library(standardize)
 library(mgcv)
+library(broom)
 
 
 #### SOM Figure ####
@@ -154,8 +155,8 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm_S.Rdata
 
 #### Diversity Maps ####
 
-diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
-                             full_dat = "output/bacteria_m_euks_16s_full_data.Rdata",
+diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map_S.Rdata",
+                             full_dat = "output/bacteria_m_euks_16s_full_data_S.Rdata",
                              figure_start = "figures/diversity/bacteria_16s_",
                              main = "16s Bacteria"){
   
@@ -244,27 +245,27 @@ diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           plot.title = element_text(hjust=0.5)) + xlab("") + ylab("Shannon Diversity") +
     ggtitle(paste0(main,"\nShannon Diversity"))
   
-  pdf(file = paste0(figure_start,"even_map.pdf"), width = 4, height = 4)
+  pdf(file = paste0(figure_start,"even_map_S.pdf"), width = 4, height = 4)
   print(even)
   dev.off()
   
-  pdf(file = paste0(figure_start,"rich_map.pdf"), width = 4, height = 4)
+  pdf(file = paste0(figure_start,"rich_map_S.pdf"), width = 4, height = 4)
   print(rich)
   dev.off()
   
-  pdf(file = paste0(figure_start,"shannon_map.pdf"), width = 4, height = 4)
+  pdf(file = paste0(figure_start,"shannon_map_S.pdf"), width = 4, height = 4)
   print(shannon)
   dev.off()
   
-  pdf(file = paste0(figure_start,"even_vio.pdf"), width = 6, height = 4)
+  pdf(file = paste0(figure_start,"even_vio_S.pdf"), width = 6, height = 4)
   print(vio_even)
   dev.off()
   
-  pdf(file = paste0(figure_start,"rich_vio.pdf"), width = 6, height = 4)
+  pdf(file = paste0(figure_start,"rich_vio_S.pdf"), width = 6, height = 4)
   print(vio_rich)
   dev.off()
   
-  pdf(file = paste0(figure_start,"shannon_vio.pdf"), width = 6, height = 4)
+  pdf(file = paste0(figure_start,"shannon_vio_S.pdf"), width = 6, height = 4)
   print(vio_shannon)
   dev.off()
   
@@ -272,10 +273,10 @@ diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
   
 }
 
-alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_16s_full_data.Rdata",
-                                      raw_data_file = "data/16s_bacteria_m_euks.Rdata",
-                                      map_file = "output/bacteria_m_euks_16s_map.Rdata", minimum_tp = 8,
-                                      figure_name = paste0("figures/bacteria_m_euks_16s_alpha_gamma_",Sys.Date(),".pdf"),
+alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_16s_full_data_S.Rdata",
+                                      raw_data_file = "data/16s_bacteria_m_euks_S.Rdata",
+                                      map_file = "output/bacteria_m_euks_16s_map_S.Rdata", minimum_tp = 8,
+                                      figure_name = paste0("figures/bacteria_m_euks_16s_alpha_gamma_",Sys.Date(),"_S.pdf"),
                                       main = "16s Bacteria"){
   
   load(full_data_file)
@@ -314,7 +315,7 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
   
   station_plot_df$total_rich <- apply(station_sums, 1, function(x) length(which(x != 0)))
   
-  station_plot_df$Diversity <- diversity(station_sums, MARGIN = 1, index = "shannon")
+  station_plot_df$Diversity <- vegan::diversity(station_sums, MARGIN = 1, index = "shannon")
   
   # station location
   
@@ -690,7 +691,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
     AIC_table <- aic_table_func(som_maps = som_maps2)
     AIC_table <- as.data.frame(AIC_table)
     colnames(AIC_table) <- c("Variables","AIC","P_val")
-    AIC_table <- AIC_table[c(1,2,3,4,5,8,7,9,10,11,12,13,17,15,16),]
+    AIC_table <- AIC_table[c(1,2,3,4,5,8,7,9,10,11,12,13,17,15),]
     AIC_table[,2] <- as.numeric(as.character(AIC_table[,2]))
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     
@@ -766,8 +767,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   # plot_df <- plot_df[-which(plot_df$Group == "Eukaryotic\nPlastid\n AIC"),]
   
   plot_df$Variables <- as.factor(plot_df$Variables)
-  plot_df$Variables <- factor(plot_df$Variables, levels = c("Distance to Coast",
-                                                            "Coeff. Var. NCD","Coeff. Var. Chl-a",
+  plot_df$Variables <- factor(plot_df$Variables, levels = c("Coeff. Var. NCD","Coeff. Var. Chl-a",
                                                             "Coeff. Var. SiO4","Coeff. Var. PO4",
                                                             "Coeff. Var. NO3", "Coeff. Var. Salinity",
                                                             "Coeff. Var. Temp",
@@ -776,20 +776,23 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
                                                             "Mean NO3","Mean Salinity",
                                                             "Mean Temp" ))
   
+  out_plot <- ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = P_Val)) + 
+    geom_point(color = "black", alpha = 0.6, shape = 21, show.legend = FALSE) +
+    scale_y_discrete(labels=parse(text=unique(plot_df$Variables))) +
+    scale_fill_manual(values = c("grey90", "red")) +
+    labs(size = "Variable\n Importance") + ylab("Variable") +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(color = "black", fill = NA),
+          legend.position = "none",
+          panel.grid.major.y = element_line(color = "grey", linetype = 2),
+          axis.text.x = element_text(angle = 0),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize)) +
+    scale_size_continuous(range = c(1,18)) + xlab("") + ylab("")
+  
   pdf(figure_name_2, width = width_plot, height = 8)
   
-  print(ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = P_Val)) + 
-          geom_point(color = "black", alpha = 0.6, shape = 21, show.legend = FALSE) +
-          scale_fill_manual(values = c("grey90", "red")) +
-          labs(size = "Variable\n Importance") + ylab("Variable") +
-          theme(panel.background = element_blank(),
-                panel.border = element_rect(color = "black", fill = NA),
-                legend.position = "none",
-                panel.grid.major.y = element_line(color = "grey", linetype = 2),
-                axis.text.x = element_text(angle = 0),
-                axis.text = element_text(size = tsize),
-                axis.title = element_text(size = tsize)) +
-          scale_size_continuous(range = c(1,18)) + xlab("") + ylab(""))
+  plot(out_plot)
   
   dev.off()
   
@@ -983,7 +986,7 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
     AIC_table <- aic_table_func_diveristy_sign(som_maps = som_maps2, col_num = col)
     AIC_table <- as.data.frame(AIC_table, stringsAsFactors = FALSE)
     colnames(AIC_table) <- c("Variables","AIC", "Slope", "P_val")
-    AIC_table <- AIC_table[c(1:5,8,7,9:13,17,15,16),]
+    AIC_table <- AIC_table[c(1:5,8,7,9:13,17,15),]
     AIC_table[,2] <- as.numeric(AIC_table[,2])
     AIC_table[,2] <- round(AIC_table[,2], digits = 2)
     AIC_table[,3] <- as.numeric(AIC_table[,3])
@@ -1101,9 +1104,9 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
 
 ##### Community Differences Plot #####
 
-fig_commun_map_func <- function(in_all = "output/total_dissimilar.Rdata",
-                       in_dat = "output/total_full_data.Rdata",
-                       in_map = "output/total_map.Rdata",
+fig_commun_map_func <- function(in_all = "output/total_dissimilar_S.Rdata",
+                       in_dat = "output/total_full_data_S.Rdata",
+                       in_map = "output/total_map_S.Rdata",
                        community_diff_fig = "figures/figure_outline/fig_x.pdf",
                        tsize = 12, psize = 12, group = "Total ASVs"){
   
@@ -1472,17 +1475,19 @@ fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdat
 
 ##### Community Time Plots #####
 
-community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
-                                 similar_mat = "output/euks_auto_18sv9_dissimilar.Rdata",
-                                 in_map = "output/euks_auto_18sv9_map.Rdata",
-                                 out_diff_file = "output/euks_auto_18sv9_diffs.Rdata",
+community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data_S.Rdata",
+                                 ncd_data = "data/ncd_data.csv",
+                                 similar_mat = "output/euks_auto_18sv9_dissimilar_S.Rdata",
+                                 in_map = "output/euks_auto_18sv9_map_S.Rdata",
+                                 out_diff_file = "output/euks_auto_18sv9_diffs_S.Rdata",
                                  title = "Eukaryotic Phytoplankton",
                                  upwelling_index = "output/upwelling_indicies.Rdata",
-                                 index_plot = "figures/euks_auto_18sv9_index_plot.pdf"){
+                                 index_plot = "figures/euks_auto_18sv9_index_plot_S.pdf"){
   
   load(in_file)
   load(similar_mat)
   load(in_map)
+  ncd_data <- read.csv(ncd_data)
   
   # find centroids
   centroid_df <- SpatialPointsDataFrame(coords = som_maps[,c(6,5)], data = som_maps)
@@ -1498,136 +1503,41 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   full_dat$Year <- as.numeric(substr(full_dat$Cruise,1,4))
   
-  full_dat <- full_dat[-which(as.numeric(substr(full_dat$Sta_ID,2,3)) < 76),]
-  
-  full_dat$ML_NC <- full_dat$MLD_Sigma - full_dat$NCDepth
-  
-  early_som_maps <- full_dat %>% 
-    filter(Year < 2017 | Year == 2019) %>%
-    group_by(Sta_ID) %>%
-    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
-              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
-              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
-              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
-              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
-              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
-              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
-              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
-              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
-              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
-              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
-              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
-              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
-              richness = mean(richness, na.rm = TRUE), 
-              ML_NC_mean = mean(ML_NC, na.rm = TRUE))
-  
-  
-  centroid_df <- SpatialPointsDataFrame(coords = early_som_maps[,c(6,5)], data = early_som_maps)
-  centroid1 <- wt.centroid(x =centroid_df , p = 2)
-  centroid2 <- wt.centroid(x =centroid_df , p = 3)
-  
-  early_dist <- distHaversine(centroid1@coords, centroid2@coords)/100
-  
-  late_som_maps <- full_dat %>% 
-    filter(Year > 2016 & Year < 2019) %>%
-    group_by(Sta_ID) %>%
-    summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
-              n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
-              temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
-              PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
-              MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
-              temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
-              sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
-              PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
-              NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
-              SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
-              MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
-              NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
-              evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
-              richness = mean(richness, na.rm = TRUE), 
-              ML_NC_mean = mean(ML_NC, na.rm = TRUE))
-  
-  centroid_df <- SpatialPointsDataFrame(coords = late_som_maps[,c(6,5)], data = late_som_maps)
-  centroid1 <- wt.centroid(x =centroid_df , p = 2)
-  centroid2 <- wt.centroid(x =centroid_df , p = 3)
-  
-  late_dist <- distHaversine(centroid1@coords, centroid2@coords)/1000     
-  
-  compare <- inner_join(early_som_maps, late_som_maps, by = "Sta_ID")
-  
-  compare$NC_diff <- compare$NC_mean.x - compare$NC_mean.y
-  compare$Temp_diff <- compare$temp_mean.x - compare$temp_mean.y
-  compare$diversity_diff <- compare$shannon.x - compare$shannon.y
-  compare$even_diff <- compare$evenness.x - compare$evenness.y
-  compare$rich_diff <- compare$richness.x - compare$richness.y
-  compare$ML_NC_diff <- compare$ML_NC_mean.x - compare$ML_NC_mean.y
-  
-  
-  map <- map_data("world")  
-  
-  diversity_diff <- ggplot() + 
-    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = compare, aes(x = long.x, y = lat.x, fill = diversity_diff),
-               color = "black", size =6, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(paste(Delta," Shannon Diversity")),low = "blue", high = "red", mid = "white", midpoint = 0) +
-    ggtitle(paste0(title,"\nDifference in Diversity Early-Late")) +
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
-          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
-  
-  print(diversity_diff)
-  
-  even_diff <- ggplot() + 
-    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = compare, aes(x = long.x, y = lat.x, fill = even_diff),
-               color = "black", size =6, stroke = 0.1, shape = 21) +
-    scale_fill_gradient2(name = expression(paste(Delta," Evenness")),low = "blue", high = "red", mid = "white", midpoint = 0) +
-    ggtitle(paste0(title,"\nDifference in Evenness Early-Late")) +
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
-          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
-  
-  print(even_diff)
-  
   som_cruise <- full_dat %>% 
     group_by(Cruise) %>%
     summarise(som_1 = sum(som_id == 1, na.rm = TRUE)/n(), som_2 = sum(som_id == 2, na.rm = TRUE)/n(),
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
               temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
               PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), 
               MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
               temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
               sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
               PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
               NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
               SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
               MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
               richness = mean(richness, na.rm = TRUE), 
-              ML_NC_mean = mean(ML_NC, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
+               Date = mean(Date, na.rm = TRUE))
   
-  # full_dat$dist_to_coast <- full_dat$dist_to_coast*1000
+  ncd_data <- ncd_data %>% filter(CruiseAlias %in% som_cruise$Cruise, !is.na(NCDepth),
+                                  St_Line > 75)
   
-  results <-  full_dat %>% 
-    group_by(Cruise) %>%
-    do(model = lm(NCDepth ~ dist_to_coast, data = .)) %>%
-    mutate(coef=coef(model)["dist_to_coast"])
   
-  som_cruise$NC_slope <- results$coef
+  slopes <- ncd_data %>% group_by(CruiseAlias) %>%
+    do(fit_ncslope = tidy(lm(NCDepth ~ Distance.from.Shore, data = .))) %>% 
+    unnest(fit_ncslope)
   
-  som_cruise$phase <- c(rep("2014-2016",12),rep("2017-2018",8),rep("2019",4))
-  som_cruise$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),6))
+  slopes <- slopes %>% filter(term == "Distance.from.Shore")
+  
+  som_cruise$NC_slope <- slopes$estimate[match(som_cruise$Cruise, slopes$CruiseAlias)]
+  
+  som_cruise$NC_slope <- som_cruise$NC_slope * -1
+  
+  som_cruise$phase <- c(rep("2014-2016",12),rep("2017-2018",8),rep("2019-2020",7))
+  som_cruise$season <- as.factor(c(rep(c("Winter", "Spring", "Summer", "Fall"),6), "Winter", "Spring", "Summer"))
   som_cruise$season <- factor(som_cruise$season, levels = c("Winter", "Spring", "Summer", "Fall"))
   
   gradient_plot <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
@@ -1671,13 +1581,13 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Frequency of Nearshore Cluster") + ggtitle(title) +
-    annotate(geom = "text", y = (max(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.15, 
+    annotate(geom = "text", y = (max(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.28, 
              label = paste0("2014-2016\nR-Squared = ",
                             round(warm_rsq,3),
                             "\np-value = ",
                             round(warm_p, 3)),
              color = "red", size = 3) +
-    annotate(geom = "text", y = (min(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.2, 
+    annotate(geom = "text", y = (min(som_cruise[,paste0("som_",nearshore_som)]) - 0.05), x = 0.28, 
              label = paste0("2017-2018\nR-Squared = ",
                             round(cool_rsq,3),
                             "\np-value = ",
@@ -1699,8 +1609,8 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   
   som_cruise$Year <- substr(som_cruise$Cruise, 1, 4)
-  som_cruise$even_odd <- rep(c("even", "even","even","even",
-                               "odd", "odd", "odd", "odd"),3)
+  som_cruise$even_odd <- c(rep(c("even", "even","even","even",
+                               "odd", "odd", "odd", "odd"),3), "even", "even", "even")
   
   ts_plot <- ggplot(som_cruise, aes_string(x = "Date", y = paste0("som_",nearshore_som))) +
     geom_rect(aes(xmin = Date, xmax = dplyr::lead(Date), ymin = 0, ymax = 1, fill = even_odd), 
@@ -1848,60 +1758,8 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   print(index_plots)
   dev.off()
   
-  diss_melt <- melt(dissimilar)
-  diss_melt <- diss_melt[-which(diss_melt$Var1 == diss_melt$Var2),]
-  
-  diss_melt$Var1_som <- full_dat$som_id[match(diss_melt$Var1,full_dat$eco_name)]
-  diss_melt$Var2_som <- full_dat$som_id[match(diss_melt$Var2,full_dat$eco_name)]
-  
-  diss_melt$Var1_phase <- NA
-  diss_melt$Var2_phase <- NA
-  
-  diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) < 2017)] <- "Early"
-  diss_melt$Var2_phase[which(substr(diss_melt$Var2,2,5) < 2017)] <- "Early"
-  
-  diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) > 2016 & substr(diss_melt$Var1,2,5) < 2019)] <- "Late"
-  diss_melt$Var2_phase[which(substr(diss_melt$Var2,2,5) > 2016 & substr(diss_melt$Var1,2,5) < 2019)] <- "Late"
-  
-  diss_melt$Var1_phase[which(substr(diss_melt$Var1,2,5) > 2018)] <- "2019"
-  diss_melt$Var2_phase[which(substr(diss_melt$Var1,2,5) > 2018)] <- "2019"
-  
-  diss_melt$comp_phase <- paste0(diss_melt$Var1_phase,"-",diss_melt$Var2_phase)
-  diss_melt$comp_som <- paste0(diss_melt$Var1_som,"-",diss_melt$Var2_som)
-  
-  diss_filt <- filter(diss_melt, comp_som == "1-1" | comp_som == "2-2")
-  diss_filt <- filter(diss_filt, comp_phase == "Early-Early" | comp_phase == "Late-Late" | comp_phase == "2019-2019")
-  
-  diss_filt$comp_phase[diss_filt$comp_phase == "Early-Early"] = "2014-2016"
-  diss_filt$comp_phase[diss_filt$comp_phase == "Late-Late"] = "2017-2018"
-  diss_filt$comp_phase[diss_filt$comp_phase == "2019-2019"] = "2019"
-  
-  if(nearshore_som == 1){
-    diss_filt$comp_som[diss_filt$comp_som == "1-1"] = "Nearshore"
-    diss_filt$comp_som[diss_filt$comp_som == "2-2"] = "Offshore"
-  }
-  if(nearshore_som == 2){
-    diss_filt$comp_som[diss_filt$comp_som == "1-1"] = "Offshore"
-    diss_filt$comp_som[diss_filt$comp_som == "2-2"] = "Nearshore"
-  }
-  
-  
-  dissimilar_plot <- ggplot(diss_filt,
-                            aes(y = 1-value, x = interaction(comp_som,comp_phase),fill = comp_phase)) +
-    geom_boxplot() + ylab("Bray-Curtis Similarity") + xlab("Phase/Cluster") +
-    labs(fill = "Phase") + 
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(color = "black", fill = NA),
-          plot.title = element_text(hjust = 0.5)) +
-    scale_x_discrete(labels = c("Nearshore\n2014-2016", "Offshore\n2014-2016",
-                                "Nearshore\n2017-2018", "Offshore\n2017-2018",
-                                "Nearshore\n2019", "Offshore\n2019")) +
-    ggtitle(title)
-  
-  print(dissimilar_plot)
-  
-  save(early_dist, late_dist, diversity_diff, even_diff, phase, season, ts_plot,
-       cuti_plot, beuti_plot, reg_nitrate, dissimilar_plot, file = out_diff_file)
+  save(phase, season, ts_plot,
+       cuti_plot, beuti_plot, reg_nitrate, file = out_diff_file)
   
   
   
@@ -2313,6 +2171,7 @@ community_comparison_station_2 <- function(in_file = "output/euks_auto_18sv9_ful
 ##### Diversity Time Plots #####
 
 diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rdata",
+                                 ncd_data = "data/ncd_data.csv",
                                  in_map = "output/euks_auto_18sv9_map.Rdata",
                                  in_raw = "data/18s_autotrophic_euks.Rdata",
                                  out_diff_file = "output/euks_auto_18sv9_diffs_div.Rdata",
@@ -2322,10 +2181,9 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   load(in_file)
   load(in_raw)
+  ncd_data <- read.csv(ncd_data)
   
   full_dat$Year <- as.numeric(substr(full_dat$Cruise,1,4))
-  
-  full_dat <- full_dat[-which(as.numeric(substr(full_dat$Sta_ID,2,3)) < 76),]
   
   full_dat$ML_NC <- full_dat$MLD_Sigma - full_dat$NCDepth
   
@@ -2336,14 +2194,13 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
               temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
               PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE),
               MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
               temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
               sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
               PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
               NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
               SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
               MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
@@ -2364,14 +2221,13 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
               temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
               PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), 
               MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
               temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
               sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
               PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
               NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
               SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
               MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
@@ -2430,14 +2286,13 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
               n_samps = n(), lat = mean(Lat_Dec, na.rm= TRUE), long = mean(Lon_Dec, na.rm = TRUE),
               temp_mean = mean(T_degC, na.rm = TRUE), sal_mean = mean(Salnty, na.rm = TRUE),
               PO4_mean = mean(PO4ug, na.rm = TRUE), NO3_mean = mean(NO3ug, na.rm = TRUE),
-              SiO3_mean = mean(SiO3ug, na.rm = TRUE), C14_mean = mean(IntC14, na.rm = TRUE),
+              SiO3_mean = mean(SiO3ug, na.rm = TRUE), 
               MLD_mean = mean(MLD_Sigma, na.rm = TRUE), NC_mean = mean(NCDepth, na.rm = TRUE),
               temp_coeff = sd(T_degC, na.rm = TRUE)/mean(T_degC, na.rm = TRUE),
               sal_coeff = sd(Salnty, na.rm = TRUE)/mean(Salnty, na.rm = TRUE),
               PO4_coeff =  sd(PO4ug, na.rm = TRUE)/mean(PO4ug, na.rm = TRUE),
               NO3_coeff = sd(NO3ug, na.rm = TRUE)/mean(NO3ug, na.rm = TRUE),
               SiO3_coeff = sd(SiO3ug, na.rm = TRUE)/mean(SiO3ug, na.rm = TRUE),
-              C14_coeff = sd(IntC14, na.rm = TRUE)/mean(IntC14, na.rm = TRUE),
               MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
@@ -2446,15 +2301,22 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   # full_dat$dist_to_coast <- full_dat$dist_to_coast*1000
   
-  results <-  full_dat %>% 
-    group_by(Cruise) %>%
-    do(model = lm(NCDepth ~ dist_to_coast, data = .)) %>%
-    mutate(coef=coef(model)["dist_to_coast"])
+  ncd_data <- ncd_data %>% filter(CruiseAlias %in% som_cruise$Cruise, !is.na(NCDepth),
+                                  St_Line > 75)
   
-  som_cruise$NC_slope <- results$coef
   
-  som_cruise$phase <- c(rep("2014-2016",12),rep("2017-2018",8), rep("2019",4))
-  som_cruise$season <- as.factor(rep(c("Winter", "Spring", "Summer", "Fall"),6))
+  slopes <- ncd_data %>% group_by(CruiseAlias) %>%
+    do(fit_ncslope = tidy(lm(NCDepth ~ Distance.from.Shore, data = .))) %>% 
+    unnest(fit_ncslope)
+  
+  slopes <- slopes %>% filter(term == "Distance.from.Shore")
+  
+  som_cruise$NC_slope <- slopes$estimate[match(som_cruise$Cruise, slopes$CruiseAlias)]
+  
+  som_cruise$NC_slope <- som_cruise$NC_slope * -1
+  
+  som_cruise$phase <- c(rep("2014-2016",12),rep("2017-2018",8), rep("2019-2020",7))
+  som_cruise$season <- as.factor(c(rep(c("Winter", "Spring", "Summer", "Fall"),6),"Winter", "Spring", "Summer"))
   som_cruise$season <- factor(som_cruise$season, levels = c("Winter", "Spring", "Summer", "Fall"))
   
   # total diversity stats
@@ -2464,7 +2326,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   asv_cruise <- asv_table %>%
     group_by(cruise) %>% summarise(across(.cols = everything(), .fns = ~sum(.x,na.rm = TRUE)))
   
-  asv_cruise$total_div <- diversity(asv_cruise[,-1], MARGIN = 1, index = "shannon")
+  asv_cruise$total_div <- vegan::diversity(asv_cruise[,-1], MARGIN = 1, index = "shannon")
   
   som_cruise$total_shannon <- asv_cruise$total_div[match(som_cruise$Cruise, asv_cruise$cruise)]
   
@@ -2485,7 +2347,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
-    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+    stat_smooth(data = som_cruise, 
                 aes_string(x = "NC_slope", y = "shannon", fill = "phase", color = "phase"),
                 method="lm") +
     scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
@@ -2496,13 +2358,13 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Mean Alpha Diversity\nPer Cruise") + ggtitle(title) +
-    annotate(geom = "text", y = (max(som_cruise[,"shannon"]) + 0.05), x = 0.16, 
+    annotate(geom = "text", y = (max(som_cruise[,"shannon"]) + 0.05), x = 0.25, 
              label = paste0("2014-2016\nR-Squared = ",
                             round(warm_rsq,3),
                             "\np-value = ",
                             round(warm_p, 3)),
              color = "red", size = 3) +
-    annotate(geom = "text", y = (min(som_cruise[,"shannon"]) + 0.05), x = 0.15, 
+    annotate(geom = "text", y = (min(som_cruise[,"shannon"]) + 0.05), x = 0.25, 
              label = paste0("2017-2018\nR-Squared = ",
                             round(cool_rsq,3),
                             "\np-value = ",
@@ -2526,7 +2388,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   
   gradient_plot2 <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "total_shannon")) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
-    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+    stat_smooth(data = som_cruise, 
                 aes_string(x = "NC_slope", y = "total_shannon", fill = "phase", color = "phase"),
                 method="lm") +
     scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
@@ -2615,16 +2477,18 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
     ylab("Mean Shannon Diversity\nPer Cruise")
   
   beuti_plot <- ggplot(som_cruise, aes_string(x = "BEUTI", y = "shannon")) +
-    # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +
-    geom_point(size = 3, aes_string(color = "season", shape = "phase"), data = som_cruise) +
-    scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
-    scale_shape_manual(values = c(15,17,18)) +
+    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    stat_smooth(data = som_cruise, 
+                aes_string(x = "BEUTI", y = "shannon", fill = "phase", color = "phase"),
+                method="lm") +
+    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_color_manual(values = c("red", "blue","gold3")) +
+    scale_shape_manual(values = c(21,22,23,24)) + 
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Phase", color = "Season") +
-    xlab("Biologically Effective Upwelling Transport Index\n(BEUTI)") +
-    ylab("")
+    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Mean Alpha Diversity\nPer Cruise") + ggtitle(title)
   
   log_beuti_plot <- ggplot(som_cruise, aes_string(x = "log_BEUTI", y = "shannon")) +
     # geom_smooth(method = 'glm', formula = y~x, se = FALSE, color = "black") +

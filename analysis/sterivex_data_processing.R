@@ -5,18 +5,18 @@ library(vegan)
 # load in data
 
 eight_s <- read.csv("data/NCOG_18sV9_asv_count_tax_S.csv", header = TRUE)
-six_s <- read.csv("data/NCOG_16S_asv_count_tax_S.csv", header = TRUE)
+six_s <- read.csv("data/NCOG_21_16S_redo2_asv_count_tax.csv", header = TRUE)
 metadata <- read.csv("data/NCOG_sample_log_DNA_stvx_meta_2014-2020.csv", header = TRUE)
 
 # pull out taxonomy data
 
 eight_tax_id <- eight_s[,c(1,1538:1543)]
-six_tax_id <- six_s[,c(1,1543:1544)]
+six_tax_id <- six_s[,c(1,1071:1072)]
 
 # remove these columns
 
 eight_s <- eight_s[,-c(1538:1543)]
-six_s <- six_s[,-c(1543:1544)]
+six_s <- six_s[,-c(1071:1072)]
 
 # transform data
 eight_feature <- eight_s$Feature.ID
@@ -27,6 +27,10 @@ six_s$Feature.ID <- NULL
 
 eight_samples <- colnames(eight_s)
 six_samples <- colnames(six_s)
+
+# match ends for six samples
+
+six_samples <- gsub("16S_S2", "S", six_samples)
 
 eight_s <- eight_s %>% t() %>% as.data.frame()
 six_s <- six_s %>% t() %>% as.data.frame()
@@ -52,6 +56,10 @@ six_s$sample <- NULL
 colnames(eight_s) <- eight_feature
 colnames(six_s) <- six_feature
 
+# fix six s rows
+
+rownames(six_s) <- gsub("16S_S2", "S", rownames(six_s))
+
 # for 18Sv9 remove prokaryotes
 
 prok <- eight_tax_id[which(eight_tax_id$silva_Confidence > eight_tax_id$pr2_Confidence),]
@@ -70,6 +78,18 @@ six_s <- six_s[,-c(which(!is.na(match(colnames(six_s),c(euks,chloro)))))]
 
 eight_s <- eight_s[,-which(colSums(eight_s) == 0)]
 six_s <- six_s[,-which(colSums(six_s) == 0)]
+
+# remove asvs with batch issues
+# source("analysis/filter_test.R")
+# 
+# six_issues <- which(colnames(six_s) %in% unique(six_cruise$hash))
+# eight_issues <- which(colnames(eight_s) %in% unique(eight_cruise$hash))
+# 
+# six_s <- six_s[,-six_issues]
+# eight_s <- eight_s[,-eight_issues]
+
+six_s$sample <- NULL
+eight_s$sample <- NULL
 
 # set rarefy level
 rare_level <- 17000
@@ -156,6 +176,7 @@ syne_sums <- rowSums(syne_sixteen, na.rm = TRUE)
 archaea_sums[which(archaea_sums == 0)] <- 1
 pro_sums[which(pro_sums == 0)] <- 1
 syne_sums[which(syne_sums == 0)] <- 1
+cyano_sums[which(cyano_sums == 0)] <- 1
 
 # convert to matricies
 
@@ -272,6 +293,8 @@ autotrophs <- c(chlorophytes, dinos_minus_syn, cryptophytes,
 
 non_auto <- 1:ncol(eight_rare)
 non_auto <- non_auto[-autotrophs]
+
+non_auto <- non_auto[which(!non_auto %in% metazoa)]
 
 # get tables
 
@@ -435,3 +458,5 @@ rownames(total_copy) <- t_rows
 asv_table <- total_copy
 
 save(scaled_inputs, totals, asv_table, six_tax_id, eight_tax_id, file = "data/totals_S.Rdata")
+save(eight_rare, eight_tax_id, file = "data/all_18Sv9_rare.Rdata")
+save(six_rare, six_tax_id, file = "data/all_16S_rare.Rdata")

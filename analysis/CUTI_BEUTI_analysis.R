@@ -130,7 +130,7 @@ beuti_plot <- ggplot(beuti_df, aes(x = Date, y = Value, color = Index)) + geom_l
   ylab("Biologically Effective Upwelling Transport Index\n(BEUTI)") 
 
 yearly_beuti <- ggplot(beuti_df, aes(x = Year_Day, y = month2_MA, group = interaction(Year, Phase), color = Year)) +
-  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2")) +
+  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2", "gold3")) +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black")) +
   ylab("Biologically Effective Upwelling\n Transport Index\n(BEUTI)") + xlab("Year Day") +
@@ -153,14 +153,14 @@ nitrate_plot <- ggplot(nitrate_df, aes(x = Date, y = Value, color = Index)) + ge
   ylab("Regionally Available Nitrate\n(BEUTI/CUTI)")
 
 yearly_nitrate <- ggplot(nitrate_df, aes(x = Year_Day, y = month2_MA, group = interaction(Year, Phase), color = Year)) +
-  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2")) +
+  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2", "gold3")) +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black")) +
   ylab("Regionally Available Nitrate\n(BEUTI/CUTI)") + xlab("Year Day") +
   scale_x_continuous(breaks = c(min(cuti_df$Year_Day),seq(30,350, by = 60) ,max(cuti_df$Year_Day)),limits = c(1,365))
 
 yearly_nitrate1 <- ggplot(nitrate_df, aes(x = Year_Day, y = month2_MA, group = interaction(Year, Phase), color = Year)) +
-  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2")) +
+  geom_line(size = 1) + scale_color_manual(values = c("firebrick1","firebrick2", "firebrick3", "dodgerblue1", "dodgerblue2", "gold2", "gold3")) +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "bottom") +
