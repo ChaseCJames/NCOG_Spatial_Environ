@@ -28,6 +28,7 @@ library(MASS)
 library(standardize)
 library(mgcv)
 library(broom)
+library(ggtext)
 
 
 #### SOM Figure ####
@@ -35,7 +36,7 @@ library(broom)
 som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
                        figure_name = paste0("figures/som_maps/bacteria_16s_som_",Sys.Date(),".pdf"),
                        main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
-                       tsize = 12, psize = 4){
+                       tsize = 15, psize = 4){
   
   
   
@@ -57,7 +58,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
   p1 <-  ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") + 
+    xlab("Longitude") + ylab("Latitude") + labs(fill = "Frequency") +
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust1)), color = "black", size =psize, stroke = 0.1, shape = 21) +
     scale_fill_gradient(low = "white", high = "darkblue", limits = c(0,1)) +
     ggtitle(paste0(cluster1)) +
@@ -67,7 +68,9 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           plot.title = element_text(hjust = 0.5), axis.line = element_blank(),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize))
+          axis.title = element_text(size = tsize)) +
+    scale_x_continuous(breaks = c(-124,-119)) +
+    scale_y_continuous(breaks = c(35,32.5,30))
   
   if(clust1 == 1){p1 <- p1 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "red", size = 5, pch = 10)}
   if(clust1 == 2){p1 <- p1 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "red", size = 5, pch = 10)}
@@ -75,7 +78,7 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
   p2 <-  ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") + 
+    xlab("Longitude") + ylab("Latitude") + labs(fill = "Frequency") +
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = paste0("som_",clust2)), color = "black", size =psize, stroke = 0.1, shape = 21) +
     scale_fill_gradient(low = "white", high = "darkred", limits = c(0,1)) +
     ggtitle(paste0(cluster2)) +
@@ -85,7 +88,10 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
           plot.title = element_text(hjust = 0.5), axis.line = element_blank(),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize))
+          axis.title = element_text(size = tsize)) +
+    scale_x_continuous(breaks = c(-124,-119)) +
+    scale_y_continuous(breaks = c(35,32.5,30)) 
+  
   
   if(clust2 == 1){p2 <- p2 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "blue", size = 5, pch = 10)}
   if(clust2 == 2){p2 <- p2 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "blue", size = 5, pch = 10)}
@@ -766,28 +772,31 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
   # # removing plastids from plot
   # plot_df <- plot_df[-which(plot_df$Group == "Eukaryotic\nPlastid\n AIC"),]
   
+  
+  plot_df$Variables <- gsub("4","<sub>4</sub>",plot_df$Variables)
+  plot_df$Variables <- gsub("3","<sub>3</sub>",plot_df$Variables)
+  
   plot_df$Variables <- as.factor(plot_df$Variables)
   plot_df$Variables <- factor(plot_df$Variables, levels = c("Coeff. Var. NCD","Coeff. Var. Chl-a",
-                                                            "Coeff. Var. SiO4","Coeff. Var. PO4",
-                                                            "Coeff. Var. NO3", "Coeff. Var. Salinity",
+                                                            "Coeff. Var. SiO<sub>4</sub>","Coeff. Var. PO<sub>4</sub>",
+                                                            "Coeff. Var. NO<sub>3</sub>", "Coeff. Var. Salinity",
                                                             "Coeff. Var. Temp",
                                                             "Mean NCD", "Mean Chl-a",
-                                                            "Mean SiO4", "Mean PO4",
-                                                            "Mean NO3","Mean Salinity",
-                                                            "Mean Temp" ))
+                                                            "Mean SiO<sub>4</sub>", "Mean PO<sub>4</sub>",
+                                                            "Mean NO<sub>3</sub>","Mean Salinity",
+                                                            "Mean Temp"))
   
   out_plot <- ggplot(data = plot_df, aes(x = Group, y = Variables, size = AIC, fill = P_Val)) + 
-    geom_point(color = "black", alpha = 0.6, shape = 21, show.legend = FALSE) +
-    scale_y_discrete(labels=parse(text=unique(plot_df$Variables))) +
+    geom_point(color = "black", alpha = 0.6, shape = 21) +
     scale_fill_manual(values = c("grey90", "red")) +
     labs(size = "Variable\n Importance") + ylab("Variable") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(color = "black", fill = NA),
           legend.position = "none",
           panel.grid.major.y = element_line(color = "grey", linetype = 2),
-          axis.text.x = element_text(angle = 0),
-          axis.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize)) +
+          plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0, size = tsize - 2),
+          axis.text.y = element_markdown(size = tsize)) + ggtitle(title_name) +
     scale_size_continuous(range = c(1,18)) + xlab("") + ylab("")
   
   pdf(figure_name_2, width = width_plot, height = 8)
@@ -805,7 +814,8 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
           legend.position = "none",
           panel.grid.major.y = element_line(color = "grey", linetype = 2),
           plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 0)) + ggtitle(title_name) +
+          axis.text.x = element_text(angle = 0),
+          axis.text.y = element_markdown(size = tsize)) + ggtitle(title_name) +
     scale_size_continuous(range = c(1,18)) + xlab("") + ylab("")
   
   return(a)
@@ -1049,16 +1059,19 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
   # # removing plastids from plot
   # plot_df <- plot_df[-which(plot_df$Group == "Eukaryotic\nPlastid\n AIC"),]
   
+  
+  plot_df$Variables <- gsub("4","<sub>4</sub>",plot_df$Variables)
+  plot_df$Variables <- gsub("3","<sub>3</sub>",plot_df$Variables)
+  
   plot_df$Variables <- as.factor(plot_df$Variables)
-  plot_df$Variables <- factor(plot_df$Variables, levels = c("Distance to Coast",
-                                                            "Coeff. Var. NCD","Coeff. Var. Chl-a",
-                                                            "Coeff. Var. SiO4","Coeff. Var. PO4",
-                                                            "Coeff. Var. NO3", "Coeff. Var. Salinity",
+  plot_df$Variables <- factor(plot_df$Variables, levels = c("Coeff. Var. NCD","Coeff. Var. Chl-a",
+                                                            "Coeff. Var. SiO<sub>4</sub>","Coeff. Var. PO<sub>4</sub>",
+                                                            "Coeff. Var. NO<sub>3</sub>", "Coeff. Var. Salinity",
                                                             "Coeff. Var. Temp",
                                                             "Mean NCD", "Mean Chl-a",
-                                                            "Mean SiO4", "Mean PO4",
-                                                            "Mean NO3","Mean Salinity",
-                                                            "Mean Temp" ))
+                                                            "Mean SiO<sub>4</sub>", "Mean PO<sub>4</sub>",
+                                                            "Mean NO<sub>3</sub>","Mean Salinity",
+                                                            "Mean Temp"))
   
   
   plot_df$Group <- as.factor(plot_df$Group)
@@ -1075,10 +1088,10 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
                 legend.position = "right",
                 panel.grid.major.y = element_line(color = "grey", linetype = 2),
                 plot.title = element_text(hjust = 0, size = tsize),
-                axis.text.y = element_text(size = tsize),
+                axis.text.y = element_markdown(size = tsize),
                 legend.title = element_text(size = tsize),
                 legend.text = element_text(size = tsize),
-                axis.text.x = element_text(size = tsize, angle = 0)) +
+                axis.text.x = element_text(size = tsize-2, angle = 0)) +
           scale_size_continuous(range = c(1,18), guide = FALSE) + xlab("") + ylab(""))
   dev.off()
   
@@ -1092,10 +1105,10 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
           legend.position = "right",
           panel.grid.major.y = element_line(color = "grey", linetype = 2),
           plot.title = element_text(hjust = 0, size = tsize),
-          axis.text.y = element_text(size = tsize),
+          axis.text.y = element_markdown(size = tsize),
           legend.title = element_text(size = tsize),
           legend.text = element_text(size = tsize),
-          axis.text.x = element_text(size = tsize, angle = 0)) +
+          axis.text.x = element_text(size = tsize-2, angle = 0)) +
     scale_size_continuous(range = c(1,18), guide = FALSE) + xlab("") + ylab("")
   
   return(p)
@@ -1356,9 +1369,8 @@ fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdat
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.text.x = element_blank(),
-          axis.title.x = element_blank(),
-          axis.ticks.x = element_blank()) +
+          axis.text.x = element_text(size = tsize),
+          axis.title.x = element_text(size = tsize)) +
     ggtitle(group,paste0("Surface\n(2014-2016) vs (2017-2018)"))
   
   plot_b <- ggplot() +
@@ -1439,9 +1451,8 @@ fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdat
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.text.x = element_blank(),
-          axis.title.x = element_blank(),
-          axis.ticks.x = element_blank()) +
+          axis.text.x = element_text(size = tsize),
+          axis.title.x = element_text(size = tsize)) +
     ggtitle(group,paste0("Surface\n(2014-2016) vs (2017-2018)"))
   
   plot_deep_bw <- ggplot() +
@@ -1568,31 +1579,56 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data_S.R
   cool_p <- cool_lm$coefficients[2,4]
   cool_rsq <- cool_lm$r.squared
   
+  new_lm <- summary(lm(formula = formula1,
+                        data = som_cruise %>% filter(phase == "2019-2020")))
+  
+  new_p <- new_lm$coefficients[2,4]
+  new_rsq <- new_lm$r.squared
+  
+  fit_mat <- matrix(c("2014-2016", "2017-2018", "2019-2020",
+    warm_p, cool_p, new_p),3,2, byrow = FALSE) %>% as.data.frame()
+  
+  som_cruise$sig <- "Y"
+  som_cruise$sig[which(!is.na(match(som_cruise$phase, fit_mat$V1[which(fit_mat$V2 > 0.05)])))] <- NA
+  
+  
   phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
-    stat_smooth(data = som_cruise %>% filter(phase != "2019"), 
+    stat_smooth(data = som_cruise %>% filter(!is.na(sig)), 
                 aes_string(x = "NC_slope", y = paste0("som_",nearshore_som), fill = "phase", color = "phase"),
                 method="lm") +
-    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_fill_manual(values = c("red", "blue","gold3")) +
     scale_color_manual(values = c("red", "blue","gold3")) +
     scale_shape_manual(values = c(21,22,23,24)) + 
+    scale_y_continuous(breaks = c(0,0.2,0.4,0.6,0.8,1)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    labs(shape = "Season", color = "Phase", fill = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
     ylab("Frequency of Nearshore Cluster") + ggtitle(title) +
-    annotate(geom = "text", y = (max(som_cruise[,paste0("som_",nearshore_som)]) + 0.05), x = 0.28, 
-             label = paste0("2014-2016\nR-Squared = ",
+    annotate(geom = "rect", ymax = -0.03,
+             ymin = -Inf, xmin = -Inf, xmax = Inf,
+             fill = "white", color = "white") +
+    annotate(geom = "text", y = -0.06, x = 0.2, 
+             label = paste0("R-Squared = ",
                             round(warm_rsq,3),
                             "\np-value = ",
                             round(warm_p, 3)),
-             color = "red", size = 3) +
-    annotate(geom = "text", y = (min(som_cruise[,paste0("som_",nearshore_som)]) - 0.05), x = 0.28, 
-             label = paste0("2017-2018\nR-Squared = ",
+             color = "red", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = -0.06, x = 0.25, 
+             label = paste0("R-Squared = ",
                             round(cool_rsq,3),
                             "\np-value = ",
                             round(cool_p, 3)),
-             color = "blue", size = 3)
+             color = "blue", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = -0.06, x = 0.3, 
+             label = paste0("R-Squared = ",
+                            round(new_rsq,3),
+                            "\np-value = ",
+                            round(new_p, 3)),
+             color = "gold3", size = 3, fontface = "bold") +
+    coord_cartesian(ylim = c(-0.07,max(som_cruise[,paste0("som_",nearshore_som)])+0.05))
+  
   
   season <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
     geom_point(size = 3, aes_string(color = "season", fill = "season", shape = "season"), data = som_cruise) +
@@ -1613,9 +1649,6 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data_S.R
                                "odd", "odd", "odd", "odd"),3), "even", "even", "even")
   
   ts_plot <- ggplot(som_cruise, aes_string(x = "Date", y = paste0("som_",nearshore_som))) +
-    geom_rect(aes(xmin = Date, xmax = dplyr::lead(Date), ymin = 0, ymax = 1, fill = even_odd), 
-              alpha = 1, show.legend = FALSE) +
-    scale_fill_manual(values = c("grey90", "white")) +
     geom_line(color = "black", size = 1) + 
     geom_point(size = 3, aes_string(color = "season"), data = som_cruise) +
     scale_color_manual(values = c("slategray3", "springgreen3", "gold3", "darkorange3")) +
@@ -2212,6 +2245,15 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   centroid1 <- wt.centroid(x =centroid_df , p = 2)
   centroid2 <- wt.centroid(x =centroid_df , p = 3)
   
+  wt_1 <- wt.centroid(x = centroid_df, p = 2)
+  wt_2 <- wt.centroid(x = centroid_df, p = 3)
+  
+  clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
+  clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
+  
+  if(clust1 == 1){nearshore_som <- 1}
+  if(clust1 == 2){nearshore_som <- 2}
+  
   early_dist <- distHaversine(centroid1@coords, centroid2@coords)/100
   
   late_som_maps <- full_dat %>% 
@@ -2296,7 +2338,7 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
               MLD_coeff = sd(MLD_Sigma, na.rm = TRUE)/mean(MLD_Sigma, na.rm = TRUE),
               NC_coeff = sd(NCDepth, na.rm = TRUE)/mean(NCDepth, na.rm = TRUE),
               evenness = mean(evenness, na.rm = TRUE), shannon = mean(shannon, na.rm = TRUE),
-              richness = mean(richness, na.rm = TRUE), 
+              richness = mean(richness, na.rm = TRUE),  
               ML_NC_mean = mean(ML_NC, na.rm = TRUE), Date = mean(Date, na.rm = TRUE))
   
   # full_dat$dist_to_coast <- full_dat$dist_to_coast*1000
@@ -2345,31 +2387,55 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   cool_p <- cool_lm$coefficients[2,4]
   cool_rsq <- cool_lm$r.squared
   
+  new_lm <- summary(lm(formula = formula1,
+                       data = som_cruise %>% filter(phase == "2019-2020")))
+  
+  new_p <- new_lm$coefficients[2,4]
+  new_rsq <- new_lm$r.squared
+  
+  fit_mat <- matrix(c("2014-2016", "2017-2018", "2019-2020",
+                      warm_p, cool_p, new_p),3,2, byrow = FALSE) %>% as.data.frame()
+  
+  som_cruise$sig <- "Y"
+  som_cruise$sig[which(!is.na(match(som_cruise$phase, fit_mat$V1[which(fit_mat$V2 > 0.05)])))] <- NA
+  
+  
   phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "shannon")) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
-    stat_smooth(data = som_cruise, 
+    stat_smooth(data = som_cruise %>% filter(!is.na(sig)), 
                 aes_string(x = "NC_slope", y = "shannon", fill = "phase", color = "phase"),
                 method="lm") +
-    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_fill_manual(values = c("red", "blue","gold3")) +
     scale_color_manual(values = c("red", "blue","gold3")) +
     scale_shape_manual(values = c(21,22,23,24)) + 
+    scale_y_continuous(breaks = scales::pretty_breaks(5)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
-    ylab("Mean Alpha Diversity\nPer Cruise") + ggtitle(title) +
-    annotate(geom = "text", y = (max(som_cruise[,"shannon"]) + 0.05), x = 0.25, 
-             label = paste0("2014-2016\nR-Squared = ",
+          plot.title = element_text(hjust = 0)) +
+    labs(shape = "Season", color = "Phase", fill = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Mean Alpha Diveristy\nPer Cruise") + ggtitle(title) +
+    annotate(geom = "rect", ymax = min(som_cruise$shannon)-0.03,
+             ymin = -Inf, xmin = -Inf, xmax = Inf,
+             fill = "white", color = "white") +
+    annotate(geom = "text", y = min(som_cruise$shannon)-0.1, x = 0.19, 
+             label = paste0("R-Squared = ",
                             round(warm_rsq,3),
                             "\np-value = ",
                             round(warm_p, 3)),
-             color = "red", size = 3) +
-    annotate(geom = "text", y = (min(som_cruise[,"shannon"]) + 0.05), x = 0.25, 
-             label = paste0("2017-2018\nR-Squared = ",
+             color = "red", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = min(som_cruise$shannon)-0.1, x = 0.25, 
+             label = paste0("R-Squared = ",
                             round(cool_rsq,3),
                             "\np-value = ",
                             round(cool_p, 3)),
-             color = "blue", size = 3)
+             color = "blue", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = min(som_cruise$shannon)-0.1, x = 0.305, 
+             label = paste0("R-Squared = ",
+                            round(new_rsq,3),
+                            "\np-value = ",
+                            round(new_p, 3)),
+             color = "gold3", size = 3, fontface = "bold") +
+    coord_cartesian(ylim = c(min(som_cruise$shannon)-0.13,max(som_cruise$shannon)+0.05))
   
   formula2 <- as.formula(paste0("total_shannon", "~",
                                 "NC_slope"))
@@ -2386,31 +2452,54 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   cool_p <- cool_lm$coefficients[2,4]
   cool_rsq <- cool_lm$r.squared
   
+  new_lm <- summary(lm(formula = formula2,
+                       data = som_cruise %>% filter(phase == "2019-2020")))
+  
+  new_p <- new_lm$coefficients[2,4]
+  new_rsq <- new_lm$r.squared
+  
+  fit_mat <- matrix(c("2014-2016", "2017-2018", "2019-2020",
+                      warm_p, cool_p, new_p),3,2, byrow = FALSE) %>% as.data.frame()
+  
+  som_cruise$sig <- "Y"
+  som_cruise$sig[which(!is.na(match(som_cruise$phase, fit_mat$V1[which(fit_mat$V2 > 0.05)])))] <- NA
+  
   gradient_plot2 <- ggplot(som_cruise, aes_string(x = "NC_slope", y = "total_shannon")) +
     geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
-    stat_smooth(data = som_cruise, 
+    stat_smooth(data = som_cruise %>% filter(!is.na(sig)), 
                 aes_string(x = "NC_slope", y = "total_shannon", fill = "phase", color = "phase"),
                 method="lm") +
-    scale_fill_manual(values = c("red", "blue","gold3"), guide = FALSE) +
+    scale_fill_manual(values = c("red", "blue","gold3")) +
     scale_color_manual(values = c("red", "blue","gold3")) +
     scale_shape_manual(values = c(21,22,23,24)) + 
+    scale_y_continuous(breaks = scales::pretty_breaks(5)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
-          plot.title = element_text(hjust = 0.5)) +
-    labs(shape = "Season", color = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
-    ylab("Gamma Diversity\nPer Cruise") + ggtitle(title) +
-    annotate(geom = "text", y = (max(som_cruise[,"total_shannon"]) + 0.05), x = 0.16, 
-             label = paste0("2014-2016\nR-Squared = ",
+          plot.title = element_text(hjust = 0)) +
+    labs(shape = "Season", color = "Phase", fill = "Phase") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Total Gamma Diveristy\nPer Cruise") + ggtitle(title) +
+    annotate(geom = "rect", ymax = min(som_cruise$total_shannon)-0.03,
+             ymin = -Inf, xmin = -Inf, xmax = Inf,
+             fill = "white", color = "white") +
+    annotate(geom = "text", y = min(som_cruise$total_shannon)-0.1, x = 0.19, 
+             label = paste0("R-Squared = ",
                             round(warm_rsq,3),
                             "\np-value = ",
                             round(warm_p, 3)),
-             color = "red", size = 3) +
-    annotate(geom = "text", y = (min(som_cruise[,"total_shannon"]) + 0.05), x = 0.15, 
-             label = paste0("2017-2018\nR-Squared = ",
+             color = "red", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = min(som_cruise$total_shannon)-0.1, x = 0.25, 
+             label = paste0("R-Squared = ",
                             round(cool_rsq,3),
                             "\np-value = ",
                             round(cool_p, 3)),
-             color = "blue", size = 3)
+             color = "blue", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = min(som_cruise$total_shannon)-0.1, x = 0.305, 
+             label = paste0("R-Squared = ",
+                            round(new_rsq,3),
+                            "\np-value = ",
+                            round(new_p, 3)),
+             color = "gold3", size = 3, fontface = "bold") +
+    coord_cartesian(ylim = c(min(som_cruise$total_shannon)-0.13,max(som_cruise$total_shannon)+0.05))
   
   print(gradient_plot2)
   
@@ -2535,9 +2624,136 @@ diversity_comparison <- function(in_file = "output/euks_auto_18sv9_full_data.Rda
   print(index_plots)
   dev.off()
   
+  asv_table$som <- full_dat$som_id[match(rownames(asv_table), paste0("X",full_dat$Sample.Name))]
+  asv_table$cruise <- full_dat$Cruise[match(rownames(asv_table), paste0("X",full_dat$Sample.Name))]
+  
+  asv_table <- asv_table[complete.cases(asv_table),]
+  
+  piv_table <- asv_table %>% pivot_longer(-c(som,cruise), names_to = "hash", values_to = "reads") %>%
+    group_by(som, cruise) %>% mutate(sum_reads = sum(reads,na.rm= TRUE)) %>% ungroup() %>%
+    group_by(som, cruise, hash) %>% summarise(rel_abun = sum(reads,na.rm=TRUE)/sum_reads[1])
+  
+  piv_table$comb <- paste0("X",piv_table$som,"_", piv_table$cruise)
+  
+  all_rich <- piv_table %>% filter(rel_abun != 0) %>% group_by(cruise) %>% summarise(total_richness = n_distinct(hash))
+  
+  som_sort <- piv_table %>% group_by(som, hash, cruise) %>% 
+    filter(rel_abun != 0) %>% ungroup() %>%
+    group_by(hash,cruise) %>% summarise(count = n()) %>% filter(count == 1)
+  
+  som_rich <- piv_table %>% filter(rel_abun != 0, paste(hash,cruise) %in% paste(som_sort$hash, som_sort$cruise)) %>%
+    group_by(cruise,som) %>% summarise(total_richness = n_distinct(hash))
+  
+  wide_set <- piv_table[,3:5] %>% pivot_wider(names_from = hash, values_from = rel_abun)
+  cruise_samps <- wide_set$comb
+  wide_set$comb <- NULL
+  
+  gamma_div <- vegan::diversity(wide_set)
+  
+  som_gamma <- matrix(NA,nrow = length(cruise_samps), ncol = 2) %>% as.data.frame()
+  
+  som_gamma$V1 <- cruise_samps
+  som_gamma$V2 <- gamma_div
+  som_gamma$V3 <- som_rich$total_richness[match(som_gamma$V1,paste0("X",som_rich$som,"_",som_rich$cruise))]
+  
+  som_gamma$som <- NA
+  som_gamma$som[which(as.numeric(substr(som_gamma$V1,2,2)) == nearshore_som)] <- "Nearshore"
+  som_gamma$som[which(as.numeric(substr(som_gamma$V1,2,2)) != nearshore_som)] <- "Offshore"
+  
+  som_gamma$Cruise <- substr(som_gamma$V1,4,9)
+  
+  som_gamma$V1 <- NULL
+  colnames(som_gamma)[1:2] <- c("total_shannon","total_richness")
+  
+  all_gamma <- som_cruise[,c(29,26,1)]
+  
+  all_gamma$total_richness <- all_rich$total_richness[match(all_gamma$Cruise, all_rich$cruise)]
+  
+  som_gamma$NC_slope <- som_cruise$NC_slope[match(som_gamma$Cruise, som_cruise$Cruise)]
+  som_gamma$Cruise <- as.numeric(som_gamma$Cruise)
+  all_gamma$som <- "Both"
+  
+  som_gamma <- bind_rows(som_gamma, all_gamma)
+  
+  formula3 <- as.formula(paste0("total_shannon", "~",
+                                "NC_slope"))
+  
+  near_lm <- summary(lm(formula = formula3,
+                        data = som_gamma %>% filter(som == "Nearshore")))
+  
+  near_p <- near_lm$coefficients[2,4]
+  near_rsq <- near_lm$r.squared
+  
+  off_lm <- summary(lm(formula = formula3,
+                        data = som_gamma %>% filter(som == "Offshore")))
+  
+  off_p <- off_lm$coefficients[2,4]
+  off_rsq <- off_lm$r.squared
+  
+  all_lm <- summary(lm(formula = formula3,
+                       data = som_gamma %>% filter(som == "Both")))
+  
+  all_p <- all_lm$coefficients[2,4]
+  all_rsq <- all_lm$r.squared
+  
+  fit_mat <- matrix(c("Nearshore", "Offshore", "Both",
+                      near_p, off_p, all_p),3,2, byrow = FALSE) %>% as.data.frame()
+  
+  som_gamma$sig <- "Y"
+  som_gamma$sig[which(!is.na(match(som_gamma$som, fit_mat$V1[which(fit_mat$V2 > 0.05)])))] <- NA
+  
+  som_gamma$som <- factor(som_gamma$som, levels = c("Nearshore", "Offshore", "Both"))
+  
+  som_gamma$Phase <- som_cruise$phase[match(som_gamma$Cruise, som_cruise$Cruise)]
+  som_gamma$Season <- som_cruise$season[match(som_gamma$Cruise, som_cruise$Cruise)]
+  
+  
+  som_div <- ggplot(som_gamma, aes(x = NC_slope, y = total_shannon, color = som)) +
+    geom_point(size = 3, aes(fill = som, color = som), data = som_gamma) +
+    stat_smooth(data = som_gamma %>% filter(!is.na(sig)), 
+                aes(x = NC_slope, y = total_shannon, fill = som, color = som),
+                method="lm") +
+    scale_fill_manual(values = c("blue", "red","grey50")) +
+    scale_color_manual(values = c("blue", "red","grey50")) +
+    scale_shape_manual(values = c(21,22,23,24)) + 
+    scale_y_continuous(breaks = scales::pretty_breaks(5)) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA, color = "black"),
+          plot.title = element_text(hjust = 0),
+          legend.key = element_blank()) +
+    labs(color = "Cluster", fill = "Cluster") + xlab("Nearshore-Offshore\nSlope in Nitracline") +
+    ylab("Total Gamma Diveristy\nPer Cruise") + ggtitle(title) +
+    annotate(geom = "rect", ymax = min(som_gamma$total_shannon)-0.03,
+             ymin = -Inf, xmin = -Inf, xmax = Inf,
+             fill = "white", color = "white") +
+    annotate(geom = "text", y = min(som_gamma$total_shannon)-0.1, x = 0.19, 
+             label = paste0("R-Squared = ",
+                            round(near_rsq,3),
+                            "\np-value = ",
+                            round(near_p, 3)),
+             color = "red", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = min(som_gamma$total_shannon)-0.1, x = 0.25, 
+             label = paste0("R-Squared = ",
+                            round(off_rsq,3),
+                            "\np-value = ",
+                            round(off_p, 3)),
+             color = "blue", size = 3, fontface = "bold") +
+    annotate(geom = "text", y = min(som_gamma$total_shannon)-0.1, x = 0.305, 
+             label = paste0("R-Squared = ",
+                            round(all_rsq,3),
+                            "\np-value = ",
+                            round(all_p, 3)),
+             color = "grey50", size = 3, fontface = "bold") +
+    coord_cartesian(ylim = c(min(som_gamma$total_shannon)-0.13,max(som_gamma$total_shannon)+0.05))
+  
+  
+  
+  
+  
+  
   save(early_dist, late_dist, diversity_diff, even_diff, 
        phase, season, ts_plot, gradient_plot2, ts_plot2,
-       cuti_plot, beuti_plot, reg_nitrate, file = out_diff_file)
+       cuti_plot, beuti_plot, reg_nitrate, som_div, file = out_diff_file)
   
 }
 

@@ -24,7 +24,7 @@ for (i in 1:length(in_group_list)) {
   
   plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map_S.Rdata"),
                                figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot_S.pdf"),
-                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 3)
+                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 6)
 
   
 }
@@ -34,12 +34,12 @@ for (i in 1:length(in_group_list)) {
 in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
                   "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                   "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9", "euks_auto_18sv9")
+                  "cyano_16s", "euks_hetero_18sv9", "euks_auto_18sv9")
 
 in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
                    "Sar 11 Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
                    "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
+                  "Cyanobacteria",
                    "Eukaryotic Protists", "Photosynthetic Eukaryotic Protists")
 
 var_list = c("temp_mean", "sal_mean", "PO4_mean", "NO3_mean", "SiO3_mean", "NC_mean",
@@ -67,18 +67,18 @@ for (i in 1:length(in_group_list)) {
 in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "archaea_16s",
                   "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                   "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9", "bacteria_m_euks_16s",
-                  "plastid_16s", "cyano_16s", "euks_hetero_18sv9", "euks_auto_18sv9")
+                  "cyano_16s", "euks_hetero_18sv9", "euks_auto_18sv9")
 
 in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
                    "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
                    "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
-                   "Eukaryotic Phytoplankton (Plastids)", "Cyanobacteria",
+                   "Cyanobacteria",
                    "Eukaryotic Protists", "Photosynthetic Eukaryotic Protists")
 
 in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar", "16s_archaea",
                         "18s_diatom","18s_dino", "18s_syndin",
                         "18s_hapto", "18s_chloro", "18s_metazoa", "16s_bacteria_m_euks",
-                        "16s_plastids", "16s_cyanos", "18s_heterotrophic_euks", "18s_autotrophic_euks")
+                        "16s_cyanos", "18s_heterotrophic_euks", "18s_autotrophic_euks")
 
 
 for (i in 1:length(in_group_list)) {
@@ -175,7 +175,7 @@ in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", "ar
                    "cyano_16s", "euks_hetero_18sv9","euks_auto_18sv9", "total")
 
 in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales",
-                   "Sar Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
+                   "SAR 11 Clade", "Archaea","Diatoms", "Dinoflagellates", "Syndiniales",
                    "Haptophytes", "Chlorophytes","Metazoans", "Bacteria",
                     "Cyanobacteria",
                    "Eukaryotic Protists","Photosynthetic Eukaryotes", "All ASVs")
@@ -195,7 +195,7 @@ for (i in 1:length(in_group_list)) {
                                 in_map = paste0("output/",in_group_list[i],"_map_S.Rdata"),
                                 community_diff_fig = paste0("figures/community_diff/",
                                                             in_group_list[i],"_both_diff_S.pdf"),
-                                tsize = 12, psize = 6, group = in_group_names[i])
+                                tsize = 15, psize = 6, group = in_group_names[i])
   print(i)
   
 }
@@ -284,7 +284,7 @@ in_group_list_basic = c("16s_pro", "16s_syne","16s_flavo", "16s_rhodo", "16s_sar
                         "18s_hapto", "18s_chloro", "18s_metazoa", "16s_bacteria_m_euks",
                          "16s_cyanos", "18s_heterotrophic_euks", "18s_autotrophic_euks")
 
-for (i in 13:length(in_group_list)) {
+for (i in 1:length(in_group_list)) {
   print(i)
   
   diversity_comparison(in_file = paste0("output/",in_group_list[i],"_full_data_S.Rdata"),

@@ -1,7 +1,7 @@
 source("analysis/figure_functions_S.R")
 
 ###### Main Text Figures #####
-
+library(ggsn)
 #### Figure 1 Revised: Physical Conditions and ASV compare ####
 
 # CHECK VENN DIAGRAM
@@ -11,7 +11,7 @@ fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
                        in_full = "output/cyano_16s_full_data.Rdata",
                        in_venn = "output/venn_diagram_S.Rdata",
                        fig_name = "figures_S/fig_1_S.pdf",
-                       tsize = 12, psize = 6){
+                       tsize = 16, psize = 6){
   
   map <- map_data("world")    
   
@@ -23,13 +23,50 @@ fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
   som_maps <- som_maps %>% filter(substr(Sta_ID,2,3) > 75)
   full_dat <- full_dat %>% filter(substr(Sta_ID,2,3) > 75)
   
+  som_maps$line <- substr(som_maps$Sta_ID,1,5) %>% as.numeric()
+  
+  som_line <- som_maps %>% group_by(line) %>%
+    summarise(x_coord = min(long), y_coord = min(lat)) %>%
+    filter(!line %in% c(81.8,93.4))
+  
+  som_maps$cardinal <- "Cardinal Stations"
+  som_maps$cardinal[which(som_maps$n_samps < 35)] <- NA
+  
   stations <-  ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "n_samps"),
                color = "black", size =psize, stroke = 0.1, shape = 21) +
+    geom_text(data = som_line, aes(x = x_coord - 0.43, y = y_coord - 0.05, label = line),
+              hjust = 1, size = 6) +
+    geom_point(data = som_maps %>% filter(!is.na(cardinal)), aes(x = long, y = lat, shape = cardinal),
+               show.legend = TRUE, pch = 0 , size = 6) + 
+    annotate(x = -126.95, y = 36.99, label = "a", size = 7, geom = "text", fontface = "bold") +
     scale_fill_gradient(name = "# of Samples", low = "white", high = "red") +
+    scalebar(x.min = -127, x.max = -116, 
+             y.min =  28, y.max = 37, dist = 200, dist_unit = "km",
+             transform = TRUE, location = "bottomright", st.dist = -0.05, height = 0.025, st.size = 4,  st.color = "black") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) + 
+    scale_shape_manual(na.value = NA) +
+    theme(panel.background = element_blank(),
+          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
+          plot.title = element_text(), axis.line = element_blank(),
+          legend.justification=c(1,1), 
+          legend.position=c(0.99, 0.99),
+          legend.background = element_rect(fill = "white", color = "black"),
+          axis.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          title = element_text(size = tsize),
+          plot.margin = ggplot2::margin(5,5,5,5)) 
+
+  
+  depths <- ggplot() +
+    geom_point(data = full_dat, aes(x = dist_to_coast, y = Depthm), size = psize/3, pch = 21, alpha = 0.5, fill = "grey60") +
+    scale_y_reverse() + scale_x_continuous(breaks = c(0,200,400)) +
+    annotate(x = 0, y = 0, label = "b", size = 7, geom = "text", fontface = "bold") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(), axis.line = element_blank(),
@@ -40,87 +77,74 @@ fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          title = element_text(size = tsize))
-  
-  depths <- ggplot() +
-    geom_point(data = full_dat, aes(x = dist_to_coast, y = Depthm), size = psize/3, pch = 21, alpha = 0.5, fill = "grey60") +
-    scale_y_reverse() +
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
-          legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
-          legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
+          plot.margin = ggplot2::margin(5,5,5,5)) +
     labs(x = "Distance to Coast (km)", y = "Depth (m)")
-  
-  sst <- ggplot() + 
-    geom_tile(data = coeff_table, aes(x = lon, y = lat, fill = coeff_var), width =0.26, height = 0.26) +
-    scale_fill_gradient2(name = "Coeff. Var SST", low = "darkblue", mid = "white", high = "darkred", limits = c(0.09,0.12), oob = squish, midpoint = 0.1066851) + geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
-    coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
-    xlab("Longitude") + ylab("Latitude") +
-    theme(panel.background = element_blank(),
-          panel.border = element_rect(fill = NA,colour = "black", linetype = "solid", size = 1),
-          plot.title = element_text(hjust = 0.5), axis.line = element_blank())
   
   sst_mean <- ggplot() + 
     geom_tile(data = mean_table, aes(x = lon, y = lat, fill = Mean), width =0.26, height = 0.26) +
-    scale_fill_gradient2(name = "SST Mean (°C)", low = "darkblue", mid = "white", high = "darkred", limits = c(15,18), oob = squish, midpoint = 16.5) +geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
+    scale_fill_gradient2(name = "SST Mean (°C)", low = "darkblue", mid = "white", high = "darkred",
+                         limits = c(15,18), oob = squish, midpoint = 16.5,
+                         breaks = c(15,16,17,18), labels = c("<15", "16", "17", ">18")) +
+    geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    annotate(x = -126.95, y = 36.99, label = "d", size = 7, geom = "label", fontface = "bold") +
     xlab("Longitude") + ylab("Latitude") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(), axis.line = element_blank(),
           legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
+          legend.position=c(0.99, 0.99),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) 
+          legend.title = element_text(size = tsize),
+          plot.margin = ggplot2::margin(5,5,5,5)) 
   
   nc_depth <-  ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "c", size = 7, geom = "text", fontface = "bold") +
     geom_point(data = som_maps, aes_string(x = "long", y = "lat", fill = "NC_mean"),
                color = "black", size = psize, stroke = 0.1, shape = 21) +
-    scale_fill_gradient(name = "Mean Nitracline\nDepth (m)", low = "darkblue", high = "cyan", trans = 'reverse') +
+    scale_fill_gradient(name = "Mean\nNitracline\nDepth (m)", low = "darkblue", high = "cyan", trans = 'reverse') +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(), axis.line = element_blank(),
           legend.justification=c(1,1), 
-          legend.position=c(0.97, 0.97),
+          legend.position=c(0.99, 0.99),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) 
+          legend.title = element_text(size = tsize-2),
+          plot.margin = ggplot2::margin(5,5,5,5)) 
   
   
   stations <- stations + theme(axis.title.x=element_blank(),
-                               axis.text.x=element_blank(),
-                               axis.ticks.x=element_blank())
+                               axis.text.x=element_blank())
 
   
   sst_mean <- sst_mean + theme(axis.title.y=element_blank(),
-                               axis.text.y=element_blank(),
-                               axis.ticks.y=element_blank())
+                               axis.text.y=element_blank())
   
   
   
   layout <- "ABEE
              CDEE"
   
+  grobTree(venn_plot)
+  
   patch <- stations + depths +
     nc_depth + sst_mean +
     wrap_elements(grobTree(venn_plot)) +
     plot_layout(design = layout) 
   
-  patch <- patch + plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 16))
+  patch <- patch + plot_annotation(tag_levels = list(c("", "", "", "", "e"))) & 
+    theme(plot.tag = element_text(size = 20, hjust = 0, vjust = 0, face = "bold"))
   
   pdf(fig_name, width = 22, height = 12)
   print(patch)
@@ -130,53 +154,60 @@ fig_1_rev_func <- function(in_temp = "output/CALCOFI_temp_tables.Rdata",
 
 #### Figure 2: SOMs ####
 
-fig_2_func <- function(in_list = plot_list, file_name = "figures_S/fig_2_S.pdf", tsize  = 12){
+fig_2_func <- function(in_list = plot_list, file_name = "figures_S/fig_2_S.pdf", tsize  = 17){
   
   in_list[[6]]$bp <- in_list[[6]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
                                              axis.text.x = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle(expression(paste(bold("a"), " Archaea")))
+                                             plot.title = element_text(hjust = 0.5, size = tsize),
+                                             legend.position = "none",
+                                             plot.background = element_blank()) + ggtitle("Archaea") +
+    annotate(x = -126.95, y = 36.95, label = "a", size = 6.5, geom = "text", fontface = "bold") +
+    annotate(x = -126.99, y = 28.2, label = "Offshore", size = 6, geom = "text", hjust = 0)
   in_list[[13]]$bp <- in_list[[13]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
                                                axis.text.x = element_blank(),
                                                axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle(expression(paste(bold("b"), " Bacteria")))
+                                               plot.title = element_text(hjust = 0.5, size = tsize),
+                                               legend.position = "none",
+                                               plot.background = element_blank()) + ggtitle(" Bacteria") +
+    annotate(x = -126.95, y = 36.95, label = "b", size = 6.5, geom = "text", fontface = "bold")
   in_list[[14]]$bp <- in_list[[14]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
                                                axis.text.x = element_blank(),
                                                axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle(expression(paste(bold("c"), " Cyanobacteria")))
+                                               plot.title = element_text(hjust = 0.5, size = tsize),
+                                               legend.position = "none",
+                                               plot.background = element_blank()) + ggtitle("Cyanobacteria")  +
+    annotate(x = -126.95, y = 36.95, label = "c", size = 6.5, geom = "text", fontface = "bold")
   in_list[[16]]$bp <- in_list[[16]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
                                                axis.text.x = element_blank(),
                                                axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle(expression(atop(paste(bold("d"), " Photosynthetic eukaryotic"), "protists")))
+                                               plot.title = element_text(hjust = 0.5, size = tsize),
+                                               legend.position = "none",
+                                               plot.background = element_blank()) + ggtitle("Photosynthetic eukaryotic\n Protists") +
+    annotate(x = -126.95, y = 36.97, label = "d", size = 6.5, geom = "text", fontface = "bold")
   in_list[[15]]$bp <- in_list[[15]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
                                                axis.text.x = element_blank(),
                                                axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize)) + ggtitle(expression(atop(paste(bold("e"), " Heterotrophic eukaryotic"),"protists")))
-  
+                                               plot.title = element_text(hjust = 0.5, size = tsize),
+                                               plot.tag = element_text(angle = -90, hjust = 0.25, size = tsize),
+                                               plot.tag.position = c(1.05,0.5),
+                                               plot.background = element_blank(),
+                                               plot.margin = ggplot2::margin(1,25,1,1)) + ggtitle("Heterotrophic\neukaryotic protists") +
+    labs(tag = "Frequency") + annotate(x = -126.95, y = 36.95, label = "e", size = 6.5, geom = "text", fontface = "bold")
+    
   in_list[[6]]$rp <- in_list[[6]]$rp + theme(legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) +
+    annotate(x = -126.99, y = 28.2, label = "Nearshore", size = 6, geom = "text", hjust = 0)
   in_list[[13]]$rp <- in_list[[13]]$rp + theme(axis.title.y = element_blank(),
                                                axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
                                                plot.title = element_text(hjust = 0),
                                                legend.position = "none") + 
     scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+
   in_list[[14]]$rp <- in_list[[14]]$rp + theme(axis.title.y = element_blank(),
                                                axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
@@ -192,12 +223,15 @@ fig_2_func <- function(in_list = plot_list, file_name = "figures_S/fig_2_S.pdf",
   in_list[[15]]$rp <- in_list[[15]]$rp + theme(axis.title.y = element_blank(),
                                                axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0)) + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                               plot.title = element_text(hjust = 0),
+                                               plot.tag = element_text(angle = -90, hjust = 0.5, size = tsize),
+                                               plot.tag.position = c(1.05,0.5)) + 
+    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) +
+    labs(tag = "Frequency")
   
   
   
-  pdf(file = file_name, width = 15, height = 6)
+  pdf(file = file_name, width = 13, height = 6.5)
   print(in_list[[6]]$bp + in_list[[13]]$bp + in_list[[14]]$bp +
           in_list[[16]]$bp + in_list[[15]]$bp +
           in_list[[6]]$rp + in_list[[13]]$rp + in_list[[14]]$rp +
@@ -208,7 +242,7 @@ fig_2_func <- function(in_list = plot_list, file_name = "figures_S/fig_2_S.pdf",
 
 #### Figure 3: Reg and Var Import ####
 
-fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 12){
+fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 15){
   
   cyano <- regression_figure(glm_file = "output/cyano_16s_glm_S.Rdata",
                              map_file = "output/cyano_16s_map_S.Rdata",   
@@ -218,12 +252,14 @@ fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 12){
   
   cyano <- cyano + ggtitle("") + 
     theme(legend.justification=c(1,0.5), 
-          legend.position=c(0.20, 0.5),
+          legend.position=c(0.90, 0.5),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          plot.title = element_text(hjust = 0, size = tsize))
+          plot.title = element_text(hjust = 0, size = tsize),
+          plot.margin = ggplot2::margin(1,1,1,1)) +
+    annotate(x = 0, y = 1, geom = "text", label = "a", size = 6.5, fontface = "bold")
   
   aic_plot <- full_aic_table_figure(in_group_list = c("archaea_16s","bacteria_m_euks_16s", "cyano_16s","euks_auto_18sv9",
                                                       "euks_hetero_18sv9"),
@@ -234,12 +270,15 @@ fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 12){
                                     title_name = "Variable Importance")
   
   aic_plot <- aic_plot + ggtitle("") + 
-    theme(axis.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          plot.title = element_text(hjust = 0, size = tsize))
+    theme(axis.title = element_blank(),
+          axis.text.x = element_text(size = (tsize - 2.5)),
+          plot.title = element_text(hjust = 0, size = tsize),
+          plot.margin = ggplot2::margin(1,1,1,1)) +
+    annotate(xmin = 0.4, ymin = 13.25, xmax = 0.6, ymax = 14.75, geom = "rect", fill = "white", color= "white") +
+    annotate(x = 0.5, y = 14, geom = "text", label = "b", size = 6.5, fontface = "bold") 
+    
   
-  a <- cyano + aic_plot + plot_layout(widths = c(1,2)) +
-    plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 14))
+  a <- cyano + aic_plot + plot_layout(widths = c(1,2)) 
   
   pdf(file = file_name, width = 16, height = 8)
   print(a)
@@ -251,7 +290,7 @@ fig_3_func <- function(file_name = "figures_S/fig_3_S.pdf", tsize = 12){
 
 fig_4_func <- function(file_name = "figures_S/fig_4_S.pdf",
                        in_group = c("total","diatom_18sv9"), basic = c("totals","18s_diatom"),
-                       name = c("All ASVs", "Diatoms"), tsize = 12){
+                       name = c("All ASVs", "Diatoms"), tsize = 18){
   
   
   
@@ -280,51 +319,63 @@ fig_4_func <- function(file_name = "figures_S/fig_4_S.pdf",
   
   
   all_map <- all_map + ggtitle("All ASVs") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
-          legend.justification=c(0,1), 
-          legend.position=c(0.03, 0.97),
+    annotate(x = -126.95, y = 36.99, label = "a", size = 7, geom = "text", fontface = "bold") +
+    theme(plot.title = element_text(hjust = 0, size = tsize+3),
+          legend.justification=c(1,1), 
+          legend.position=c(0.97, 0.97),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
+          axis.text.y  = element_text(size = tsize+3),
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          legend.text = element_text(size = (tsize-3)),
+          axis.title.y = element_text(size = tsize+3),
+          legend.title = element_text(size = (tsize-3)),
+          plot.margin = ggplot2::margin(5,1,1,1)) + 
     labs(fill = "Mean Alpha\nDiversity") +
     scale_x_continuous(breaks= scales::pretty_breaks(n=3)) +
-    scale_fill_viridis()
+    scale_fill_viridis(breaks = c(5.6,5.2,4.8))
   
   all_alpha_gamma <- all_alpha_gamma + ggtitle("All ASVs") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
-          legend.justification=c(1,0.5), 
-          legend.position=c(0.97, 0.18),
+    annotate(x = 0, y = 7, label = "b", size = 7, geom = "text", fontface = "bold") +
+    theme(plot.title = element_text(hjust = 0, size = tsize+3),
+          legend.justification=c(1,0), 
+          legend.position=c(0.95, 0.05),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize+3),
           legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize)) + 
+          axis.title.y = element_text(size = tsize+3),
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          plot.margin = ggplot2::margin(5,1,1,5)) + 
     labs(fill = "Mean Alpha\nDiversity") +
     scale_x_continuous(breaks= scales::pretty_breaks(n=5))
   
   
   map <- map + ggtitle("Diatoms") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
-          legend.justification=c(0,1), 
-          legend.position=c(0.03, 0.97),
+    annotate(x = -126.95, y = 36.99, label = "c", size = 7, geom = "text", fontface = "bold") +
+    theme(plot.title = element_text(hjust = 0, size = tsize+3),
+          legend.justification=c(1,1), 
+          legend.position=c(0.97, 0.97),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
+          axis.text = element_text(size = tsize+3),
+          legend.text = element_text(size = (tsize-3)),
+          axis.title = element_text(size = tsize+3),
+          legend.title = element_text(size = (tsize-3)),
+          plot.margin = ggplot2::margin(5,1,1,1)) + 
     labs(fill = "Mean Alpha\nDiversity") +
     scale_x_continuous(breaks= scales::pretty_breaks(n=3)) +
     scale_fill_viridis()
   
   alpha_gamma <- alpha_gamma + ggtitle("Diatoms") +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    annotate(x = 0, y = 4.35, label = "d", size = 7, geom = "text", fontface = "bold") +
+    theme(plot.title = element_text(hjust = 0, size = tsize+3),
           legend.justification=c(1,0.5), 
-          legend.position=c(0.97, 0.5),
+          legend.position=c(0.97, 0.46),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
+          axis.text = element_text(size = tsize+3),
           legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize)) + 
+          axis.title = element_text(size = tsize+3),
+          plot.margin = ggplot2::margin(5,1,1,5)) + 
     labs(fill = "Mean Alpha\nDiversity") +
     scale_x_continuous(breaks= scales::pretty_breaks(n=5))
   
@@ -337,8 +388,12 @@ fig_4_func <- function(file_name = "figures_S/fig_4_S.pdf",
                                                                       "Photosynthetic Eukaryotic\nProtists",
                                                                       "Heterotrophic\nEukaryotic Protists"),
                                                    figure_name_2 = NULL,
-                                                   col = 25, width_plot = 12, tsize = 16)
+                                                   col = 25, width_plot = 12, tsize = 17)
   
+  
+    out_plot <- out_plot +
+    annotate(xmin = 0.4, ymin = 13.25, xmax = 0.6, ymax = 14.75, geom = "rect", fill = "white", color= "white") +
+    annotate(x = 0.5, y = 14, geom = "text", label = "e", size = 7, fontface = "bold") 
   
   layout <- "ABEE
              CDEE"
@@ -347,10 +402,7 @@ fig_4_func <- function(file_name = "figures_S/fig_4_S.pdf",
     alpha_gamma + out_plot + 
     plot_layout(design = layout)
     
-  plots <- plots + plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 16))
-  
-  
-  pdf(file = file_name, width = 28, height = 15)
+  pdf(file = file_name, width = 26, height = 13)
   print(plots)
   dev.off()
   
@@ -362,8 +414,7 @@ fig_4_func <- function(file_name = "figures_S/fig_4_S.pdf",
 fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
                        nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                        time_plot = "figures_S/fig_5_S.pdf",
-                       tsize = 12, psize = 6,
-                       in_list = fig_list){
+                       tsize = 15, psize = 6, in_list = fig_list){
   
   map <- map_data("world") 
   
@@ -377,7 +428,8 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
                                      legend.title = element_text(size = tsize),
                                      legend.position = "none") + 
     ggtitle("Coastal Upwelling\nTransport Index (CUTI)") +
-    xlab("Year Day") + ylab("CUTI")
+    xlab("Year Day") + ylab("CUTI") +
+    annotate(x = 1, y = 1, geom = "text", size = 7, fontface = "bold", label = "a")
   
   yearly_beuti <- yearly_beuti + theme(plot.title = element_text(size = tsize),
                                        axis.text = element_text(size = tsize),
@@ -386,15 +438,21 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
                                        legend.title = element_text(size = tsize),
                                        legend.position = "none") +
     ggtitle("Biologically Effective Upwelling\nTransport Index (BEUTI)") +
-    xlab("Year Day") + ylab("BEUTI")
+    xlab("Year Day") + ylab("BEUTI") +
+    annotate(x = 1, y = 8.1, geom = "text", size = 7, fontface = "bold", label = "b")
+  
   
   yearly_nitrate <- yearly_nitrate + theme(plot.title = element_text(size = tsize),
                                            axis.text = element_text(size = tsize),
                                            axis.title = element_text(size = tsize),
                                            legend.text = element_text(size = tsize),
-                                           legend.title = element_text(size = tsize)) +
+                                           legend.title = element_text(size = tsize),
+                                           legend.key = element_blank(),
+                                           legend.position = c(0.99,0.99),
+                                           legend.justification = c(1,1)) +
     ggtitle("Regionally available\n nitrate (BEUTI/CUTI)") +
-    ylab("BEUTI/CUTI")
+    ylab("BEUTI/CUTI") +
+    annotate(x = 1, y = 8.3, geom = "text", size = 7, fontface = "bold", label = "c")
   
   early_phase <- early_phase %>% filter(Sta_ID %in% late_phase$Sta_ID)
   
@@ -413,14 +471,18 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(size = tsize), axis.line = element_blank(),
-          legend.justification=c(1,0), 
-          legend.position=c(0.97, 0.03),
+          legend.position=c(0.97,0.03),
+          legend.direction = "horizontal",
+          legend.justification = c(1,0),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-2),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean nitrate μM (2014-2016)")
+          legend.title = element_text(size = tsize-2),
+          plot.margin = ggplot2::margin(2,2,0,2)) + 
+    ggtitle("Mean nitrate μM (2014-2016)") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) + 
+    annotate(x = -126.95, y = 36.99, label = "d", size = 7, geom = "text", fontface = "bold") 
   
   late_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -433,17 +495,21 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(size = tsize), axis.line = element_blank(),
-          legend.justification=c(1,0), 
-          legend.position=c(0.97, 0.03),
+          legend.position=c(0.97,0.03),
+          legend.direction = "horizontal",
+          legend.justification = c(1,0),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-2),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-2),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean nitrate μM (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.margin = ggplot2::margin(2,2,0,2)) +
+    ggtitle("Mean nitrate μM (2017-2018)") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) + 
+    annotate(x = -126.95, y = 36.99, label = "e", size = 7, geom = "text", fontface = "bold")
   
   diff_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -453,30 +519,38 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
                color = "black", size =psize, stroke = 0.1, shape = 21) +
     scale_fill_gradient(name = expression(paste(Delta~NO[3]," ", mu,M)),
                         low = "blue", high = "white",
-                        limits = c(-6,0), oob = scales::squish) +
+                        limits = c(-6,0), oob = scales::squish,
+                        breaks = c(-6,-4,-2,0)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
           plot.title = element_text(size = tsize), axis.line = element_blank(),
-          legend.justification=c(1,0), 
-          legend.position=c(0.97, 0.03),
+          legend.position=c(0.97,0.03),
+          legend.direction = "horizontal",
+          legend.justification = c(1,0),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-2),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-2),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in mean nitrate\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.margin = ggplot2::margin(2,2,0,2)) + 
+    ggtitle("Changes in mean nitrate\n(2014-2016) - (2017-2018)") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) + 
+    annotate(x = -126.95, y = 36.99, label = "f", size = 7, geom = "text", fontface = "bold")
   
   low <- 0.2
-  high <- 0.5
+  high <- 0.6
   
   arch <- (in_list[[6]]$surf + ggtitle("Archaea") +
       scale_fill_gradient(limits = c(low, high),
                           low = "white", high = "red", oob = scales::squish) +
       labs(fill = "Bray-Curtis\nSimilarity")+
-        theme(legend.position = "none")) 
+        theme(legend.position = "none",
+              plot.margin = ggplot2::margin(1,2,2,2))) + 
+    annotate(x = -126.95, y = 36.99, label = "g", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
     
     bact <- (in_list[[13]]$surf + ggtitle("Bacteria") +
        scale_fill_gradient(limits = c(low,high),
@@ -485,7 +559,10 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
              axis.ticks.y = element_blank())+
-         theme(legend.position = "none")) 
+         theme(legend.position = "none",
+               plot.margin = ggplot2::margin(1,2,2,2))) + 
+      annotate(x = -126.95, y = 36.99, label = "h", size = 7, geom = "text", fontface = "bold") +
+      scale_x_continuous(breaks = c(-125,-122,-119))
     
     cyano <- (in_list[[14]]$surf + ggtitle("Cyanobacteria") +
        scale_fill_gradient(limits = c(low,high),
@@ -494,7 +571,10 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
              axis.ticks.y = element_blank())+
-         theme(legend.position = "none")) 
+         theme(legend.position = "none",
+               plot.margin = ggplot2::margin(1,2,2,2))) + 
+      annotate(x = -126.95, y = 36.99, label = "i", size = 7, geom = "text", fontface = "bold") +
+      scale_x_continuous(breaks = c(-125,-122,-119))
     
     photo <- (in_list[[16]]$surf + ggtitle("Photosynthetic Eukaryotic\nProtists") +
        scale_fill_gradient(limits = c(low,high),
@@ -503,29 +583,40 @@ fig_5_func <- function(in_upwell = "output/upwelling_plots.Rdata",
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
              axis.ticks.y = element_blank())+
-         theme(legend.position = "none")) 
+         theme(legend.position = "none",
+               plot.margin = ggplot2::margin(1,2,2,2))) + 
+      annotate(x = -126.95, y = 36.99, label = "j", size = 7, geom = "text", fontface = "bold") +
+      scale_x_continuous(breaks = c(-125,-122,-119))
     
     hetero <- (in_list[[15]]$surf + ggtitle("Heterotrophic Eukaryotic\nProtists") +
        scale_fill_gradient(limits = c(low,high),
-                           low = "white", high = "red", oob = scales::squish) +
+                           low = "white", high = "red", oob = scales::squish,
+                           breaks = c(0.2,0.4,0.6)) +
        labs(fill = "Bray-Curtis\nSimilarity") +
        theme(axis.title.y = element_blank(),
              axis.text.y = element_blank(),
-             axis.ticks.y = element_blank()))
+             axis.ticks.y = element_blank(),
+             legend.position=c(0.97,0.03),
+             legend.direction = "horizontal",
+             legend.justification = c(1,0),
+             legend.text = element_text(size = tsize -4),
+             legend.title = element_text(size = tsize - 4),
+             plot.margin = ggplot2::margin(1,2,2,2),
+             legend.margin = ggplot2::margin(2,15,2,2)))+ 
+      annotate(x = -126.95, y = 36.99, label = "k", size = 7, geom = "text", fontface = "bold") +
+      scale_x_continuous(breaks = c(-125,-122,-119))
     
-    fig_plot <- arch + bact + cyano + photo + hetero + plot_layout(nrow = 1, guides = "collect")
-  
+    fig_plot <- (arch + bact + cyano + photo + hetero + plot_layout(nrow = 1)) 
+    
   layout = "ABC
             DEF
             GGG"
   
   plot1 <- yearly_cuti + yearly_beuti + yearly_nitrate  +
     early_n + late_n + diff_n  + fig_plot +
-    plot_layout(design = layout)
-  
-  plot1 <- plot1 + plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 16))
+    plot_layout(design = layout, heights = c(1,1,0.8))
 
-  pdf(file = time_plot, width = 17, height = 17)
+  pdf(file = time_plot, width = 14, height = 14)
   print(plot1)
   dev.off()
 
@@ -540,7 +631,7 @@ fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_S.Rdata",
                        in_bact = "output/bacteria_m_euks_16s_diffs_S.Rdata",
                        in_arch = "output/archaea_16s_diffs_S.Rdata",
                        gradient_plot_file = "figures_S/fig_6_S.pdf",
-                       tsize = 12){
+                       tsize = 15){
   
   
   load(in_phyto)
@@ -558,48 +649,60 @@ fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_S.Rdata",
   load(in_arch)
   arch_gradient <- phase
   
-  phyto_gradient <- phyto_gradient + theme(legend.position = "none") + xlab("")  + 
+  phyto_gradient <- phyto_gradient + theme(legend.position = "none") +  
     ylab("Proportion of Samples\nIdentified as Nearshore") +
     theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
           plot.title = element_text(hjust=0, size = tsize),
           axis.title = element_text(size = tsize),
           axis.title.y = element_text(size = tsize),
-          axis.text.y = element_text(size = tsize)) + ggtitle("Photosynthetic eukaryotic protists")
+          axis.title.x = element_blank(),
+          axis.text.y = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize)) + ggtitle("Photosynthetic eukaryotic protists") +
+    annotate(x = 0.17, y = 0.64, geom = "text", label = "a", fontface = "bold", size = 6)
   
-  euk_gradient <- euk_gradient + theme(legend.position = "none") + xlab("") + ylab("") +
+  euk_gradient <- euk_gradient + theme(legend.position = "none") + 
     theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.text.y  = element_text(size = tsize),
+          axis.title.y = element_blank(),
+          axis.text.y = element_text(size = tsize),
           plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize)) + ggtitle("Heterotrophic eukaryotic protists")
+          axis.title = element_blank(),
+          legend.position = "none") + ggtitle("Heterotrophic eukaryotic protists") +
+    annotate(x = 0.17, y = 0.77, geom = "text", label = "b", fontface = "bold", size = 6)
   
   cyano_gradient <- cyano_gradient + theme(legend.position = "none")  + 
     ylab("Proportion of Samples\nIdentified as Nearshore") + 
     xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
     theme(plot.title = element_text(hjust=0, size = tsize),
           axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("Cyanobacteria")
+          axis.text = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize)) + ggtitle("Cyanobacteria") +
+    annotate(x = 0.17, y = 0.675, geom = "text", label = "c", fontface = "bold", size = 6)
   
   bact_gradient <- bact_gradient +
-    theme(axis.text.y  = element_text(size = tsize),
+    theme(axis.title.y = element_blank(),
           plot.title = element_text(hjust=0, size = tsize),
           axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("Bacteria") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+          axis.text = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize)) + ggtitle("Bacteria") +
+    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    annotate(x = 0.17, y = 0.71, geom = "text", label = "d", fontface = "bold", size = 6)
   
   arch_gradient <- arch_gradient +
-    theme(axis.text.y  = element_text(size = tsize),
+    theme(axis.title.y = element_blank(),
           plot.title = element_text(hjust=0, size = tsize),
           axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("Archaea") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+          axis.text = element_text(size = tsize),
+          legend.position = "none") + ggtitle("Archaea") +
+    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    annotate(x = 0.17, y = 0.7, geom = "text", label = "e", fontface = "bold", size = 6)
   
   grad_plot <- phyto_gradient + euk_gradient + guide_area() +
-    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect") +
-    plot_annotation(tag_levels = "a") & theme(plot.tag = element_text(face = "bold", size = 16))
+    cyano_gradient + bact_gradient + arch_gradient + plot_layout(guides = "collect") 
   
-  pdf(file = gradient_plot_file, width = 12, height = 7)
+  pdf(file = gradient_plot_file, width = 14, height = 11)
   print(grad_plot)
   dev.off()
   
@@ -684,7 +787,7 @@ alt_fig_6_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_S.Rdata",
 
 suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
                              out_plot = "figures_S/supp_fig_1_S.pdf",
-                             tsize = 12, psize = 6){
+                             tsize = 18, psize = 6){
   
   load(in_dat)
   
@@ -701,15 +804,19 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient2(name = "°C", low = "blue", high = "red", mid = "white", midpoint = 16.5) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize),
+          axis.text.x = element_blank(),
+          legend.text = element_text(size = tsize-4),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean temperature (°C)")
+          legend.title = element_text(size = tsize-4),
+          axis.title.x = element_blank()) +
+    ggtitle("Mean temperature (°C)") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "a", size = 7, geom = "text", fontface = "bold")
   
   t_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -720,15 +827,19 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize),
+          axis.text.x = element_blank(),
+          legend.text = element_text(size = tsize-4),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. var. temperature")
+          legend.title = element_text(size = tsize-4),
+          axis.title.x = element_blank()) +
+    ggtitle("Coeff. var. temperature")  + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "e", size = 7, geom = "text", fontface = "bold")
   
   sal_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -739,15 +850,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient2(name = "PSU", low = "blue", high = "gold2", mid = "white", midpoint = 33.35) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean salinity")
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Mean salinity")  + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "b", size = 7, geom = "text", fontface = "bold")
   
   sal_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -758,15 +871,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. var. salinity")
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Coeff. var. salinity")  + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "f", size = 7, geom = "text", fontface = "bold")
   
   # Nutrients
   
@@ -779,15 +894,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(paste(NO[3]," ",mu,M)), low = "white", high = "purple") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle(expression(paste("Mean ", NO[3])))
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle(expression(paste("Mean ", NO[3]))) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "j", size = 7, geom = "text", fontface = "bold")
   
   no3_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -798,15 +915,19 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle(expression(paste("Coeff. var. ", NO[3])))
+          axis.text.x = element_text(size = tsize),
+          axis.text.y = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title.y = element_blank(),
+          axis.title.x = element_text(size = tsize),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle(expression(paste("Coeff. var. ", NO[3]))) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "n", size = 7, geom = "text", fontface = "bold")
   
   po4_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -817,15 +938,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(paste(PO[4]," ",mu,M)), low = "white", high = "purple") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle(expression(paste("Mean ", PO[4])))
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle(expression(paste("Mean ", PO[4]))) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "k", size = 7, geom = "text", fontface = "bold")
   
   po4_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -836,15 +959,19 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle(expression(paste("Coeff. var. ", PO[4])))
+          axis.text.x = element_text(size = tsize),
+          axis.text.y = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title.y = element_blank(),
+          axis.title.x = element_text(size = tsize),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle(expression(paste("Coeff. var. ", PO[4]))) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "o", size = 7, geom = "text", fontface = "bold")
   
   sio4_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -855,15 +982,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name =  expression(paste(SiO[4]," ",mu,M)), low = "white", high = "purple") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle(expression(paste("Mean ", SiO[4])))
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle(expression(paste("Mean ", SiO[4]))) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "l", size = 7, geom = "text", fontface = "bold")
   
   sio4_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -874,15 +1003,19 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle(expression(paste("Coeff. var. ", SiO[4])))
+          axis.text.x = element_text(size = tsize),
+          axis.text.y = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title.y = element_blank(),
+          axis.title.x = element_text(size = tsize),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle(expression(paste("Coeff. var. ", SiO[4]))) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "p", size = 7, geom = "text", fontface = "bold")
   
   # Chlorophyll
   
@@ -895,15 +1028,19 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(mu*g/L), low = "white", high = "darkgreen") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          axis.text.y = element_text(size = tsize),
+          axis.text.x = element_blank(),
+          legend.text = element_text(size = tsize-4),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean chl-a")
+          axis.title.x = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Mean chl-a") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "i", size = 7, geom = "text", fontface = "bold")
   
   chl_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -914,15 +1051,18 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. var. chl-a")
+          legend.text = element_text(size = tsize-4),
+          axis.title.y = element_text(size = tsize),
+          axis.title.x = element_text(size = tsize),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Coeff. var. chl-a") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "m", size = 7, geom = "text", fontface = "bold")
   
   # MLD and NCD
   
@@ -935,15 +1075,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = "Depth (m)", low = "darkblue", high = "cyan", trans = 'reverse') +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean mixed layer depth")
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Mean mixed layer depth") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "c", size = 7, geom = "text", fontface = "bold")
   
   mld_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -954,15 +1096,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. var. mixed layer depth")
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Coeff. var. mixed layer depth") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "g", size = 7, geom = "text", fontface = "bold")
   
   ncd_m <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -973,15 +1117,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = "Depth (m)", low = "darkblue", high = "cyan", trans = 'reverse') +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean nitracline depth")
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Mean nitracline depth") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "d", size = 7, geom = "text", fontface = "bold")
   
   ncd_c <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -992,15 +1138,17 @@ suppl_fig_1_func <- function(in_dat = "output/mld_mean_profiles_S.Rdata",
     scale_fill_gradient(name = expression(sigma/mu), low = "white", high = "black", na.value = "none") +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(), axis.line = element_blank(),
+          plot.title = element_text(size = tsize), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
-          axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
-          axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Coeff. var. nitracline depth")
+          axis.text = element_blank(),
+          legend.text = element_text(size = tsize-4),
+          axis.title = element_blank(),
+          legend.title = element_text(size = tsize-4)) +
+    ggtitle("Coeff. var. nitracline depth") + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.99, label = "h", size = 7, geom = "text", fontface = "bold")
   
   
   plot1 <- t_m + sal_m + mld_m + ncd_m + 
@@ -1135,161 +1283,187 @@ source("analysis/suppl_fig_3_S.R")
 
 ##### Suppl Figure 4: SOMs small groups #####
 
-suppl_fig_4_func <- function(in_list = plot_list, file_name = "figures_S/supp_fig_4_S.pdf", tsize  = 12){
+suppl_fig_4_func <- function(in_list = plot_list, file_name = "figures_S/supp_fig_4_S.pdf", tsize  = 17){
   
   in_list[[1]]$bp <- in_list[[1]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
                                              axis.text.x = element_blank(),
                                              plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("a Prochlorococcus")
-  in_list[[2]]$bp <- in_list[[2]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("b Synechococcus")
-  in_list[[3]]$bp <- in_list[[3]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("c Flavobacteriales")
-  in_list[[4]]$bp <- in_list[[4]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("d Rhodobacterales")
-  in_list[[5]]$bp <- in_list[[5]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize)) + ggtitle("e SAR 11 Clade")
-  in_list[[7]]$bp <- in_list[[7]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("f Diatoms")
-  in_list[[8]]$bp <- in_list[[8]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("g Dinoflagellates")
-  in_list[[9]]$bp <- in_list[[9]]$bp + theme(axis.title.x = element_blank(),
-                                             axis.ticks.x = element_blank(),
-                                             axis.text.x = element_blank(),
-                                             axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
-                                             axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0, size = tsize),
-                                             legend.position = "none") + ggtitle("h Syndiniales")
-  in_list[[10]]$bp <- in_list[[10]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("i Haptophytes")
-  in_list[[11]]$bp <- in_list[[11]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("j Chlorophytes")
-  in_list[[12]]$bp <- in_list[[12]]$bp + theme(axis.title.x = element_blank(),
-                                               axis.ticks.x = element_blank(),
-                                               axis.text.x = element_blank(),
-                                               axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
-                                               axis.text.y = element_blank(),
-                                               plot.title = element_text(hjust = 0, size = tsize),
-                                               legend.position = "none") + ggtitle("k Metazoans")
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Prochlorococcus") +
+  annotate(x = -126.95, y = 36.85, label = "a", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
-  in_list[[1]]$rp <- in_list[[1]]$rp + theme(legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+  in_list[[2]]$bp <- in_list[[2]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             axis.title.y = element_blank(),
+                                             axis.text.y = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Synechococcus") +
+    annotate(x = -126.95, y = 36.85, label = "b", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[3]]$bp <- in_list[[3]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             axis.title.y = element_blank(),
+                                             axis.text.y = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Flavobacteriales") +
+    annotate(x = -126.95, y = 36.85, label = "c", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[4]]$bp <- in_list[[4]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             axis.title.y = element_blank(),
+                                             axis.text.y = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Rhodobacterales") +
+    annotate(x = -126.95, y = 36.85, label = "d", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[5]]$bp <- in_list[[5]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             axis.title.y = element_blank(),
+                                             axis.text.y = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             plot.margin = ggplot2::margin(5,5,0,5),
+                                             legend.title = element_text(size = tsize, vjust = 0.5)) + ggtitle("SAR 11 Clade") +
+    annotate(x = -126.95, y = 36.85, label = "e", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) + labs(fill = "Frequency")
+  
+  in_list[[7]]$bp <- in_list[[7]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Diatoms") +
+    annotate(x = -126.95, y = 36.85, label = "f", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[8]]$bp <- in_list[[8]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             axis.title.y = element_blank(),
+                                             axis.text.y = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Dinoflagellates") +
+    annotate(x = -126.95, y = 36.85, label = "g", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[9]]$bp <- in_list[[9]]$bp + theme(axis.title.x = element_blank(),
+                                             axis.text.x = element_blank(),
+                                             axis.title.y = element_blank(),
+                                             axis.text.y = element_blank(),
+                                             plot.title = element_text(hjust = 0, size = tsize),
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Syndiniales") +
+    annotate(x = -126.95, y = 36.85, label = "h", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[10]]$bp <- in_list[[10]]$bp + theme(axis.title.x = element_blank(),
+                                               axis.text.x = element_blank(),
+                                               axis.title.y = element_blank(),
+                                               axis.text.y = element_blank(),
+                                               plot.title = element_text(hjust = 0, size = tsize),
+                                               legend.position = "none",
+                                               plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Haptophytes") +
+    annotate(x = -126.95, y = 36.85, label = "i", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[11]]$bp <- in_list[[11]]$bp + theme(axis.title.x = element_blank(),
+                                               axis.text.x = element_blank(),
+                                               axis.title.y = element_blank(),
+                                               axis.text.y = element_blank(),
+                                               plot.title = element_text(hjust = 0, size = tsize),
+                                               legend.position = "none",
+                                               plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Chlorophytes") +
+    annotate(x = -126.95, y = 36.85, label = "j", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[12]]$bp <- in_list[[12]]$bp + theme(axis.title.x = element_blank(),
+                                               axis.text.x = element_blank(),
+                                               axis.title.y = element_blank(),
+                                               axis.text.y = element_blank(),
+                                               plot.title = element_text(hjust = 0, size = tsize),
+                                               legend.position = "none",
+                                               plot.margin = ggplot2::margin(5,5,0,5)) + ggtitle("Metazoans") +
+    annotate(x = -126.95, y = 36.85, label = "k", size = 7, geom = "text", fontface = "bold") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
+  
+  in_list[[1]]$rp <- in_list[[1]]$rp + theme(legend.position = "none",
+                                             plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[2]]$rp <- in_list[[2]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
                                              axis.text.y = element_blank(),
                                              plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[3]]$rp <- in_list[[3]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
                                              axis.text.y = element_blank(),
                                              plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[4]]$rp <- in_list[[4]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
                                              axis.text.y = element_blank(),
                                              plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[5]]$rp <- in_list[[5]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
                                              axis.text.y = element_blank(),
-                                             plot.title = element_text(hjust = 0)) + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                             plot.title = element_text(hjust = 0),
+                                             plot.margin = ggplot2::margin(0,5,5,5),
+                                             legend.title = element_text(size = tsize, vjust = 0.5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119)) + labs(fill = "Frequency")
   
   in_list[[7]]$rp <- in_list[[7]]$rp + theme(legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[8]]$rp <- in_list[[8]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
                                              axis.text.y = element_blank(),
                                              plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[9]]$rp <- in_list[[9]]$rp + theme(axis.title.y = element_blank(),
-                                             axis.ticks.y = element_blank(),
                                              axis.text.y = element_blank(),
                                              plot.title = element_text(hjust = 0),
-                                             legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                             legend.position = "none",
+                                             plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[10]]$rp <- in_list[[10]]$rp + theme(axis.title.y = element_blank(),
-                                              axis.ticks.y = element_blank(),
                                               axis.text.y = element_blank(),
                                               plot.title = element_text(hjust = 0),
-                                              legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                              legend.position = "none",
+                                              plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[11]]$rp <- in_list[[11]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
                                                plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                               legend.position = "none",
+                                               plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   in_list[[12]]$rp <- in_list[[12]]$rp + theme(axis.title.y = element_blank(),
-                                               axis.ticks.y = element_blank(),
                                                axis.text.y = element_blank(),
                                                plot.title = element_text(hjust = 0),
-                                               legend.position = "none") + 
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3))
+                                               legend.position = "none",
+                                               plot.margin = ggplot2::margin(0,5,5,5)) + 
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
-  
+  layout <- "ABCDEK
+             FGHIJK
+             LMNOPQ
+             RSTUVW"
   
   
   pdf(file = file_name, width = 16, height = 12)
-  print(in_list[[1]]$bp + in_list[[2]]$bp + in_list[[3]]$bp + in_list[[4]]$bp + in_list[[5]]$bp + plot_spacer() +
+  print(in_list[[1]]$bp + in_list[[2]]$bp + in_list[[3]]$bp + in_list[[4]]$bp + in_list[[5]]$bp + 
           in_list[[1]]$rp + in_list[[2]]$rp + in_list[[3]]$rp + in_list[[4]]$rp + in_list[[5]]$rp + guide_area() +
           in_list[[7]]$bp + in_list[[8]]$bp + in_list[[9]]$bp + in_list[[10]]$bp + in_list[[11]]$bp + in_list[[12]]$bp + 
           in_list[[7]]$rp + in_list[[8]]$rp + in_list[[9]]$rp + in_list[[10]]$rp + in_list[[11]]$rp + in_list[[12]]$rp +
-          plot_layout(ncol = 6, guides = "collect"))
+          plot_layout(guides = "collect", design = layout))
   dev.off()
 }
 
@@ -1298,22 +1472,26 @@ suppl_fig_4_func <- function(in_list = plot_list, file_name = "figures_S/supp_fi
 full_aic_table_figure(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                         "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                         "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar 11 Clade", 
+                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "SAR 11 Clade", 
                                          "Diatoms",
                                          "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                      minimum_tp = 4, width_plot = 16,
+                      minimum_tp = 4, width_plot = 17.5,
                       figure_name_2 = paste0("figures_S/supp_fig_5_S",".pdf"),
-                      title_name = "", tsize = 12)
+                      title_name = "", tsize = 15)
 
-#### Suppl Figure 6: Diversity Maps #####
+##### Suppl Figure 6: Surface and DCM Diversity Maps #####
 
-suppl_fig_6_func <- function(file_name = "figures_S/supp_fig_6_S.pdf",
+source("analysis/response_figure.R")
+
+#### Suppl Figure 7: Diversity Maps #####
+
+suppl_fig_7_func <- function(file_name = "figures_S/supp_fig_7_S.pdf",
                                in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
                                in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar Clade", 
                                                   "Diatoms",
-                                                  "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"), tsize = 12){
+                                                  "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"), tsize = 20){
   
   div_map <- list()
   
@@ -1327,181 +1505,179 @@ suppl_fig_6_func <- function(file_name = "figures_S/supp_fig_6_S.pdf",
   }
   
   pro <- div_map[[1]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    ggtitle("a Prochlorococcus") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.x = element_blank()) +
+    ggtitle("Prochlorococcus") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "a", size = 7, geom = "text", fontface = "bold") 
   
   syn <- div_map[[2]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("b Synecococcus") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Synecococcus") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "b", size = 7, geom = "text", fontface = "bold") 
   
   flavo <- div_map[[3]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("c Flavobacteriales") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Flavobacteriales") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "c", size = 7, geom = "text", fontface = "bold")  
   
   rho <- div_map[[4]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("d Rhodobacterales") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Rhodobacterales") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "d", size = 7, geom = "text", fontface = "bold") 
   
   sar <- div_map[[5]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    ggtitle("e SAR 11 Clade") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.x = element_blank()) +
+    ggtitle("SAR 11 Clade") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "e", size = 7, geom = "text", fontface = "bold") 
   
   diatom <- div_map[[6]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("f Diatoms") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Diatoms") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "f", size = 7, geom = "text", fontface = "bold") 
   
   dino <- div_map[[7]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("g Dinoflagellates") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Dinoflagellates") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "g", size = 7, geom = "text", fontface = "bold") 
   
   sindin <- div_map[[8]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("h Syndiniales") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.x = element_text(size = tsize),
+          axis.title.x = element_text(size = tsize)) +
+    ggtitle("Syndiniales") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "h", size = 7, geom = "text", fontface = "bold")  
   
   hapto <- div_map[[9]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("i Haptophytes") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          legend.title = element_text(size = tsize-7)) +
+    ggtitle("Haptophytes") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "i", size = 7, geom = "text", fontface = "bold")  
   
   chloro <- div_map[[10]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("j Chlorophytes") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Chlorophytes") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "j", size = 7, geom = "text", fontface = "bold")  
   
   meta <- div_map[[11]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+2),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
-          legend.text = element_text(size = tsize),
+          legend.text = element_text(size = tsize-7),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize-7),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("k Metazoans") + labs(fill = "Mean Alpha\nDiversity") +
-    scale_x_continuous(breaks= scales::pretty_breaks(n=3)) 
+          axis.text.y = element_blank()) +
+    ggtitle("Metazoans") + labs(fill = "Mean Alpha\nDiversity") +
+    scale_x_continuous(breaks = c(-125,-122,-119)) +
+    annotate(x = -126.95, y = 36.9, label = "k", size = 7, geom = "text", fontface = "bold")  
   
   plot_div <-  pro + syn + flavo + rho +
     sar + diatom + dino + sindin +
@@ -1515,7 +1691,7 @@ suppl_fig_6_func <- function(file_name = "figures_S/supp_fig_6_S.pdf",
 }
 
 
-##### Suppl Figure 7: Diversity Importance Small Groups #####
+##### Suppl Figure 8: Diversity Importance Small Groups #####
 
 full_aic_table_figure_diversity_sign(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                        "diatom_18sv9","dino_18sv9", "syndin_18sv9",
@@ -1523,27 +1699,28 @@ full_aic_table_figure_diversity_sign(in_group_list = c("pro_16s", "syne_16s","fl
                                      in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales","Rhodobacterales", "Sar 11 Clade", 
                                                         "Diatoms",
                                                         "Dinoflagellates", "Syndiniales", "Haptophytes", "Chlorophytes","Metazoans"),
-                                     figure_name_2 = "figures_S/supp_fig_7_S.pdf",
-                                     col = 27, width_plot = 16, tsize = 12)
+                                     figure_name_2 = "figures_S/supp_fig_8_S.pdf",
+                                     col = 27, width_plot = 17.5, tsize = 14)
 
-####### Suppl Figure 8: Diversity - Productivity ########
+####### Suppl Figure 9: Diversity - Productivity ########
 
 
-suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
+suppl_fig_9_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
                              in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
                                                 "Rhodobacterales", "SAR 11 Clade", "Diatoms",
                                                 "Dinoflagellates", "Syndiniales", "Haptophytes",
-                                                "Chlorophytes","Metazoans"), tsize = 12,
-                             out_fig_name = "figures_S/supp_fig_8_S.pdf"){
+                                                "Chlorophytes","Metazoans"), tsize = 15,
+                             out_fig_name = "figures_S/supp_fig_9_S.pdf"){
   
   
   out_plot_list <- list()
   
   #pull IntC14 Data
   metadata <- read.csv("data/NCOG_sample_log_DNA_meta_2014-2020.csv")
-
+  lab_vect <- c("a","b","c","d","e",
+                "f","g","h","i","j", "k")
   
   for (i in 1:length(in_group_list)) {
     
@@ -1558,18 +1735,48 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
     
     prodo_dat$phase <- substr(prodo_dat$Cruise,1,4)
     
-    prodo_dat$phase[which(prodo_dat$phase == "2014" | prodo_dat$phase == "2015" | prodo_dat$phase == "2016")] <- "Warm"
-    prodo_dat$phase[which(prodo_dat$phase == "2017" | prodo_dat$phase == "2018")] <- "Cool"
+    prodo_dat$phase[which(prodo_dat$phase == "2014" | prodo_dat$phase == "2015" | prodo_dat$phase == "2016")] <- "2014-2016"
+    prodo_dat$phase[which(prodo_dat$phase == "2017" | prodo_dat$phase == "2018")] <- "2017-2018"
     prodo_dat$phase[which(prodo_dat$phase == "2019" | prodo_dat$phase == "2020")] <- "2019-2020"
     
     prodo_dat$phase <- as.factor(prodo_dat$phase)
-    prodo_dat$phase <- factor(prodo_dat$phase, levels = c("Warm", "Cool", "2019-2020"))
+    prodo_dat$phase <- factor(prodo_dat$phase, levels = c("2014-2016", "2017-2018", "2019-2020"))
     
     gam_dat <- prodo_dat 
     
+    gam_dat$IntC14_day <- gam_dat$IntC14*2
+    
+    warm_lm <- summary(gam(richness ~ IntC14_day,data = gam_dat %>% filter(phase == "2014-2016")))
+    
+    warm_p <- warm_lm$p.pv[2]
+    
+    cool_lm <- summary(gam(richness ~ IntC14_day,data = gam_dat %>% filter(phase == "2017-2018")))
+    
+    cool_p <- cool_lm$p.pv[2]
+    
+    new_lm <- summary(gam(richness ~ IntC14_day,data = gam_dat %>% filter(phase == "2019-2020")))
+    
+    new_p <- new_lm$p.pv[2]
+    
+    fit_mat <- matrix(c("2014-2016", "2017-2018", "2019-2020",
+                        warm_p, cool_p, new_p),3,2, byrow = FALSE) %>% as.data.frame()
+    
+    fit_mat$V2 <- as.numeric(fit_mat$V2)
+    
+    gam_dat$sig <- "Y"
+    gam_dat$sig[which(!is.na(match(gam_dat$phase, fit_mat$V1[which(fit_mat$V2 > 0.05)])))] <- NA
+    
+    
+    round_list <- c(round(warm_p, 3),round(cool_p, 3),round(new_p, 3))
+    round_list[which(round_list == 0)] <- "< 0.01"
+    round_list[which(round_list > 0)] <- paste("= ", round_list[which(round_list  > 0)])
+    
+    p_window <- dist(range(gam_dat$richness)) * 0.1
+    
     out_plot_list[[i]] <- ggplot() +
-      geom_point(data = prodo_dat, aes(x = IntC14*2, y = richness, color = phase)) + scale_x_log10() + 
-      stat_smooth(data = gam_dat, aes(x = IntC14*2, y = richness, color = phase, fill = phase),
+      geom_point(data = gam_dat, aes(x = IntC14*2, y = richness, color = phase)) + scale_x_log10() + 
+      scale_y_continuous(breaks = scales::pretty_breaks(n = 5)) +
+      stat_smooth(data = gam_dat %>% filter(sig == "Y"), aes(x = IntC14*2, y = richness, color = phase, fill = phase),
                   method = "gam", se = 0.99) + labs(color = "Phase") +
       scale_color_manual(values = c("red", "blue","gold3")) +
       scale_fill_manual(values = c("red", "blue","gold3")) + ylab("Richness") +
@@ -1580,8 +1787,27 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
             legend.title = element_text(size = tsize),
             axis.text = element_text(size = tsize),
             axis.title = element_text(size = tsize),
-            plot.title = element_text(size = tsize)) +
-      ggtitle(in_group_names[i]) + guides(fill = FALSE)
+            plot.title = element_text(size = tsize),
+            legend.key = element_blank()) +
+      ggtitle(in_group_names[i]) + guides(fill = FALSE) +
+      annotate(geom = "text", x = 100, y = max(prodo_dat$richness, na.rm = TRUE)*0.95, label = lab_vect[i],
+               fontface = "bold", size = 7) +
+      annotate(geom = "rect", ymax = -2,
+               ymin = -Inf, xmin = -Inf, xmax = Inf,
+               fill = "white", color = "white") +
+      annotate(geom = "text", y = -p_window*0.75, x = 260, 
+               label = paste0("p ",
+                              round_list[1]),
+               color = "red", size = 2.5, fontface = "bold") +
+      annotate(geom = "text", y = -p_window*0.75, x = 650, 
+               label = paste0("p ",
+                              round_list[2]),
+               color = "blue", size = 2.5, fontface = "bold") +
+      annotate(geom = "text", y = -p_window*0.75, x = 1600, 
+               label = paste0("p ",
+                              round_list[3]),
+               color = "gold3", size = 2.5, fontface = "bold") +
+      coord_cartesian(ylim = c(-p_window,max(gam_dat$richness)))
     
     
   }
@@ -1598,7 +1824,7 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
     (out_plot_list[[9]] + theme()) +
     (out_plot_list[[10]] + theme(axis.title.y = element_blank())) +
     (out_plot_list[[11]] + theme(axis.title.y = element_blank())) +
-    guide_area()  + plot_layout(ncol = 4, guides = "collect") + plot_annotation(tag_levels = "a")
+    guide_area()  + plot_layout(ncol = 4, guides = "collect") 
   
   pdf(out_fig_name, width = 12, height = 9)
   print(out_plot)
@@ -1614,8 +1840,8 @@ suppl_fig_8_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s"
 
 ##### Suppl Figure 9: Environmental Differences #####
 
-suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
-                             suppl_plot = "figures_S/supp_fig_9_S.pdf",
+suppl_fig_10_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
+                             suppl_plot = "figures_S/supp_fig_10_S.pdf",
                              tsize = 12, psize = 6){
   
   map <- map_data("world")
@@ -1646,15 +1872,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(13,20), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean temperature (°C) (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "a", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Temperature (°C)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_t <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1666,7 +1898,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(13,20), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1676,8 +1908,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean temperature (°C) (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_t <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1690,7 +1924,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                          limits = c(-0.5,2), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1700,8 +1934,13 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in temperature\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("(2014-2016) - (2017-2018)") +
+    labs(tag = expression(Delta~Temperature)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   early_sa <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1713,15 +1952,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(33,34), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize + 3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean salinity (PSU) (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "c", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Salinty (PSU)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_sa <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1733,7 +1978,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(33,34), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1743,8 +1988,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean salinity (PSU) (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_sa <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1757,7 +2004,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                          limits = c(-0.5,0), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1767,8 +2014,13 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in salinity\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("(2014-2016) - (2017-2018)") +
+    labs(tag = expression(Delta~Salinity)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   early_ml <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1780,15 +2032,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(10,50), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean mixed layer depth (m) (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "e", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Mixed Layer Depth (m)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_ml <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1800,7 +2058,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(10,50), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1810,8 +2068,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean mixed layer depth (m) (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018")  +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_ml <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1824,7 +2084,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                          limits = c(-20,10), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1834,8 +2094,13 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in mean mixed layer depth\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("(2014-2016) - (2017-2018)") +
+    labs(tag = expression(Delta~`Mixed Layer Depth`)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   early_nc <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1847,15 +2112,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,120), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean nitracline depth (m) (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "g", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Nitracline Depth (m)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_nc <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1867,7 +2138,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,120), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1877,8 +2148,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean nitracline depth (m) (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_nc <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1891,7 +2164,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                          limits = c(-20,20), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1901,8 +2174,13 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in mean nitracline depth\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("(2014-2016) - (2017-2018)") +
+    labs(tag = expression(Delta~`Nitracline Depth`)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   
   early_chl <- ggplot() + 
@@ -1915,15 +2193,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean chl-a μg/L (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "b", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Chlorophyll-a (μg/L)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_chl <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1935,7 +2219,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1945,8 +2229,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean chl-a μg/L (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_chl <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1959,7 +2245,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                          limits = c(-2,1), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -1969,8 +2255,13 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in mean chl-a\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("(2014-2016) - (2017-2018)") +
+    labs(tag = expression(Delta~`Chlorophyll-a`)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
 
   early_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -1982,15 +2273,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) + 
-    ggtitle("Mean nitrate μM (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "d", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Nitrate (μM)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -2002,7 +2299,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -2012,8 +2309,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean nitrate μM (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_n <- ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -2026,7 +2325,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(-6,0), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0), 
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -2036,8 +2335,13 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + 
-    ggtitle("Changes in mean nitrate\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + 
+    ggtitle("(2014-2016) - (2017-2018)")  +
+    labs(tag = expression(Delta~Nitrate)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   early_p <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2049,15 +2353,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,1), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0),
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean phosphate μM (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) +
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "f", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Phosphate (μM)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_p <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2069,7 +2379,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,1), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0),
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -2079,8 +2389,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean Phosphate μM (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_p <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2093,7 +2405,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(-0.25,0.25), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0),
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -2103,7 +2415,12 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + ggtitle("Changes in mean phosphate\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + ggtitle("(2014-2016) - (2017-2018)")  +
+    labs(tag = expression(Delta~Phosphate)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   early_si <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2115,15 +2432,21 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0),
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
-    ggtitle("Mean silicate μM (2014-2016)")
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(1.1,1.08),
+          plot.tag = element_text(size = tsize + 5),
+          plot.margin = ggplot2::margin(40,5,5,5)) +
+    ggtitle("2014-2016") +
+    annotate(x = -126.95, y = 36.85, label = "h", size = 7, geom = "text", fontface = "bold") +
+    labs(tag = "Mean Silicate (μM)") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   late_si <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2135,7 +2458,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                         limits = c(0,8), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0.5), axis.line = element_blank(),
           legend.justification=c(1,0),
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -2145,8 +2468,10 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) +
-    ggtitle("Mean silicate μM (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.background = element_blank()) +
+    ggtitle("2017-2018") +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
   diff_si <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -2159,7 +2484,7 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
                          limits = c(-1.5,1.5), oob = scales::squish) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA,colour = "black", linetype = "solid"),
-          plot.title = element_text(size = tsize), axis.line = element_blank(),
+          plot.title = element_text(size = tsize+3, hjust = 0), axis.line = element_blank(),
           legend.justification=c(1,0),
           legend.position=c(0.97, 0.03),
           legend.background = element_rect(fill = "white", color = "black"),
@@ -2169,79 +2494,164 @@ suppl_fig_9_func <- function(nutrient_dat = "output/mld_mean_profiles_S.Rdata",
           legend.title = element_text(size = tsize),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.title.y = element_blank()) + ggtitle("Changes in mean silicate\n(2014-2016) - (2017-2018)")
+          axis.title.y = element_blank(),
+          plot.tag.position = c(0,1.08),
+          plot.tag = element_text(size = tsize + 5, hjust = 0),
+          plot.margin = ggplot2::margin(40,5,5,5)) + ggtitle("(2014-2016) - (2017-2018)")  +
+    labs(tag = expression(Delta~Silicate)) +
+    scale_x_continuous(breaks = c(-125,-122,-119))
   
-  
-  plot_comb <- (early_t + late_t + diff_t + plot_layout(ncol = 3, guides = "collect"))/
-    (early_sa + late_sa + diff_sa + plot_layout(ncol = 3, guides = "collect"))/
-    (early_ml + late_ml + diff_ml + plot_layout(ncol = 3, guides = "collect"))/
-    (early_nc + late_nc + diff_nc + plot_layout(ncol = 3, guides = "collect"))|
-    (early_chl + late_chl + diff_chl + plot_layout(ncol = 3, guides = "collect"))/
-    (early_n + late_n + diff_n + plot_layout(ncol = 3, guides = "collect"))/
-    (early_p + late_p + diff_p + plot_layout(ncol = 3, guides = "collect"))/
-    (early_si + late_si + diff_si + plot_layout(ncol = 3, guides = "collect"))
-  
-  pdf(file = suppl_plot, width = 28, height = 16)
-  print(plot_comb)
-  dev.off()
-  
+ plot_comb <- (early_t + late_t + diff_t + plot_layout(ncol = 3, guides = "collect"))/
+   (early_sa + late_sa + diff_sa + plot_layout(ncol = 3, guides = "collect"))/
+   (early_ml + late_ml + diff_ml + plot_layout(ncol = 3, guides = "collect"))/
+   (early_nc + late_nc + diff_nc + plot_layout(ncol = 3, guides = "collect"))|
+   (early_chl + late_chl + diff_chl + plot_layout(ncol = 3, guides = "collect"))/
+   (early_n + late_n + diff_n + plot_layout(ncol = 3, guides = "collect"))/
+   (early_p + late_p + diff_p + plot_layout(ncol = 3, guides = "collect"))/
+   (early_si + late_si + diff_si + plot_layout(ncol = 3, guides = "collect")) 
+ 
+ pdf(file = suppl_plot, width = 22, height = 18)
+ print(plot_comb)
+ dev.off()
+ 
   }
 
-##### Suppl Figure 10: Community Differences ######
+##### Suppl Figure 11: Community Differences ######
 
-suppl_fig_10_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_10_S.pdf", tsize  = 12){
+suppl_fig_11_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_11_S.pdf", tsize  = 12){
   
     low <- 0.125
     high <- 0.6
     
-    all_plots <- (in_list[[6]]$deep + ggtitle("Archaea\nDCM (2014-2016) vs (2017-2018)") +
+    all_plots <- (in_list[[6]]$deep + ggtitle("Archaea") +
                     scale_fill_gradient(limits = c(low,high),
                                         low = "white", high = "red", oob = scales::squish) +
                     labs(fill = "Bray-Curtis\nSimilarity") +
-                    theme(legend.position = "none")) +
-      (in_list[[13]]$deep + ggtitle("Bacteria\nDCM (2014-2016) vs (2017-2018)") +
+                    theme(legend.position = "none",
+                          plot.background = element_blank()) +
+                    scale_x_continuous(breaks = c(-125,-122,-119)) +
+                    annotate(x = -126.95, y = 36.85, label = "a", size = 7, geom = "text", fontface = "bold")) +
+      (in_list[[13]]$deep + ggtitle("Bacteria") +
+         scale_fill_gradient(limits = c(low,high),
+                             low = "white", high = "red", oob = scales::squish) +
+         labs(fill = "Bray-Curtis\nSimilarity") +
+         theme(axis.title.y = element_blank(),
+               axis.text.y = element_blank())+
+         theme(legend.position = "none",
+               plot.background = element_blank()) +
+         scale_x_continuous(breaks = c(-125,-122,-119)) +
+         annotate(x = -126.95, y = 36.85, label = "b", size = 7, geom = "text", fontface = "bold")) +
+      (in_list[[14]]$deep + ggtitle("Cyanobacteria") +
+         scale_fill_gradient(limits = c(low,high),
+                             low = "white", high = "red", oob = scales::squish) +
+         labs(fill = "Bray-Curtis\nSimilarity") +
+         theme(axis.title.y = element_blank(),
+               axis.text.y = element_blank())+
+         theme(legend.position = "none",
+               plot.background = element_blank()) +
+         scale_x_continuous(breaks = c(-125,-122,-119)) +
+         annotate(x = -126.95, y = 36.85, label = "c", size = 7, geom = "text", fontface = "bold")) +
+      (in_list[[15]]$deep + ggtitle("Photosynthetic eukaryotic\nprotists") +
+         scale_fill_gradient(limits = c(low,high),
+                             low = "white", high = "red", oob = scales::squish) +
+         labs(fill = "Bray-Curtis\nSimilarity") +
+         theme(axis.title.y = element_blank(),
+               axis.text.y = element_blank())+
+         theme(legend.position = "none",
+               plot.background = element_blank()) +
+         scale_x_continuous(breaks = c(-125,-122,-119)) +
+         annotate(x = -126.95, y = 36.85, label = "d", size = 7, geom = "text", fontface = "bold")) +
+      (in_list[[16]]$deep + ggtitle("Heterotrophic eukaryotic\nprotists") +
          scale_fill_gradient(limits = c(low,high),
                              low = "white", high = "red", oob = scales::squish) +
          labs(fill = "Bray-Curtis\nSimilarity") +
          theme(axis.title.y = element_blank(),
                axis.text.y = element_blank(),
-               axis.ticks.y = element_blank())+
-         theme(legend.position = "none")) +
-      (in_list[[14]]$deep + ggtitle("Cyanobacteria\nDCM (2014-2016) vs (2017-2018)") +
-         scale_fill_gradient(limits = c(low,high),
-                             low = "white", high = "red", oob = scales::squish) +
-         labs(fill = "Bray-Curtis\nSimilarity") +
-         theme(axis.title.y = element_blank(),
-               axis.text.y = element_blank(),
-               axis.ticks.y = element_blank())+
-         theme(legend.position = "none")) +
-      (in_list[[15]]$deep + ggtitle("Photosynthetic eukaryotic\nprotists\nDCM (2014-2016) vs (2017-2018)") +
-         scale_fill_gradient(limits = c(low,high),
-                             low = "white", high = "red", oob = scales::squish) +
-         labs(fill = "Bray-Curtis\nSimilarity") +
-         theme(axis.title.y = element_blank(),
-               axis.text.y = element_blank(),
-               axis.ticks.y = element_blank())+
-         theme(legend.position = "none")) +
-      (in_list[[16]]$deep + ggtitle("Heterotrophic eukaryotic\nprotists\nDCM (2014-2016) vs (2017-2018)") +
-         scale_fill_gradient(limits = c(low,high),
-                             low = "white", high = "red", oob = scales::squish) +
-         labs(fill = "Bray-Curtis\nSimilarity") +
-         theme(axis.title.y = element_blank(),
-               axis.text.y = element_blank(),
-               axis.ticks.y = element_blank())) +
-      plot_layout(ncol = 5, nrow = 1, byrow = TRUE, guides = "collect") + 
-      plot_annotation(tag_levels = "a")
+               plot.background = element_blank()) +
+         scale_x_continuous(breaks = c(-125,-122,-119)) +
+         annotate(x = -126.95, y = 36.85, label = "e", size = 7, geom = "text", fontface = "bold")) +
+      plot_layout(ncol = 5, nrow = 1, byrow = TRUE, guides = "collect") +
+      plot_annotation(title = "DCM (2014-2016) vs (2017-2018)",
+                      theme = theme(plot.title = element_text(size = 18, hjust = 0.5))) 
     
-    pdf(file = file_name, width = 17, height = 4)
+    pdf(file = file_name, width = 15, height = 4)
     print(all_plots)
     dev.off()
   
 }
 
+##### Suppl Figure 12: Difference Plots ######
+
+suppl_fig_12_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_12_S.pdf", tsize = 12,
+                              in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
+                                                 "Rhodobacterales", "SAR 11 Clade", "Diatoms",
+                                                 "Dinoflagellates", "Syndiniales", "Haptophytes",
+                                                 "Chlorophytes","Metazoans")){
+  
+  groups <- c(1:5,7:12)
+  
+  low = 0.1
+  high = 0.8
+  
+  lab_list <- c("a","b","c","d","e","f","g","h", "i", "j", "k")
+  
+  plot_list <- list()
+  for (i in 1:length(groups)) {
+    
+    plot_list[[i]] <- in_list[[groups[i]]]$surf + 
+       scale_fill_gradient(limits = c(low,high),low = "white", high = "red", oob = scales::squish,
+                           breaks = scales::pretty_breaks(n = 3)) +
+       labs(fill = "Bray-Curtis\nSimilarity", subtitle = NULL, title = in_group_names[i])+
+       theme(plot.margin = ggplot2::margin(5,5,5,5),
+             legend.direction = "vertical",
+             legend.position = c(0.025,0.025), 
+             legend.justification = c(0,0),
+             legend.margin = ggplot2::margin(4,15,4,4)) + 
+      annotate(x = -126.95, y = 36.99, label = lab_list[i], size = 7, geom = "text", fontface = "bold") +
+      scale_x_continuous(breaks = c(-125,-122,-119))
+    
+  }
+
+  fig_plot <- (plot_list[[1]] + theme(legend.position = "none",
+                          axis.text.x = element_blank(), axis.title.x = element_blank())) +
+    (plot_list[[2]] + theme(legend.position = "none",
+                            axis.text.x = element_blank(), axis.title.x = element_blank(),
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[3]] + theme(legend.position = "none",
+                            axis.text.x = element_blank(), axis.title.x = element_blank(),
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[4]] + theme(legend.position = "none",
+                            axis.text.x = element_blank(), axis.title.x = element_blank(),
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[5]] + theme(legend.position = "none",
+                            axis.text.x = element_blank(), axis.title.x = element_blank())) +
+    (plot_list[[6]] + theme(legend.position = "none",
+                            axis.text.x = element_blank(), axis.title.x = element_blank(),
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[7]] + theme(legend.position = "none",
+                            axis.text.x = element_blank(), axis.title.x = element_blank(),
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[8]] + theme(legend.position = "none",
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[9]] + theme(legend.position = "none")) +
+    (plot_list[[10]] + theme(legend.position = "none",
+                            axis.text.y = element_blank(), axis.title.y = element_blank())) +
+    (plot_list[[11]] + theme(axis.text.y = element_blank(), axis.title.y = element_blank())) + guide_area() +
+    plot_layout(guides = "collect") +
+    plot_annotation(title = "Surface\n(2014-2016) vs (2017-2018)",
+                    theme = theme(plot.title = element_text(size = 14, hjust = 0.5)))
+  
+  
+  
+  pdf(file = file_name, width = 13, height = 10)
+  print(fig_plot)
+  dev.off()
+  
+}
+
 ##### Suppl Figure 11: Violin Plots ######
 
-suppl_fig_11_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_11_S.pdf", tsize = 12){
+suppl_fig_11x_func <- function(in_list = fig_list, file_name = "figures_S/supp_fig_XX_S.pdf", tsize = 12){
 
 groups <- c(1:5,7:12)
 
@@ -2257,7 +2667,7 @@ total_mat$Group <-  as.factor(total_mat$Group)
 
 total_mat$Group <- factor(total_mat$Group,
                           levels =  c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
-                                      "Rhodobacterales", "Sar Clade", "Diatoms",
+                                      "Rhodobacterales", "SAR 11 Clade", "Diatoms",
                                       "Dinoflagellates", "Syndiniales", "Haptophytes",
                                       "Chlorophytes", "Metazoans"))
 
@@ -2267,7 +2677,7 @@ p_val_comb$Group <-  as.factor(p_val_comb$Group)
 
 p_val_comb$Group <- factor(p_val_comb$Group,
                            levels =  c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
-                                       "Rhodobacterales", "Sar Clade", "Diatoms",
+                                       "Rhodobacterales", "SAR 11 Clade", "Diatoms",
                                        "Dinoflagellates", "Syndiniales", "Haptophytes",
                                        "Chlorophytes", "Metazoans"))
 
@@ -2285,7 +2695,7 @@ between <- total_mat %>%
 p_val_comb <- p_val_comb %>% filter(p_val < 0.05)
 
 group_order <-  c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
-                  "Rhodobacterales", "Sar Clade", "Diatoms",
+                  "Rhodobacterales", "SAR 11 Clade", "Diatoms",
                   "Dinoflagellates", "Syndiniales", "Haptophytes",
                   "Chlorophytes", "Metazoans")
 
@@ -2390,35 +2800,38 @@ fig_plot <- ggplot() +
            y = b_med$V2, yend = b_med$V1,
            colour = "black") +
   annotate("point", x = p_val_comb$X_val, y = p_val_comb$Y_val, size = 3) +
-  annotate("text", x = 10.5, y = 0.95,
-           label = "Wilcoxon Signed Rank Test, p < 0.05") +
   scale_fill_manual(values = c("white", "dodgerblue1", "firebrick1")) +
   ylab("Bray-Curtis Similarity") + 
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black"),
         plot.title = element_text(size = tsize),
         axis.title = element_text(size = tsize),
-        axis.text.y = element_text(size = tsize),
-        axis.text.x = element_text(size = tsize)) 
+        axis.text.y = element_text(size = tsize+2),
+        axis.text.x = element_text(size = tsize),
+        axis.title.x = element_blank(),
+        legend.text = element_text(size = tsize +2),
+        legend.title = element_text(size = tsize +2)) 
 
-pdf(file = file_name, width = 17, height = 6)
+pdf(file = file_name, width = 16.75, height = 6)
 print(fig_plot)
 dev.off()
 
 }
 
-###### Suppl Figure 12: Prop Nearshore over Time #####
+###### Suppl Figure 13: Nitracline slope #####
 
+source("analysis/CUTI_BEUTI_Plots.R")
 
+###### Suppl Figure 14: Prop Nearshore over Time #####
 
-suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
+suppl_fig_14_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
                                in_group_names = c("a Prochlorococcus", "b Synecococcus", "c Flavobacteriales",
                                                   "d Rhodobacterales", "e SAR 11 Clade", "f Diatoms",
                                                   "g Dinoflagellates", "h Syndiniales", "i Haptophytes",
                                                   "j Chlorophytes","k Metazoans"),
-                               gradient_plot_file = "figures_S/supp_fig_12_S.pdf",
+                               gradient_plot_file = "figures_S/supp_fig_14_S.pdf",
                                tsize = 12){
   
   
@@ -2426,7 +2839,7 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
   
   for (i in  1:length(in_group_list)) {
     
-    load(paste0("output/",in_group_list[i],"_diffs_div_S.Rdata"))
+    load(paste0("output/",in_group_list[i],"_diffs_S.Rdata"))
     
     plot_list[[i]] <- ts_plot
     
@@ -2434,20 +2847,22 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
   
   
   pro <- plot_list[[1]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    ggtitle("A. Prochlorococcus") + 
-    ylab("Mean Shannon Diversity\nPer Cruise")
+          axis.text.x = element_blank()) +
+    ggtitle("Prochlorococcus") + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "a", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   syn <- plot_list[[2]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -2455,14 +2870,16 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("B. Synecococcus") 
+          axis.text.y = element_blank()) +
+    ggtitle("Synecococcus")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "b", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   flavo <- plot_list[[3]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -2470,14 +2887,16 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("C. Flavobacteriales") 
+          axis.text.y = element_blank()) +
+    ggtitle("Flavobacteriales")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "c", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   rho <- plot_list[[4]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -2485,27 +2904,32 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("D. Rhodobacterales") 
+          axis.text.y = element_blank()) +
+    ggtitle("Rhodobacterales")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "d", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   sar <- plot_list[[5]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    ggtitle("E. Sar Clade") + 
-    ylab("Mean Shannon Diversity\nPer Cruise")
+          axis.text.x = element_blank()) +
+    ggtitle("SAR 11 Clade") + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "e", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   diatom <- plot_list[[6]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -2513,14 +2937,16 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("F. Diatoms") 
+          axis.text.y = element_blank()) +
+    ggtitle("Diatoms")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "f", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   dino <- plot_list[[7]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
@@ -2528,60 +2954,75 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
           legend.title = element_text(size = tsize),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("G. Dinoflagellates") 
+          axis.text.y = element_blank()) +
+    ggtitle("Dinoflagellates")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "g", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   sindin <- plot_list[[8]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("H. Syndiniales") + 
-    xlab("Date") 
+          axis.text.y = element_blank()) +
+    ggtitle("Syndiniales") + 
+    xlab("Date")  + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "h", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   hapto <- plot_list[[9]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize)) +
-    ggtitle("I. Haptophytes") + 
+    ggtitle("Haptophytes") + 
     xlab("Date") + 
-    ylab("Mean Shannon Diversity\nPer Cruise")
+    ylab("Proportion of Samples\nIdentified as Nearshore") + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "i", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   chloro <- plot_list[[10]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("J. Chlorophytes") + 
-    xlab("Date")
+          axis.text.y = element_blank()) +
+    ggtitle("Chlorophytes") + 
+    xlab("Date") + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "j", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   meta <- plot_list[[11]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
           axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("K. Metazoans") + 
-    xlab("Date")
+          axis.text.y = element_blank()) +
+    ggtitle("Metazoans") + 
+    xlab("Date") + 
+    ylab("Proportion of Samples\nIdentified as Nearshore") +
+    annotate(geom = "text", x = dmy("1-1-2014"), y = 0.95, 
+             label = "k", fontface = "bold", size = 6) +
+    scale_y_continuous(limits = c(0,1), expand = c(0,0))
   
   plot_grad <-  pro + syn + flavo + rho +
     sar + diatom + dino + sindin +
@@ -2595,17 +3036,17 @@ suppl_fig_12_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
   
 }
 
-##### Suppl Figure 13: Diversity vs Slope #####
+##### Suppl Figure 15: Diversity vs Slope #####
 
-suppl_fig_13_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
+suppl_fig_15_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s", "rhodo_16s", "sar_16s", 
                                                  "diatom_18sv9","dino_18sv9", "syndin_18sv9",
                                                  "hapto_18sv9", "chloro_18sv9", "metazoa_18sv9"),
-                               in_group_names = c("a Prochlorococcus", "b Synecococcus", "c Flavobacteriales",
-                                                  "d Rhodobacterales", "e Sar Clade", "f Diatoms",
-                                                  "g Dinoflagellates", "h Syndiniales", "i Haptophytes",
-                                                  "j Chlorophytes","k Metazoans"),
-                             gradient_plot_file = "figures_S/supp_fig_13_S.pdf",
-                             tsize = 12){
+                               in_group_names = c("Prochlorococcus", "Synecococcus", "Flavobacteriales",
+                                                  "Rhodobacterales", "SAR 11 Clade", "Diatoms",
+                                                  "Dinoflagellates", "Syndiniales", "Haptophytes",
+                                                  "Chlorophytes","Metazoans"),
+                             gradient_plot_file = "figures_S/supp_fig_15_S.pdf",
+                             tsize = 15){
   
   
   plot_list <- list()
@@ -2618,178 +3059,172 @@ suppl_fig_13_func <- function(in_group_list = c("pro_16s", "syne_16s","flavo_16s
     
   }
   
-  
   pro <- plot_list[[1]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
+          plot.tag.position = c(0.19,0.88),
+          plot.tag = element_text(size = 14, face = "bold")) +
     ggtitle("Prochlorococcus") + 
-    ylab("Mean Alpha Diversity\nPer Cruise")
+    ylab("Mean Alpha Diversity\nPer Cruise") +
+    labs(tag = "a")
   
   syn <- plot_list[[2]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("Synecococcus") 
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
+    ggtitle("Synecococcus")  +
+    labs(tag = "b")
   
   flavo <- plot_list[[3]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("Flavobacteriales") 
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
+    ggtitle("Flavobacteriales") +
+    labs(tag = "c")
   
   rho <- plot_list[[4]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("Rhodobacterales") 
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
+    ggtitle("Rhodobacterales") +
+    labs(tag = "d") 
   
   sar <- plot_list[[5]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
+          plot.tag.position = c(0.19,0.88),
+          plot.tag = element_text(size = 14, face = "bold")) +
     ggtitle("SAR 11 Clade") + 
-    ylab("Mean Alpha Diversity\nPer Cruise")
+    ylab("Mean Alpha Diversity\nPer Cruise") +
+    labs(tag = "e")
   
   diatom <- plot_list[[6]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("Diatoms") 
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
+    ggtitle("Diatoms") +
+    labs(tag = "f") 
   
   dino <- plot_list[[7]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    ggtitle("Dinoflagellates") 
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
+    ggtitle("Dinoflagellates") +
+    labs(tag = "g") 
   
   sindin <- plot_list[[8]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
     ggtitle("Syndiniales") + 
-    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    labs(tag = "h")
   
   hapto <- plot_list[[9]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
-          legend.title = element_text(size = tsize)) +
+          legend.title = element_text(size = tsize),
+          plot.tag.position = c(0.19,0.88),
+          plot.tag = element_text(size = 14, face = "bold")) +
     ggtitle("Haptophytes") + 
     xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") + 
-    ylab("Mean Alpha Diversity\nPer Cruise")
+    ylab("Mean Alpha Diversity\nPer Cruise") +
+    labs(tag = "i")
   
   chloro <- plot_list[[10]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           legend.position = "none",
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
     ggtitle("Chlorophytes") + 
-    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    labs(tag = "j")
   
   meta <- plot_list[[11]] +
-    theme(plot.title = element_text(hjust = 0, size = tsize),
+    theme(plot.title = element_text(hjust = 0, size = tsize+4),
           axis.text = element_text(size = tsize),
           legend.text = element_text(size = tsize),
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
+          plot.tag.position = c(0.1,0.88),
+          plot.tag = element_text(size = 14, face = "bold"),
+          axis.title.y = element_blank()) +
     ggtitle("Metazoans") + 
-    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+    xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    labs(tag = "k")
  
   plot_grad <-  pro + syn + flavo + rho +
     sar + diatom + dino + sindin +
-    hapto + chloro + meta + guide_area() + plot_layout(ncol = 4, guides = "collect") +
-    plot_annotation(tag_levels = "a")
+    hapto + chloro + meta + guide_area() + plot_layout(ncol = 4, guides = "collect") 
   
   
-  pdf(file = gradient_plot_file, width = 14, height = 10)
+  pdf(file = gradient_plot_file, width = 19, height = 13)
   print(plot_grad)
   dev.off()
   
   
 }
 
-##### Suppl Figure 14: Total Diversity vs Slope #####
+##### Suppl Figure 15: Total Diversity vs Slope #####
 
-suppl_fig_14_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div_S.Rdata",
+suppl_fig_15x_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div_S.Rdata",
                              in_euks = "output/euks_hetero_18sv9_diffs_div_S.Rdata",
                              in_cyano = "output/cyano_16s_diffs_div_S.Rdata",
                              in_bact = "output/bacteria_m_euks_16s_diffs_div_S.Rdata",
                              in_arch = "output/archaea_16s_diffs_div_S.Rdata",
-                             gradient_plot_file = "figures_S/supp_fig_14_S.pdf",
+                             gradient_plot_file = "figures_S/supp_fig_XX_S.pdf",
                              tsize = 12){
   
   load(in_phyto)
@@ -2809,46 +3244,61 @@ suppl_fig_14_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div_S.Rda
   
   phyto_gradient2 <- phyto_gradient2 + theme(legend.position = "none") + xlab("")  + 
     ylab("Gamma Diversity\nPer Cruise") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          plot.title = element_text(hjust=0, size = tsize),
+    theme(plot.title = element_text(hjust=0, size = tsize + 4),
           axis.title = element_text(size = tsize),
-          axis.title.y = element_text(size = tsize),
-          axis.text.y = element_text(size = tsize)) + ggtitle("Photosynthetic eukaryotic protists")
+          axis.text = element_text(size = tsize),
+          axis.title.x = element_blank(),
+          axis.text.x = element_blank(),
+          legend.key = element_blank(),
+          legend.position = "none") + ggtitle("Photosynthetic eukaryotic protists") +
+    annotate(geom = "text", x =0.17, y = 5.2, label = "a", fontface ="bold", size = 5)
   
   euk_gradient2 <- euk_gradient2 + theme(legend.position = "none") + xlab("") + ylab("") +
-    theme(axis.text.x  = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.text.y  = element_text(size = tsize),
-          plot.title = element_text(hjust=0, size = tsize),
-          axis.title = element_text(size = tsize)) + ggtitle("Heterotrophic eukaryotic protists")
+    theme(axis.text  = element_text(size = tsize),
+          plot.title = element_text(hjust=0, size = tsize + 4),
+          axis.title = element_text(size = tsize),
+          axis.title.x = element_blank(),
+          axis.text.x = element_blank(),
+          legend.key = element_blank(),
+          legend.position = "none") + ggtitle("Heterotrophic eukaryotic protists") +
+    annotate(geom = "text", x =0.17, y = 6.8, label = "b", fontface ="bold", size = 5)
   
   cyano_gradient2 <- cyano_gradient2 + theme(legend.position = "none")  + 
     ylab("Gamma Diversity\nPer Cruise") + 
     xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
-    theme(plot.title = element_text(hjust=0, size = tsize),
+    theme(plot.title = element_text(hjust=0, size = tsize + 4),
           axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("Cyanobacteria")
+          axis.text = element_text(size = tsize),
+          legend.key = element_blank(),
+          legend.position = "none") + ggtitle("Cyanobacteria") +
+    annotate(geom = "text", x =0.17, y = 2.37, label = "c", fontface ="bold", size = 5)
   
   bact_gradient2 <- bact_gradient2 +
     theme(axis.text.y  = element_text(size = tsize),
-          plot.title = element_text(hjust=0, size = tsize),
+          plot.title = element_text(hjust=0, size = tsize + 4),
           axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("Bacteria") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+          axis.text = element_text(size = tsize),
+          legend.key = element_blank(),
+          legend.text = element_text(size = tsize),
+          legend.title = element_text(size = tsize)) + ggtitle("Bacteria") +
+    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    annotate(geom = "text", x =0.17, y = 6.14, label = "d", fontface ="bold", size = 5)
   
   arch_gradient2 <- arch_gradient2 +
     theme(axis.text.y  = element_text(size = tsize),
-          plot.title = element_text(hjust=0, size = tsize),
+          plot.title = element_text(hjust=0, size = tsize + 4),
           axis.title = element_text(size = tsize),
-          axis.text = element_text(size = tsize)) + ggtitle("Archaea") +
-    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)")
+          axis.text = element_text(size = tsize),
+          legend.key = element_blank(),
+          legend.position = "none") + ggtitle("Archaea") +
+    ylab("") + xlab("Nearshore-Offshore\nSlope in Nitracline (m/km)") +
+    annotate(geom = "text", x =0.17, y = 4.25, label = "e", fontface ="bold", size = 5)
+  
   
   grad_plot <- phyto_gradient2 + euk_gradient2 + guide_area() +
-    cyano_gradient2 + bact_gradient2 + arch_gradient2 + plot_layout(guides = "collect") +
-    plot_annotation(tag_levels = "a")
+    cyano_gradient2 + bact_gradient2 + arch_gradient2 + plot_layout(guides = "collect")
   
-  pdf(file = gradient_plot_file, width = 12, height = 7)
+  pdf(file = gradient_plot_file, width = 13, height = 8)
   print(grad_plot)
   dev.off()
   
@@ -2857,11 +3307,11 @@ suppl_fig_14_func <- function(in_phyto = "output/euks_auto_18sv9_diffs_div_S.Rda
 
 ###### Suppl Figure 15: Filter QC ########
 
-source("analysis/suppl_fig_15.R")
+# source("analysis/suppl_fig_15.R")
 
-###### Suppl Figure 15: Mock Communities ########
+###### Suppl Figure 16: Mock Communities ########
 
-source("analysis/suppl_fig_16.R")
+source("analysis/suppl_fig_16_S.R")
 
 ##### Suppl Figure XX: Community vs Time Season #####
 

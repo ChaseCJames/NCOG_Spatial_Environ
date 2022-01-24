@@ -56,7 +56,9 @@ a <- ggplot() +
                       breaks = c(10,25,50,75,100), labels = c("< 10","25","50","75","> 100")) +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA,colour = "black", linetype = "solid")) +
-  annotate(geom = "text", label = "Winter Cruise 2015", x = -121, y = 28.2)
+  annotate(geom = "text", label = "Winter Cruise 2015", x = -121, y = 28.2, size = 2.5) +
+  annotate(geom = "text", x = -126.95, y = 36.95, label = "a", fontface = "bold", size = 4) +
+  scale_x_continuous(breaks = c(-125,-122,-119))
   
 
 b <- ggplot() + 
@@ -70,7 +72,9 @@ b <- ggplot() +
                       breaks = c(10,25,50,75,100), labels = c("< 10","25","50","75","> 100")) +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA,colour = "black", linetype = "solid")) +
-  annotate(geom = "text", label = "Summer Cruise 2019", x = -121, y = 28.2)
+  annotate(geom = "text", label = "Summer Cruise 2019", x = -121, y = 28.2, size = 2.5) +
+  annotate(geom = "text", x = -126.95, y = 36.95, label = "b", fontface = "bold", size = 4) +
+  scale_x_continuous(breaks = c(-125,-122,-119))
 
 
 yr_plot <- ggplot(ncd_data, aes(x = -Distance.from.Shore, y = NCDepth,
@@ -80,10 +84,11 @@ yr_plot <- ggplot(ncd_data, aes(x = -Distance.from.Shore, y = NCDepth,
   labs(x = "Distance from Shore (km)", y = "Nitracline Depth (m)") +
   theme(panel.background = element_blank(),
         panel.border = element_rect(fill = NA, color = "black")) +
-  scale_color_date(low = "lightblue3", high = "darkblue")
+  scale_color_date(low = "lightblue3", high = "darkblue") +
+  annotate(geom = "text", x = -10, y = 0, label = "c", fontface = "bold", size = 4)
 
 
-plot_nc <- (a + b + plot_layout(guides = "collect")) / yr_plot + plot_annotation(tag_levels = "a")
+plot_nc <- (a + b + plot_layout(guides = "collect")) / yr_plot 
 
 agg_png("figures/nitracline_examples.png", width = 8, height = 8, units = "in", res = 400)
 plot(plot_nc)
@@ -146,7 +151,7 @@ p1 <- ggplot(data = cruise_dat, aes(x = mean_date)) +
   geom_line(aes(y = BEUTI_mean, color = "Mean BEUTI"), size = 1) +
   geom_point(aes(y = -nc_slope*nc_slope_fit, color = "Nitracline Slope"), size = 5) +
   geom_line(aes(y = -nc_slope*nc_slope_fit, color = "Nitracline Slope"), size = 1) +
-  scale_y_continuous(name = "BEUTI\n(Biologically Effective Transport Upwelling Index)",
+  scale_y_continuous(name = "BEUTI\n(Biologically Effective Upwelling Trasport Index)",
                      sec.axis = sec_axis(~.*-1/nc_slope_fit,
                                          name = "Nitracline Slope (m/km)",
                                          breaks = c(0,-0.1,-0.2,-0.3, -0.4, -0.5),
@@ -157,7 +162,9 @@ p1 <- ggplot(data = cruise_dat, aes(x = mean_date)) +
         panel.grid.major = element_line(color = "grey92"),
         panel.grid.minor = element_line(color = "grey92"),
         legend.key = element_blank()) +
-  scale_color_manual(values = cols)
+  scale_color_manual(values = cols) +
+  annotate(geom = "text", x = dmy("01-01-2014"), y = 10.3, label = "d",
+           fontface = "bold", size = 4)
 
  
 p2 <- ggplot(data = cruise_dat, aes(x = BEUTI_mean, y = nc_slope)) +
@@ -170,10 +177,12 @@ p2 <- ggplot(data = cruise_dat, aes(x = BEUTI_mean, y = nc_slope)) +
         axis.title.y = element_text(color = "#b02812"),
         plot.background = element_blank())
 
-out_plot <- p1 + inset_element(p2, 0.01,0.65,0.5,0.99)
+out_plot <- p1 + inset_element(p2, 0.01,0.6,0.52,0.9)
 
-agg_png("figures/nitracline_figure.png", width = 10, height = 6, res = 400, units = "in")
-plot(out_plot)
+comb <- plot_nc | out_plot
+
+pdf("figures_S/supp_fig_13_S.pdf", width = 12, height = 5)
+plot(comb)
 dev.off()
 
 

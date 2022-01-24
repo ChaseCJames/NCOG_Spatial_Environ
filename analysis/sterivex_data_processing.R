@@ -8,6 +8,22 @@ eight_s <- read.csv("data/NCOG_18sV9_asv_count_tax_S.csv", header = TRUE)
 six_s <- read.csv("data/NCOG_21_16S_redo2_asv_count_tax.csv", header = TRUE)
 metadata <- read.csv("data/NCOG_sample_log_DNA_stvx_meta_2014-2020.csv", header = TRUE)
 
+# remove internal spikes
+
+# 16S
+
+six_remove <- c("d__Bacteria; p__Deinococcota; c__Deinococci; o__Thermales; f__Thermaceae; g__Thermus; s__Thermus_thermophilus",
+                "d__Bacteria; p__Deinococcota; c__Deinococci; o__Deinococcales; f__Deinococcaceae; g__Deinococcus; s__Deinococcus_radiodurans",
+                "d__Bacteria; p__Firmicutes; c__Clostridia; o__Lachnospirales; f__Lachnospiraceae; g__Blautia")
+
+six_s <- six_s %>% filter(!silva_Taxon %in% six_remove)
+
+# 18s
+
+eight_remove <- "Eukaryota;Opisthokonta;Fungi;Ascomycota;Taphrinomycotina;Schizosaccharomycetes;Schizosaccharomyces;Schizosaccharomyces_pombe;"
+
+eight_s <- eight_s %>% filter(!pr2_Taxon %in% eight_remove)
+
 # pull out taxonomy data
 
 eight_tax_id <- eight_s[,c(1,1538:1543)]

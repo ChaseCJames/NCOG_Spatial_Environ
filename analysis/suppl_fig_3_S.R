@@ -17,7 +17,7 @@ in_group_list_basic = c("16s_bacteria_m_euks", "16s_cyanos", "16s_archaea",
 
 out_plot <- list()
 split_plot <- list()
-tsize = 22
+tsize = 20
 
 ###### bacteria #######
 
@@ -115,7 +115,6 @@ i = 1
   nearshore$rank <- 1:nrow(nearshore)
   nearshore$diff <- asv_diff$diff[match(nearshore$Group, asv_diff$Group)]
   
-  
   os <- ggplot(offshore, aes(x=mean_grp_reads, y=Group, color = diff, size = mean_n)) +
     geom_point(show.legend = TRUE) +
     geom_segment(aes(y=Group, 
@@ -125,12 +124,18 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Offshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("") + theme(plot.title = element_text(vjust = 0, hjust = 0.5, size = 20)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads))))
+          axis.ticks.y = element_blank(),
+          legend.position = c(0.5,0.35),
+          legend.key = element_blank(),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize)) +
+    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)))) +
+    annotate(geom = "text", x = 0.15, y = 50, label = "Offshore",  size = 10) +
+    labs(size = "# of ASVs",color = expression(Delta*" Rel. Abun."))
   
   ns <- ggplot(nearshore, aes(x=mean_grp_reads, y= Group, color=diff, size = mean_n)) +
     geom_point(show.legend = FALSE) +
@@ -141,16 +146,22 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) + scale_x_reverse() +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Nearshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("Bacteria") + theme(plot.title = element_text(vjust = 0, hjust = 0, size = 40)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          legend.key = element_rect(fill = NA, color = NA)) +
+          legend.key = element_rect(fill = NA, color = NA),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize)) +
     labs(color = expression(Delta*" Relative Abundance"),
          size = "# of ASVs") +
-    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0))
+    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0)) +
+    annotate(geom = "text", x = 0.29, y = 70, label = "a", fontface = "bold", size = 14) +
+    annotate(geom = "text", x = 0.15, y = 50, label = "Nearshore",  size = 10)
   
   out_plot[[i]] <-  ns + os + plot_layout(guides = "collect")
   
@@ -268,12 +279,20 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Offshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("") + theme(plot.title = element_text(vjust = 0, hjust = 0.5, size = 20)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads))))
+          axis.ticks.y = element_blank(),
+          legend.position = c(0.5,0.45),
+          legend.key = element_blank(),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize)) +
+    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)))) +
+    annotate(geom = "text", x = 0.42, y = 14, label = "Offshore",  size = 10) +
+    labs(size = "# of ASVs",color = expression(Delta*" Rel. Abun."))
   
   ns <- ggplot(nearshore, aes(x=mean_grp_reads, y= Group, color=diff, size = mean_n)) +
     geom_point(show.legend = FALSE) +
@@ -284,16 +303,20 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) + scale_x_reverse() +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Nearshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("Cyanobacteria") + theme(plot.title = element_text(vjust = 0, hjust = 0, size = 40)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          legend.key = element_rect(fill = NA, color = NA)) +
+          legend.key = element_rect(fill = NA, color = NA),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize)) +
     labs(color = expression(Delta*" Relative Abundance"),
          size = "# of ASVs") +
-    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0))
+    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0)) +
+    annotate(geom = "text", x = 0.85, y = 16, label = "c", fontface = "bold", size = 14) +
+    annotate(geom = "text", x = 0.42, y = 14, label = "Nearshore",  size = 10)
   
   out_plot[[i]] <-  ns + os + plot_layout(guides = "collect")
   
@@ -401,12 +424,21 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Offshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("") + theme(plot.title = element_text(vjust = 0, hjust = 0.5, size = 20)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads))))
+          axis.ticks.y = element_blank(),
+          legend.position = c(0.5,0.45),
+          legend.key = element_blank(),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          plot.background = element_blank()) +
+    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)))) +
+    annotate(geom = "text", x = 0.31, y = 7, label = "Offshore",  size = 10) +
+    labs(size = "# of ASVs",color = expression(Delta*" Rel. Abun."))
   
   ns <- ggplot(nearshore, aes(x=mean_grp_reads, y= Group, color=diff, size = mean_n)) +
     geom_point(show.legend = FALSE) +
@@ -417,16 +449,21 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) + scale_x_reverse() +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Nearshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("Photosynthetic eukaryotic protists") + theme(plot.title = element_text(vjust = 0, hjust = 0, size = 40)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          legend.key = element_rect(fill = NA, color = NA)) +
+          legend.key = element_rect(fill = NA, color = NA),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          plot.background = element_blank()) +
     labs(color = expression(Delta*" Relative Abundance"),
          size = "# of ASVs") +
-    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0))
+    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0)) +
+    annotate(geom = "text", x = 0.6, y = 8, label = "e", fontface = "bold", size = 14) +
+    annotate(geom = "text", x = 0.31, y = 7, label = "Nearshore",  size = 10)
   
   out_plot[[i]] <-  ns + os + plot_layout(guides = "collect")
   
@@ -539,12 +576,20 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Offshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("") + theme(plot.title = element_text(vjust = 0, hjust = 0.5, size = 20)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads))))
+          axis.ticks.y = element_blank(),
+          legend.position = c(0.5,0.5),
+          legend.key = element_blank(),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize)) +
+    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)))) +
+    annotate(geom = "text", x = 0.46, y = 6.5, label = "Offshore",  size = 10) +
+    labs(size = "# of ASVs",color = expression(Delta*" Rel. Abun."))
   
   ns <- ggplot(nearshore, aes(x=mean_grp_reads, y= Group, color=diff, size = mean_n)) +
     geom_point(show.legend = FALSE) +
@@ -555,16 +600,20 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) + scale_x_reverse() +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Nearshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("Archaea") + theme(plot.title = element_text(vjust = 0, hjust = 0, size = 40)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          legend.key = element_rect(fill = NA, color = NA)) +
+          legend.key = element_rect(fill = NA, color = NA),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize)) +
     labs(color = expression(Delta*" Relative Abundance"),
          size = "# of ASVs") +
-    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0))
+    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0)) +
+    annotate(geom = "text", x = 0.93, y = 7, label = "d", fontface = "bold", size = 14) +
+    annotate(geom = "text", x = 0.46, y = 6.5, label = "Nearshore",  size = 10)
   
   out_plot[[i]] <-  ns + os + plot_layout(guides = "collect")
   
@@ -670,12 +719,21 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Offshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("") + theme(plot.title = element_text(vjust = 0, hjust = 0.5, size = 20)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads))))
+          axis.ticks.y = element_blank(),
+          legend.position = c(0.5,0.35),
+          legend.key = element_blank(),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          legend.title = element_text(size = tsize),
+          legend.text = element_text(size = tsize),
+          plot.background = element_blank()) +
+    xlim(c(0,max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads))))  +
+    annotate(geom = "text", x = 0.26, y = 53, label = "Offshore",  size = 10) +
+    labs(size = "# of ASVs",color = expression(Delta*" Rel. Abun."))
   
   ns <- ggplot(nearshore, aes(x=mean_grp_reads, y= Group, color=diff, size = mean_n)) +
     geom_point(show.legend = FALSE) +
@@ -686,16 +744,21 @@ i = 1
     scale_color_gradient2(low = "blue", high = "red", mid = "grey") +
     scale_size_continuous(range = c(0, 8)) + scale_x_reverse() +
     ylab("Rank") + xlab("Mean Relative Abundance") +
-    ggtitle("Nearshore") + theme(plot.title = element_text(vjust = 0, hjust = 0.5)) +
+    ggtitle("Heterotrophic eukaryotic protists") + theme(plot.title = element_text(vjust = 0, hjust = 0, size = 40)) +
     theme(panel.background = element_blank(),
           panel.border = element_rect(fill = NA, color = "black"),
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
-          legend.key = element_rect(fill = NA, color = NA)) +
+          legend.key = element_rect(fill = NA, color = NA),
+          axis.text = element_text(size = tsize),
+          axis.title = element_text(size = tsize),
+          plot.background = element_blank()) +
     labs(color = expression(Delta*" Relative Abundance"),
          size = "# of ASVs") +
-    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0))
+    xlim(c(max(c(offshore$mean_grp_reads,nearshore$mean_grp_reads)),0)) +
+    annotate(geom = "text", x = 0.5, y = 74, label = "b", fontface = "bold", size = 14) +
+    annotate(geom = "text", x = 0.26, y = 53, label = "Nearshore",  size = 10)
   
   out_plot[[i]] <-  ns + os + plot_layout(guides = "collect")
   
@@ -711,25 +774,20 @@ i = 1
              EFGH
              IJKK"
   
-  plot_final <- (split_plot[[1]]$ns + theme(text = element_text(size = tsize))) +
-    (split_plot[[1]]$os + labs(size = "# of ASVs",color = expression(Delta*" Relative Abundance")) + 
-       theme(text = element_text(size = tsize))) +
-    (split_plot[[4]]$ns + theme(text = element_text(size = tsize))) +
-    (split_plot[[4]]$os + labs(size = "# of ASVs",color = expression(Delta*" Relative Abundance")) + 
-       theme(text = element_text(size = tsize))) +
-    (split_plot[[2]]$ns + theme(text = element_text(size = tsize))) +
-    (split_plot[[2]]$os + labs(size = "# of ASVs",color = expression(Delta*" Relative Abundance")) + 
-       theme(text = element_text(size = tsize))) +
-    (split_plot[[3]]$ns + theme(text = element_text(size = tsize))) +
-    (split_plot[[3]]$os + labs(size = "# of ASVs",color = expression(Delta*" Relative Abundance")) + 
-       theme(text = element_text(size = tsize))) +
-    (split_plot[[5]]$ns + theme(text = element_text(size = tsize))) +
-    (split_plot[[5]]$os + labs(size = "# of ASVs",color = expression(Delta*" Relative Abundance")) + 
-       theme(text = element_text(size = tsize))) +
+  plot_final <- (split_plot[[1]]$ns) +
+    (split_plot[[1]]$os) +
+    (split_plot[[4]]$ns) +
+    (split_plot[[4]]$os) +
+    (split_plot[[2]]$ns) +
+    (split_plot[[2]]$os) +
+    (split_plot[[3]]$ns) +
+    (split_plot[[3]]$os) +
+    (split_plot[[5]]$ns) +
+    (split_plot[[5]]$os) +
     plot_spacer() + plot_layout(design = layout)
   
   
-  pdf("figures_S/supp_fig_3_S.pdf", width = 25, height = 28)
+  pdf("figures_S/supp_fig_3_S.pdf", width = 25, height = 34)
   print(plot_final)
   dev.off()
   
