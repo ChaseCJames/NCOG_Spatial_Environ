@@ -50,7 +50,7 @@ a <- ggplot() +
   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
   xlab("Longitude") + ylab("Latitude") + 
   geom_point(data = ncd_data %>% filter(CruiseAlias == flat), aes(x = DLon_Dec, y = DLat_Dec, fill = NCDepth),
-             color = "black", size =4, stroke = 0.1, shape = 21) +
+             color = "black", size =2, stroke = 0.1, shape = 21) +
   scale_fill_gradient(name = "Mean Nitracline\nDepth (m)", low = "darkblue", high = "cyan",
                       trans = 'reverse', limits = c(100,10), oob = scales::squish,
                       breaks = c(10,25,50,75,100), labels = c("< 10","25","50","75","> 100")) +
@@ -66,7 +66,7 @@ b <- ggplot() +
   coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
   xlab("Longitude") + ylab("Latitude") + 
   geom_point(data = ncd_data %>% filter(CruiseAlias == steep), aes(x = DLon_Dec, y = DLat_Dec, fill = NCDepth),
-             color = "black", size =4, stroke = 0.1, shape = 21) +
+             color = "black", size =2, stroke = 0.1, shape = 21) +
   scale_fill_gradient(name = "Mean Nitracline\nDepth (m)", low = "darkblue", high = "cyan",
                       trans = 'reverse', limits = c(100,10), oob = scales::squish,
                       breaks = c(10,25,50,75,100), labels = c("< 10","25","50","75","> 100")) +
@@ -181,7 +181,7 @@ out_plot <- p1 + inset_element(p2, 0.01,0.6,0.52,0.9)
 
 comb <- plot_nc | out_plot
 
-pdf("figures_S/supp_fig_13_S.pdf", width = 12, height = 5)
+pdf("figures_S/supp_fig_14_S.pdf", width = 12, height = 5)
 plot(comb)
 dev.off()
 

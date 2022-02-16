@@ -24,7 +24,7 @@ for (i in 1:length(in_group_list)) {
   
   plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map_S.Rdata"),
                                figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot_S.pdf"),
-                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 6)
+                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 3.75)
 
   
 }
@@ -195,7 +195,7 @@ for (i in 1:length(in_group_list)) {
                                 in_map = paste0("output/",in_group_list[i],"_map_S.Rdata"),
                                 community_diff_fig = paste0("figures/community_diff/",
                                                             in_group_list[i],"_both_diff_S.pdf"),
-                                tsize = 15, psize = 6, group = in_group_names[i])
+                                tsize = 15, psize = 4, group = in_group_names[i])
   print(i)
   
 }

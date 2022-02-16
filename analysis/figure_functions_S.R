@@ -36,7 +36,7 @@ library(ggtext)
 som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
                        figure_name = paste0("figures/som_maps/bacteria_16s_som_",Sys.Date(),".pdf"),
                        main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
-                       tsize = 15, psize = 4){
+                       tsize = 15, psize = 2){
   
   
   
@@ -135,11 +135,11 @@ regression_figure <- function(glm_file = "output/bacteria_m_euks_16s_glm_S.Rdata
   clust1 <- which.max(c(wt_1@coords[1], wt_2@coords[1]))
   clust2 <- which.min(c(wt_1@coords[1], wt_2@coords[1]))
   
-  if(clust1 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Offshore"}
-  if(clust1 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Offshore"}
+  if(clust1 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Nearshore"}
+  if(clust1 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Nearshore"}
   
-  if(clust2 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Nearshore"}
-  if(clust2 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Nearshore"}
+  if(clust2 == 1){som_plots$cluster[which(som_plots$cluster == "som_1")] <- "Offshore"}
+  if(clust2 == 2){som_plots$cluster[which(som_plots$cluster == "som_2")] <- "Offshore"}
   
   
   reg_plot <- ggplot(som_plots, aes_string(x = var, y = "freq", color = "cluster")) + geom_point() +
@@ -200,7 +200,7 @@ diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map_S.Rdata"
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = som_maps, aes(x = long, y = lat, fill = shannon), color = "black", size =6, stroke = 0.1, shape = 21) +
+    geom_point(data = som_maps, aes(x = long, y = lat, fill = shannon), color = "black", size =6.5, stroke = 0.1, shape = 21) +
     scale_fill_viridis() +
     ggtitle(paste0(main,"\nMean Shannon Diversity")) +
     theme(legend.title = element_blank(),

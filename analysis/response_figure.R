@@ -38,7 +38,7 @@ diveristy_figure_response <- function(map_file = paste0("output/", in_group_list
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = surf, aes(x = long, y = lat, fill = shannon), color = "black", size =6, stroke = 0.1, shape = 21) +
+    geom_point(data = surf, aes(x = long, y = lat, fill = shannon), color = "black", size =4, stroke = 0.1, shape = 21) +
     scale_fill_viridis(limits = c(min_v,max_v), breaks = scales::pretty_breaks(3)) +
     ggtitle(paste0(main,"\nSurface")) +
     theme(panel.background = element_blank(),
@@ -64,7 +64,7 @@ diveristy_figure_response <- function(map_file = paste0("output/", in_group_list
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = dcm, aes(x = long, y = lat, fill = shannon), color = "black", size =6, stroke = 0.1, shape = 21) +
+    geom_point(data = dcm, aes(x = long, y = lat, fill = shannon), color = "black", size =4, stroke = 0.1, shape = 21) +
     scale_fill_viridis(limits = c(min_v,max_v), breaks = scales::pretty_breaks(3)) +
     ggtitle(paste0("Deep Chlorophyll Maximum")) +
     theme(panel.background = element_blank(),
@@ -106,7 +106,7 @@ out <- plot_list[[6]]$p1 + plot_list[[1]]$p1 + plot_list[[2]]$p1 +
   plot_list[[3]]$p1 + plot_list[[4]]$p1 + plot_list[[5]]$p1 +  
   plot_list[[3]]$p2 + plot_list[[4]]$p2 + plot_list[[5]]$p2 + plot_layout(nrow = 4)
 
-pdf("figures_S/supp_fig_6.pdf", width = 12, height = 15)
+pdf("figures_S/supp_fig_7.pdf", width = 12, height = 15)
 plot(out)
 dev.off()
 
