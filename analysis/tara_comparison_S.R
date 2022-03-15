@@ -35,12 +35,12 @@ venn_plot <- venn.diagram(x = list(tara, polar, calcofi),
                           
                           
                           # Numbers
-                          cex = 1.5,
+                          cex = 0.5,
                           fontface = "bold",
                           fontfamily = "sans",
                           
                           # Set names
-                          cat.cex = 1.5,
+                          cat.cex = 0.5,
                           cat.default.pos = "outer",
                           cat.pos = c(-20, 20, 130),
                           cat.dist = c(0.055, 0.055, 0.055),

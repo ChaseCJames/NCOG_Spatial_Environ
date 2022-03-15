@@ -36,7 +36,7 @@ library(ggtext)
 som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
                        figure_name = paste0("figures/som_maps/bacteria_16s_som_",Sys.Date(),".pdf"),
                        main = "16s Bacteria", cluster1 = "Nearshore", cluster2 = "Offshore",
-                       tsize = 15, psize = 2){
+                       tsize = 7, psize = 1.5){
   
   
   
@@ -72,8 +72,8 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     scale_x_continuous(breaks = c(-124,-119)) +
     scale_y_continuous(breaks = c(35,32.5,30))
   
-  if(clust1 == 1){p1 <- p1 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "red", size = 5, pch = 10)}
-  if(clust1 == 2){p1 <- p1 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "red", size = 5, pch = 10)}
+  if(clust1 == 1){p1 <- p1 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "red", size = 2, pch = 10)}
+  if(clust1 == 2){p1 <- p1 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "red", size = 2, pch = 10)}
   
   p2 <-  ggplot() + 
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
@@ -93,8 +93,8 @@ som_figure <- function(map_file = "output/bacteria_m_euks_16s_map.Rdata",
     scale_y_continuous(breaks = c(35,32.5,30)) 
   
   
-  if(clust2 == 1){p2 <- p2 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "blue", size = 5, pch = 10)}
-  if(clust2 == 2){p2 <- p2 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "blue", size = 5, pch = 10)}
+  if(clust2 == 1){p2 <- p2 + geom_point(aes(x = wt_1@coords[1], y = wt_1@coords[2]), color = "blue", size = 2, pch = 10)}
+  if(clust2 == 2){p2 <- p2 + geom_point(aes(x = wt_2@coords[1], y = wt_2@coords[2]), color = "blue", size = 2, pch = 10)}
   
   title <- ggdraw() + draw_label(main, fontface='bold')
   a <- plot_grid(title,plot_grid(p2,p1), nrow = 2,
@@ -200,7 +200,7 @@ diveristy_figure <- function(map_file = "output/bacteria_m_euks_16s_map_S.Rdata"
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") + 
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
     xlab("Longitude") + ylab("Latitude") + 
-    geom_point(data = som_maps, aes(x = long, y = lat, fill = shannon), color = "black", size =6.5, stroke = 0.1, shape = 21) +
+    geom_point(data = som_maps, aes(x = long, y = lat, fill = shannon), color = "black", size =1.7, stroke = 0.1, shape = 21) +
     scale_fill_viridis() +
     ggtitle(paste0(main,"\nMean Shannon Diversity")) +
     theme(legend.title = element_blank(),
@@ -357,9 +357,9 @@ alpha_versus_gamma_figure <- function(full_data_file = "output/bacteria_m_euks_1
   #   scale_color_manual(values = c("royalblue2", "seagreen3")) 
   
   div_plot <- ggplot(som_maps, aes(x = Dist_mean)) + 
-    geom_point(aes(y = shannon, color = "Mean Alpha Diversity")) +
+    geom_point(aes(y = shannon, color = "Mean Alpha Diversity"), size = 0.7) +
     stat_smooth(aes(y = shannon), method = "loess", level = 0.95, color = "royalblue2") +
-    geom_point(aes(y = Gamma_Diversity, color = "Gamma Diversity")) +
+    geom_point(aes(y = Gamma_Diversity, color = "Gamma Diversity"), size = 0.7) +
     stat_smooth(aes(y = Gamma_Diversity), method = "loess", level = 0.95, color = "seagreen3") +
     ylab("Shannon Index") + xlab("Distance to Coast (km)") +
     theme(legend.title = element_blank(),
@@ -684,7 +684,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
                                   minimum_tp = 4, width_plot = 15,
                                   figure_name = paste0("figures/full_aic_table_logit_",Sys.Date(),".pdf"),
                                   figure_name_2 = paste0("figures/full_aic_plot_logit_",Sys.Date(),".pdf"),
-                                  title_name = "Variable Importance", tsize = 12){
+                                  title_name = "Variable Importance", tsize = 7){
   # load data
   
   map_list <- list()
@@ -812,7 +812,7 @@ full_aic_table_figure <- function(in_group_list = c("bacteria_m_euks_16s", "cyan
     theme(panel.background = element_blank(),
           panel.border = element_rect(color = "black", fill = NA),
           legend.position = "none",
-          panel.grid.major.y = element_line(color = "grey", linetype = 2),
+          panel.grid.major.y = element_line(color = "grey", linetype = 2, size = 0.25),
           plot.title = element_text(hjust = 0.5),
           axis.text.x = element_text(angle = 0),
           axis.text.y = element_markdown(size = tsize)) + ggtitle(title_name) +
@@ -1108,7 +1108,7 @@ full_aic_table_figure_diversity_sign <- function(in_group_list = c("cyano_16s","
           axis.text.y = element_markdown(size = tsize),
           legend.title = element_text(size = tsize),
           legend.text = element_text(size = tsize),
-          axis.text.x = element_text(size = tsize-2, angle = 0)) +
+          axis.text.x = element_text(size = tsize, angle = 0)) +
     scale_size_continuous(range = c(1,18), guide = FALSE) + xlab("") + ylab("")
   
   return(p)
@@ -1199,7 +1199,7 @@ fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdat
                                 in_dat = "output/total_full_data.Rdata",
                                 in_map = "output/total_map.Rdata",
                                 community_diff_fig = "figures/figure_outline/fig_x2.pdf",
-                                tsize = 12, psize = 12, group = "Total ASVs"){
+                                tsize = 7, psize = 12, group = "Total ASVs"){
   
   load(in_all)
   load(in_dat)
@@ -1353,6 +1353,7 @@ fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdat
   plot_a <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
     coord_fixed(xlim = c(-127, -116),ylim= c(28,37), 1.3) +
+    ggtitle(group) +
     xlab("Longitude") + ylab("Latitude") +
     geom_point(data = som_maps[complete.cases(som_maps$surf_bc_vals),],
                aes_string(x = "long", y = "lat", fill = "surf_bc_vals"),
@@ -1370,8 +1371,8 @@ fig_commun_map_surf_deep_func <- function(in_all = "output/total_dissimilar.Rdat
           axis.title = element_text(size = tsize),
           legend.title = element_text(size = tsize),
           axis.text.x = element_text(size = tsize),
-          axis.title.x = element_text(size = tsize)) +
-    ggtitle(group,paste0("Surface\n(2014-2016) vs (2017-2018)"))
+          axis.title.x = element_text(size = tsize)) 
+   
   
   plot_b <- ggplot() +
     geom_polygon(data = map, aes(x=long, y = lat, group = group), fill = "grey", color = "black") +
@@ -1593,7 +1594,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data_S.R
   
   
   phase <- ggplot(som_cruise, aes_string(x = "NC_slope", y = paste0("som_",nearshore_som))) +
-    geom_point(size = 3, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
+    geom_point(size = 1.7, aes_string(fill = "phase", color = "phase", shape = "season"), data = som_cruise) +
     stat_smooth(data = som_cruise %>% filter(!is.na(sig)), 
                 aes_string(x = "NC_slope", y = paste0("som_",nearshore_som), fill = "phase", color = "phase"),
                 method="lm") +
@@ -1609,24 +1610,24 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data_S.R
     annotate(geom = "rect", ymax = -0.03,
              ymin = -Inf, xmin = -Inf, xmax = Inf,
              fill = "white", color = "white") +
-    annotate(geom = "text", y = -0.06, x = 0.2, 
+    annotate(geom = "text", y = -0.06, x = 0.195, 
              label = paste0("R-Squared = ",
                             round(warm_rsq,3),
                             "\np-value = ",
                             round(warm_p, 3)),
-             color = "red", size = 3, fontface = "bold") +
+             color = "red", size = 1.6, fontface = "bold") +
     annotate(geom = "text", y = -0.06, x = 0.25, 
              label = paste0("R-Squared = ",
                             round(cool_rsq,3),
                             "\np-value = ",
                             round(cool_p, 3)),
-             color = "blue", size = 3, fontface = "bold") +
-    annotate(geom = "text", y = -0.06, x = 0.3, 
+             color = "blue", size = 1.6, fontface = "bold") +
+    annotate(geom = "text", y = -0.06, x = 0.305, 
              label = paste0("R-Squared = ",
                             round(new_rsq,3),
                             "\np-value = ",
                             round(new_p, 3)),
-             color = "gold3", size = 3, fontface = "bold") +
+             color = "gold3", size = 1.6, fontface = "bold") +
     coord_cartesian(ylim = c(-0.07,max(som_cruise[,paste0("som_",nearshore_som)])+0.05))
   
   
@@ -1779,8 +1780,7 @@ community_comparison <- function(in_file = "output/euks_auto_18sv9_full_data_S.R
           plot.title = element_text(hjust = 0.5)) +
     labs(shape = "Phase", color = "Season") + xlab("log(Regionally Availible Nitrate)") +
     ylab("") 
-  
-  
+
   title_plot <- ggdraw() + draw_label(title, fontface='bold')
   
   index_plots <- plot_grid(title_plot,

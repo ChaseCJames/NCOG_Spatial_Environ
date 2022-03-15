@@ -23,8 +23,8 @@ for (i in 1:length(in_group_list)) {
   print(i)
   
   plot_list[[i]] <- som_figure(map_file = paste0("output/",in_group_list[i],"_map_S.Rdata"),
-                               figure_name = paste0("figures/som_maps/", in_group_list[i],"_map_plot_S.pdf"),
-                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 3.75)
+                               figure_name = paste0("old_figures/figures/som_maps/", in_group_list[i],"_map_plot_S.pdf"),
+                               main = in_group_names[i], cluster1 = "Nearshore", cluster2 = "Offshore", psize = 1.7)
 
   
 }
@@ -193,9 +193,9 @@ for (i in 1:length(in_group_list)) {
   fig_list[[i]] <- fig_commun_map_surf_deep_func(in_all = paste0("output/",in_group_list[i],"_dissimilar_S.Rdata"),
                                 in_dat = paste0("output/",in_group_list[i],"_full_data_S.Rdata"),
                                 in_map = paste0("output/",in_group_list[i],"_map_S.Rdata"),
-                                community_diff_fig = paste0("figures/community_diff/",
+                                community_diff_fig = paste0("old_figures/figures/community_diff/",
                                                             in_group_list[i],"_both_diff_S.pdf"),
-                                tsize = 15, psize = 4, group = in_group_names[i])
+                                tsize = 7, psize = 1.7, group = in_group_names[i])
   print(i)
   
 }
@@ -224,7 +224,7 @@ for (i in 1:length(in_group_list)) {
                        out_diff_file = paste0("output/",in_group_list[i],"_diffs_S.Rdata"),
                        title = in_group_names[i],
                        upwelling_index = "output/upwelling_indicies.Rdata",
-                       index_plot = paste0("figures/",in_group_list[i],"_index_plot_S.pdf"))
+                       index_plot = paste0("old_figures/figures/",in_group_list[i],"_index_plot_S.pdf"))
   
   print(i)
   
